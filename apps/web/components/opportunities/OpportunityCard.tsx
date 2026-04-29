@@ -21,17 +21,17 @@ export function OpportunityCard({ opportunity, projectId }: OpportunityCardProps
         <Badge>{opportunityStatusLabel(opportunity.status)}</Badge>
       </div>
       <div className="opportunityMetaGrid">
-        <MetaItem label="Score" value={formatScore(opportunity.opportunity_score)} />
-        <MetaItem label="Evidence" value={formatNumber(opportunity.evidence_count)} />
-        <MetaItem label="Last seen" value={formatDateTime(opportunity.last_seen_at)} />
-        <MetaItem label="Status" value={opportunityStatusLabel(opportunity.status)} />
+        <MetaItem label="机会评分" value={formatScore(opportunity.opportunity_score)} />
+        <MetaItem label="证据数量" value={formatNumber(opportunity.evidence_count)} />
+        <MetaItem label="最近出现" value={formatDateTime(opportunity.last_seen_at)} />
+        <MetaItem label="状态" value={opportunityStatusLabel(opportunity.status)} />
       </div>
       <MetaItem
-        label="Platforms"
+        label="平台分布"
         value={formatPlatformDistribution(opportunity.platform_distribution)}
       />
       <Link className="button buttonSecondary buttonSmall" href={detailHref}>
-        Open detail
+        查看详情
       </Link>
     </article>
   );

@@ -10,8 +10,8 @@ export function Navigation({ selectedProjectId }: { selectedProjectId: string | 
   const projectId = searchParams.get("projectId") ?? selectedProjectId;
 
   return (
-    <nav aria-label="Primary">
-      <p className="sectionLabel">Navigation</p>
+    <nav aria-label="主导航">
+      <p className="sectionLabel">导航</p>
       <div className="navList">
         {NAV_ITEMS.map((item) => {
           const href = projectId

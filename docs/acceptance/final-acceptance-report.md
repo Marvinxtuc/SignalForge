@@ -102,7 +102,8 @@ Phase 6 evidence:
 - Dashboard: PASS
 - Opportunity Board: PASS
 - Logs / Settings / Reports: PASS
-- Open Source evidence links and high value marker: PASS
+- Open Source / 打开来源 evidence links and High Value / 高价值 marker: PASS
+- Chinese frontend UI localization with backend enum values preserved: PASS
 - frontend build: PASS
 - `scripts/validate_frontend_mvp.py --require-http`: PASS
 

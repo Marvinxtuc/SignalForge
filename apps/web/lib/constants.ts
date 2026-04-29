@@ -16,10 +16,10 @@ export const ROUTES = {
 } as const;
 
 export const NAV_ITEMS = [
-  { href: ROUTES.signals, label: "Signal Inbox", hint: "Core" },
-  { href: ROUTES.dashboard, label: "Dashboard", hint: "Summary" },
-  { href: ROUTES.opportunities, label: "Opportunities", hint: "Pipeline" },
-  { href: ROUTES.logs, label: "Logs", hint: "Collection" },
-  { href: ROUTES.reports, label: "Reports", hint: "Exports" },
-  { href: ROUTES.settings, label: "Settings", hint: "Admin" }
+  { href: ROUTES.signals, label: "信号收件箱", hint: "核心" },
+  { href: ROUTES.dashboard, label: "仪表盘", hint: "摘要" },
+  { href: ROUTES.opportunities, label: "机会看板", hint: "处理" },
+  { href: ROUTES.logs, label: "运行日志", hint: "采集" },
+  { href: ROUTES.reports, label: "报告导出", hint: "导出" },
+  { href: ROUTES.settings, label: "设置", hint: "管理" }
 ] as const;

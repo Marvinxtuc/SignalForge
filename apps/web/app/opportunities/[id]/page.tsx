@@ -26,7 +26,7 @@ export default async function OpportunityDetailPage({
 
     return <OpportunityDetail initialOpportunity={opportunity} projectId={projectId} />;
   } catch (error) {
-    return <ErrorState error={error} title="Unable to load opportunity detail" />;
+    return <ErrorState error={error} title="无法加载机会详情" />;
   }
 }
 

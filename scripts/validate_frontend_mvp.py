@@ -126,13 +126,13 @@ def validate_ui_markers(files: list[Path]) -> None:
     text_by_file = {path: _read(path) for path in files}
     all_text = "\n".join(text_by_file.values())
 
-    if "Open Source" not in all_text:
-        _fail('Open Source text is missing from frontend source')
-    _pass("Open Source text is present")
+    if "Open Source" not in all_text and "打开来源" not in all_text:
+        _fail('Open Source / 打开来源 text is missing from frontend source')
+    _pass("Open Source / 打开来源 text is present")
 
-    if not re.search(r"\bhigh[-_\s]?value\b", all_text, re.IGNORECASE):
-        _fail("high value marker is missing from frontend source")
-    _pass("high value marker is present")
+    if not re.search(r"\bhigh[-_\s]?value\b", all_text, re.IGNORECASE) and "高价值" not in all_text:
+        _fail("high value / 高价值 marker is missing from frontend source")
+    _pass("high value / 高价值 marker is present")
 
     settings_pages = [
         path

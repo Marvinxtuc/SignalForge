@@ -132,7 +132,7 @@ export function SignalInbox({ projectId }: SignalInboxProps) {
     try {
       const response = await api.processing.run(projectId, { mode: processMode });
       setProcessMessage(
-        `Process completed in ${response.mode}: ${response.total_signals} signals available.`
+        `处理完成（${response.mode}）：当前共有 ${response.total_signals} 条信号。`
       );
       await loadSignals();
     } catch (error) {
@@ -145,38 +145,38 @@ export function SignalInbox({ projectId }: SignalInboxProps) {
   if (!projectId) {
     return (
       <EmptyState
-        description="Use the project selector to choose a project before reviewing signals."
-        title="Select a project"
+        description="请先在项目选择器中选择项目，然后查看信号。"
+        title="请选择项目"
       />
     );
   }
 
   return (
-    <section className={styles.inbox} aria-label="Signal Inbox">
+    <section className={styles.inbox} aria-label="信号收件箱">
       <SignalFilters filters={filters} isDisabled={isLoading} onChange={setFilters} />
 
-      <section className={styles.signalList} aria-label="Signals">
+      <section className={styles.signalList} aria-label="信号列表">
         <div className={styles.listHeader}>
           <div>
-            <p className={styles.eyebrow}>Signal Inbox</p>
-            <h1 className={styles.title}>Signals</h1>
+            <p className={styles.eyebrow}>信号收件箱</p>
+            <h1 className={styles.title}>信号</h1>
           </div>
           <Button disabled={isLoading} onClick={() => void loadSignals()} size="small">
-            Refresh
+            刷新
           </Button>
         </div>
 
-        {isLoading ? <LoadingState label="Loading signals" /> : null}
+        {isLoading ? <LoadingState label="正在加载信号" /> : null}
 
         {loadError ? (
           <ErrorState
             action={
               <Button onClick={() => void loadSignals()} size="small" variant="primary">
-                Retry
+                重试
               </Button>
             }
             error={loadError}
-            title="Unable to load signals"
+            title="无法加载信号"
           />
         ) : null}
 
@@ -185,7 +185,7 @@ export function SignalInbox({ projectId }: SignalInboxProps) {
             action={
               <div className={styles.processPanel}>
                 <label className={styles.fieldLabel} htmlFor="process-mode">
-                  Process mode
+                  处理模式
                 </label>
                 <div className={styles.processControls}>
                   <select
@@ -205,15 +205,15 @@ export function SignalInbox({ projectId }: SignalInboxProps) {
                     onClick={() => void runProcess()}
                     variant="primary"
                   >
-                    {isProcessing ? "Processing" : "Run Process"}
+                    {isProcessing ? "处理中" : "运行处理"}
                   </Button>
                 </div>
                 {processError ? <p className={styles.inlineError}>{processError}</p> : null}
                 {processMessage ? <p className={styles.inlineSuccess}>{processMessage}</p> : null}
               </div>
             }
-            description="No signals returned for this project and filter set. Run Process with an approved local MVP mode, then refresh the inbox."
-            title="No signals yet"
+            description="当前项目和筛选条件下没有返回信号。请使用已批准的本地 MVP 模式运行处理，然后刷新信号收件箱。"
+            title="暂无信号"
           />
         ) : null}
 
@@ -279,5 +279,5 @@ function formatActionError(error: unknown): string {
     return `${error.code}${error.status ? ` (${error.status})` : ""}: ${error.message}`;
   }
 
-  return "Unexpected frontend error.";
+  return "未知前端错误。";
 }

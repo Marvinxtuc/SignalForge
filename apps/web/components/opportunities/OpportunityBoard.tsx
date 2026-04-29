@@ -16,7 +16,7 @@ export function OpportunityBoard({ opportunities, projectId }: OpportunityBoardP
   const grouped = groupByStatus(opportunities);
 
   return (
-    <section aria-label="Opportunity board" className="opportunityBoard">
+    <section aria-label="机会看板" className="opportunityBoard">
       {OPPORTUNITY_STATUSES.map((status) => {
         const items = grouped[status];
 
@@ -30,15 +30,15 @@ export function OpportunityBoard({ opportunities, projectId }: OpportunityBoardP
               <h2 id={`opportunity-column-${status}`} className="opportunityColumnTitle">
                 {opportunityStatusLabel(status)}
               </h2>
-              <span aria-label={`${items.length} opportunities`} className="opportunityCount">
+              <span aria-label={`${items.length} 个机会`} className="opportunityCount">
                 {items.length}
               </span>
             </div>
             {items.length === 0 ? (
               <EmptyState
                 compact
-                description="No opportunities in this status."
-                title="Empty column"
+                description="该状态下暂无机会。"
+                title="空列"
               />
             ) : (
               <div className="opportunityCardList">

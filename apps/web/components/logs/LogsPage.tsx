@@ -3,7 +3,13 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
-import { formatDateTime, formatNumber, platformLabel, truncateText } from "../../lib/format";
+import {
+  formatDateTime,
+  formatNumber,
+  formatStatusLabel,
+  platformLabel,
+  truncateText
+} from "../../lib/format";
 import type { CollectionLog, PaginatedResponse } from "../../lib/types";
 import { Badge } from "../ui/Badge";
 import { EmptyState } from "../ui/EmptyState";
@@ -50,8 +56,8 @@ export function LogsPage() {
   if (!projectId) {
     return (
       <EmptyState
-        description="Select a project to inspect collection logs."
-        title="No project selected"
+        description="请选择项目以查看采集日志。"
+        title="请选择项目"
       />
     );
   }
@@ -60,25 +66,25 @@ export function LogsPage() {
     <section className="detailPage">
       <header className="pageHeader">
         <div>
-          <p className="pageEyebrow">Logs</p>
-          <h1 className="pageTitle">Collection logs</h1>
-          <p className="pageSubtitle">Read-only collection history for the selected project.</p>
+          <p className="pageEyebrow">运行日志</p>
+          <h1 className="pageTitle">采集日志</h1>
+          <p className="pageSubtitle">所选项目的只读采集历史。</p>
         </div>
       </header>
 
       {state.status === "loading" || state.status === "idle" ? (
-        <LoadingState label="Loading collection logs" />
+        <LoadingState label="正在加载采集日志" />
       ) : null}
 
       {state.status === "error" ? (
-        <ErrorState error={state.error} title="Unable to load collection logs" />
+        <ErrorState error={state.error} title="无法加载采集日志" />
       ) : null}
 
       {state.status === "ready" && state.response.items.length === 0 ? (
         <EmptyState
           compact
-          description="No collection log records were returned for this project."
-          title="No logs found"
+          description="当前项目暂无采集日志记录。"
+          title="未找到日志"
         />
       ) : null}
 
@@ -87,22 +93,22 @@ export function LogsPage() {
           <table className="dataTable">
             <thead>
               <tr>
-                <Th>Status</Th>
-                <Th>Platform</Th>
-                <Th>Collected</Th>
-                <Th>Inserted</Th>
-                <Th>Skipped</Th>
-                <Th>Error</Th>
-                <Th>Rate limit</Th>
-                <Th>Reset at</Th>
-                <Th>Created at</Th>
+                <Th>状态</Th>
+                <Th>平台</Th>
+                <Th>采集数量</Th>
+                <Th>入库数量</Th>
+                <Th>跳过数量</Th>
+                <Th>错误信息</Th>
+                <Th>速率限制</Th>
+                <Th>重置时间</Th>
+                <Th>创建时间</Th>
               </tr>
             </thead>
             <tbody>
               {state.response.items.map((log) => (
                 <tr key={log.id}>
                   <td>
-                    <Badge tone={statusTone(log.status)}>{log.status}</Badge>
+                    <Badge tone={statusTone(log.status)}>{formatStatusLabel(log.status)}</Badge>
                   </td>
                   <td>{platformLabel(log.platform)}</td>
                   <td>{formatNumber(log.items_collected)}</td>
@@ -140,7 +146,7 @@ function sanitizeErrorMessage(value: string | null): string {
     .map((line) => line.trim())
     .find((line) => line && !/^\s*(file ".*", line \d+|at\s+\S+)/i.test(line));
 
-  return truncateText(firstReadableLine || "Collection failed. See backend logs for details.", 140);
+  return truncateText(firstReadableLine || "采集失败。详情请查看后端日志。", 140);
 }
 
 function statusTone(status: string): "neutral" | "success" | "warning" | "danger" {

@@ -272,8 +272,9 @@ Phase 6 evidence:
 - Web npm build: PASS
 - `scripts/validate_frontend_mvp.py --require-http`: PASS
 - Required pages `/`, `/signals`, `/dashboard`, `/opportunities`, `/logs`, `/settings`, `/reports`: PASS
-- Open Source evidence text: PASS
-- High value marker: PASS
+- Open Source / 打开来源 evidence text: PASS
+- High value / 高价值 marker: PASS
+- Chinese frontend UI localization with backend enum values preserved: PASS
 - Settings excludes `encrypted_payload`: PASS
 - Reports markdown and csv controls: PASS
 - Frontend API client only calls SignalForge backend-relative paths: PASS

@@ -16,8 +16,8 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
   if (!projectId) {
     return (
       <EmptyState
-        description="Select a project from the sidebar to load project opportunities."
-        title="No project selected"
+        description="请先在侧边栏选择项目，以加载项目机会。"
+        title="请选择项目"
       />
     );
   }
@@ -29,18 +29,18 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
       <section className="detailPage">
         <header className="pageHeader">
           <div>
-            <p className="pageEyebrow">Opportunities</p>
-            <h1 className="pageTitle">Opportunity Board</h1>
+            <p className="pageEyebrow">机会</p>
+            <h1 className="pageTitle">机会看板</h1>
             <p className="pageSubtitle">
-              Grouped by status for project {projectId}. Showing {response.items.length} of{" "}
-              {response.total} opportunities.
+              按状态分组展示项目 {projectId} 的机会。当前显示 {response.items.length} /{" "}
+              {response.total} 个机会。
             </p>
           </div>
         </header>
         {response.items.length === 0 ? (
           <EmptyState
-            description="No opportunities returned by the backend for this project."
-            title="No opportunities"
+            description="后端未返回当前项目的机会。"
+            title="暂无机会"
           />
         ) : (
           <OpportunityBoard opportunities={response.items} projectId={projectId} />
@@ -48,7 +48,7 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
       </section>
     );
   } catch (error) {
-    return <ErrorState error={error} title="Unable to load opportunities" />;
+    return <ErrorState error={error} title="无法加载机会" />;
   }
 }
 

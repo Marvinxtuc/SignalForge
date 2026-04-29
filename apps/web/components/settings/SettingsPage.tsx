@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../../lib/api";
-import { formatDateTime, platformLabel } from "../../lib/format";
+import { formatDateTime, formatStatusLabel, platformLabel } from "../../lib/format";
 import type {
   CredentialStatus,
   CredentialStatusItem,
@@ -72,17 +72,17 @@ export function SettingsPage() {
     <section className="detailPage">
       <header className="pageHeader">
         <div>
-          <p className="pageEyebrow">Settings</p>
-          <h1 className="pageTitle">Platform Integrations</h1>
+          <p className="pageEyebrow">设置</p>
+          <h1 className="pageTitle">平台设置</h1>
           <p className="pageSubtitle">
-          Read-only platform and credential status. Secret payloads are not displayed.
+            只读平台与凭据状态。不会展示密钥载荷。
           </p>
         </div>
       </header>
 
-      {state.status === "loading" ? <LoadingState label="Loading settings" /> : null}
+      {state.status === "loading" ? <LoadingState label="正在加载设置" /> : null}
       {state.status === "error" ? (
-        <ErrorState error={state.error} title="Unable to load settings" />
+        <ErrorState error={state.error} title="无法加载设置" />
       ) : null}
 
       {state.status === "ready" ? (
@@ -96,18 +96,20 @@ export function SettingsPage() {
                 <div>
                   <p className="integrationName">{platformLabel(row.platform)}</p>
                   <p className="integrationMeta">
-                    Last checked {formatDateTime(row.lastCheckedAt)}. Read-only status for local MVP.
+                    最近检查 {formatDateTime(row.lastCheckedAt)}。本地 MVP 的只读状态。
                   </p>
                 </div>
               </div>
               <div className="integrationBadges">
                 <Badge tone={phaseTone(row.phase)}>{row.phase}</Badge>
                 <Badge tone={row.enabledForMvp ? "success" : "neutral"}>
-                  {row.enabledForMvp ? "MVP enabled" : "MVP disabled"}
+                  {row.enabledForMvp ? "MVP 已启用" : "MVP 未启用"}
                 </Badge>
-                <Badge tone={credentialTone(row.platformStatus)}>{row.platformStatus}</Badge>
+                <Badge tone={credentialTone(row.platformStatus)}>
+                  {formatStatusLabel(row.platformStatus)}
+                </Badge>
                 <Badge tone={credentialTone(row.credentialStatus)}>
-                  credential {row.credentialStatus}
+                  凭据 {formatStatusLabel(row.credentialStatus)}
                 </Badge>
               </div>
             </article>

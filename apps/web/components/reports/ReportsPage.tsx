@@ -28,8 +28,8 @@ export function ReportsPage() {
   if (!projectId) {
     return (
       <EmptyState
-        description="Select a project to export markdown or csv reports."
-        title="No project selected"
+        description="请选择项目以导出 Markdown 或 CSV 报告。"
+        title="请选择项目"
       />
     );
   }
@@ -80,10 +80,10 @@ export function ReportsPage() {
     <section className="detailPage">
       <header className="pageHeader">
         <div>
-          <p className="pageEyebrow">Reports</p>
-          <h1 className="pageTitle">Report exports</h1>
+          <p className="pageEyebrow">报告导出</p>
+          <h1 className="pageTitle">报告导出</h1>
           <p className="pageSubtitle">
-            Export markdown and csv reports with source_url preserved from the backend response.
+            导出 Markdown 和 CSV 报告，并保留后端返回的 source_url。
           </p>
         </div>
       </header>
@@ -96,10 +96,10 @@ export function ReportsPage() {
             type="button"
             variant="primary"
           >
-            {loadingFormat === "markdown" ? "Exporting markdown" : "Export markdown"}
+            {loadingFormat === "markdown" ? "正在导出 Markdown" : "Markdown 导出"}
           </Button>
           <Button disabled={loadingFormat !== null} onClick={exportCsv} type="button">
-            {loadingFormat === "csv" ? "Exporting csv" : "Export csv"}
+            {loadingFormat === "csv" ? "正在导出 CSV" : "CSV 导出"}
           </Button>
           <Button
             disabled={state.status !== "markdown" || loadingFormat !== null}
@@ -107,25 +107,25 @@ export function ReportsPage() {
             type="button"
             variant="secondary"
           >
-            Download markdown
+            下载 Markdown
           </Button>
         </div>
       </section>
 
       {state.status === "error" ? (
-        <ErrorState error={state.error} title="Unable to export report" />
+        <ErrorState error={state.error} title="无法导出报告" />
       ) : null}
 
       {state.status === "markdown" ? (
         <section className="surfacePanel">
           <div className="pageHeader">
-            <h2 className="opportunityCardTitle">Markdown preview</h2>
+            <h2 className="opportunityCardTitle">Markdown 预览</h2>
             <span className="selectorMeta">
-              Generated {formatDateTime(state.report.generated_at)}
+              生成时间 {formatDateTime(state.report.generated_at)}
             </span>
           </div>
           <textarea
-            aria-label="Markdown preview"
+            aria-label="Markdown 预览"
             readOnly
             spellCheck={false}
             className="reportsPreview"
@@ -136,10 +136,10 @@ export function ReportsPage() {
 
       {state.status === "csv" ? (
         <section className="surfacePanel">
-          <h2 className="opportunityCardTitle">CSV export</h2>
+          <h2 className="opportunityCardTitle">CSV 导出</h2>
           <p className="stateText">
-            Downloaded {state.report.filename || fallbackCsvFilename(currentProjectId)}. Generated{" "}
-            {formatDateTime(state.report.generated_at)}.
+            已下载 {state.report.filename || fallbackCsvFilename(currentProjectId)}。生成时间{" "}
+            {formatDateTime(state.report.generated_at)}。
           </p>
           <pre className="csvPreview">{state.report.content}</pre>
         </section>

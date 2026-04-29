@@ -51,17 +51,17 @@ export function ProjectSelector({
   return (
     <section className="projectSelector" aria-labelledby="project-selector-label">
       <p className="sectionLabel" id="project-selector-label">
-        Project
+        项目
       </p>
       <select
-        aria-label="Project selector"
+        aria-label="项目选择器"
         className="selectControl"
         disabled={projects.length === 0}
         onChange={(event) => handleProjectChange(event.target.value)}
         value={activeProjectId}
       >
         {projects.length === 0 ? (
-          <option value="">No projects available</option>
+          <option value="">暂无可用项目</option>
         ) : (
           projects.map((project) => (
             <option key={project.id} value={project.id}>
@@ -74,12 +74,12 @@ export function ProjectSelector({
         {errorMessage
           ? errorMessage
           : projects.length === 0
-            ? "No backend projects returned. Selector is disabled."
+            ? "后端未返回项目，选择器已禁用。"
             : activeProjectId === selectedProjectId
               ? matchedDefaultProject
-                ? `Default: ${DEFAULT_PROJECT_NAME}`
-                : `Default: ${selectedProjectName ?? "first existing project"}`
-              : "Existing backend projects only."}
+                ? `默认项目：${DEFAULT_PROJECT_NAME}`
+                : `默认项目：${selectedProjectName ?? "第一个现有项目"}`
+              : "仅可选择已有后端项目。"}
       </p>
     </section>
   );

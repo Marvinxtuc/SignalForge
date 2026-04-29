@@ -39,7 +39,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         if (active) {
           setProjectState({
             ...INITIAL_PROJECT_STATE,
-            errorMessage: "Unable to load projects from SignalForge backend."
+            errorMessage: "无法从 SignalForge 后端加载项目。"
           });
         }
       });
@@ -53,26 +53,26 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="appShell">
       <header className="topBar">
         <div className="brandLockup" aria-label="SignalForge">
-          <p className="brandName">Signal Insight Radar</p>
-          <span className="brandPhase">Stitch-inspired UI refresh</span>
+          <p className="brandName">信号洞察雷达</p>
+          <span className="brandPhase">前端 MVP</span>
         </div>
-        <div className="statusStrip" aria-label="Backend target">
+        <div className="statusStrip" aria-label="后端目标">
           <span className="statusDot" aria-hidden="true" />
-          Backend API client ready
+          后端 API 已就绪
         </div>
       </header>
-      <aside className="sidebar" aria-label="Workspace navigation">
+      <aside className="sidebar" aria-label="工作区导航">
         <div className="brandPanel" aria-label="SignalForge">
           <span className="brandMark" aria-hidden="true">
             SF
           </span>
           <div>
             <p className="brandTitle">SignalForge</p>
-            <p className="brandSubtitle">Research Workstation</p>
+            <p className="brandSubtitle">研究工作台</p>
           </div>
         </div>
         <button className="sidebarAction" disabled type="button">
-          New Analysis
+          新建分析
         </button>
         <Suspense fallback={null}>
           <ProjectSelector
@@ -117,7 +117,7 @@ async function getProjectSelectorState(): Promise<ProjectSelectorState> {
       errorMessage:
         error instanceof ApiClientError
           ? `${error.code}: ${error.message}`
-          : "Unable to load projects from SignalForge backend."
+          : "无法从 SignalForge 后端加载项目。"
     };
   }
 }

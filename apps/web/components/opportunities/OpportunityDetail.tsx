@@ -72,19 +72,19 @@ export function OpportunityDetail({ initialOpportunity, projectId }: Opportunity
       <div className="detailHeader">
         <div className="detailTitleBlock">
           <Link className="button buttonGhost buttonSmall" href={backHref}>
-            Back to board
+            返回看板
           </Link>
           <Badge>{opportunityStatusLabel(opportunity.status)}</Badge>
           <h1 className="detailTitle">{opportunity.title}</h1>
           {opportunity.description ? (
             <p className="detailDescription">{opportunity.description}</p>
           ) : (
-            <p className="detailDescription">No opportunity description available.</p>
+            <p className="detailDescription">暂无机会描述。</p>
           )}
         </div>
         <div className="detailActions">
           <select
-            aria-label="Opportunity status"
+            aria-label="机会状态"
             className="selectControl"
             disabled={pendingAction !== null}
             onChange={(event) => handleStatusChange(event.target.value as OpportunityStatus)}
@@ -101,35 +101,35 @@ export function OpportunityDetail({ initialOpportunity, projectId }: Opportunity
             onClick={handleArchive}
             variant="secondary"
           >
-            {pendingAction === "archive" ? "Archiving" : "Archive"}
+            {pendingAction === "archive" ? "归档中" : "归档"}
           </Button>
         </div>
       </div>
 
-      {error ? <ErrorState compact error={error} title="Unable to update opportunity" /> : null}
+      {error ? <ErrorState compact error={error} title="无法更新机会" /> : null}
 
-      <section aria-label="Opportunity metrics" className="metricGrid">
-        <Metric label="Score" value={formatScore(opportunity.opportunity_score)} />
-        <Metric label="Evidence" value={formatNumber(opportunity.evidence_count)} />
-        <Metric label="Last seen" value={formatDateTime(opportunity.last_seen_at)} />
-        <Metric label="Status" value={opportunityStatusLabel(opportunity.status)} />
+      <section aria-label="机会指标" className="metricGrid">
+        <Metric label="机会评分" value={formatScore(opportunity.opportunity_score)} />
+        <Metric label="证据数量" value={formatNumber(opportunity.evidence_count)} />
+        <Metric label="最近出现" value={formatDateTime(opportunity.last_seen_at)} />
+        <Metric label="状态" value={opportunityStatusLabel(opportunity.status)} />
       </section>
 
       <section aria-labelledby="opportunity-evidence" className="surfacePanel">
         <h2 id="opportunity-evidence" className="opportunityCardTitle">
-          Evidence
+          证据
         </h2>
         <div className="evidenceGrid">
-          <EvidenceItem label="Cluster ID" value={opportunity.cluster_id ?? "Unavailable"} />
-          <EvidenceItem label="Evidence count" value={formatNumber(opportunity.evidence_count)} />
+          <EvidenceItem label="聚类 ID" value={opportunity.cluster_id ?? "不可用"} />
+          <EvidenceItem label="证据数量" value={formatNumber(opportunity.evidence_count)} />
           <EvidenceItem
-            label="Platform distribution"
+            label="平台分布"
             value={formatPlatformDistribution(opportunity.platform_distribution)}
           />
-          <EvidenceItem label="Last seen" value={formatDateTime(opportunity.last_seen_at)} />
+          <EvidenceItem label="最近出现" value={formatDateTime(opportunity.last_seen_at)} />
         </div>
         <p className="stateText">
-          Source evidence unavailable from current opportunity payload.
+          当前机会数据未返回可直接打开的来源证据。
         </p>
       </section>
     </section>
