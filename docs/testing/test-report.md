@@ -2,9 +2,37 @@
 
 Status: NOT_STARTED
 Phase: Phase -1 Governance Bootstrap
-This document is a skeleton and does not represent final MVP acceptance.
+Current workstream: Phase 0 Infrastructure
+This document does not represent final MVP acceptance.
 
-No final MVP tests have been run. Phase -1 local validation results must be reported in the Codex final response for this phase.
+## Phase Results
+
+- Phase -1 Governance Bootstrap: PASS
+- Phase -1 SOP Marker Rectification: PASS
+- Phase 0 Infrastructure: CONDITIONAL PASS
+
+## Phase 0 Local Results
+
+- Governance validation: PASS
+- Python syntax check: PASS
+- Forbidden path check: PASS
+- Docker Compose config/build/up/wait/down: BLOCKED
+
+Blocker:
+
+- Local `docker` command is not available in the current environment.
+
+Re-run after Docker is available:
+
+```bash
+docker compose -f infra/docker-compose.yml config
+docker compose -f infra/docker-compose.yml build
+docker compose -f infra/docker-compose.yml up -d
+python3 scripts/wait_for_services.py
+docker compose -f infra/docker-compose.yml down
+```
+
+No final MVP tests have been run.
 
 ## Canonical v2.1 Phase Markers
 

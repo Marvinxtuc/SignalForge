@@ -38,6 +38,8 @@ phases:
     gates:
       - docker_gate
       - code_gate
+      - docs_gate
+      - no_secrets_gate
 
   phase_1_data_model:
     required_outputs:

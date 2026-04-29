@@ -14,3 +14,64 @@ If Git user.name or user.email is missing, do not modify global Git config. Reco
 ## CI Placeholder Confusion
 
 Docker, Data, and Acceptance gates are Phase -1 placeholders only. Real checks will be enabled in later phases.
+
+## Docker build fails
+
+- Confirm Docker Desktop or the Docker daemon is running.
+- Run `docker compose -f infra/docker-compose.yml config` before build.
+- Check network access for base images and package installs.
+
+## Port already in use
+
+Phase 0 defaults:
+
+- API: 8000
+- Web: 3000
+- PostgreSQL: 5432
+- Redis: 6379
+
+Stop conflicting local services or adjust ports in a later approved change.
+
+## API health fails
+
+Run:
+
+```bash
+docker compose -f infra/docker-compose.yml logs api
+```
+
+Expected health payload:
+
+```json
+{"status":"ok","service":"signalforge-api","phase":"phase-0-infrastructure"}
+```
+
+## Web is not accessible
+
+Run:
+
+```bash
+docker compose -f infra/docker-compose.yml logs web
+```
+
+The Phase 0 web app is a static infrastructure shell and does not call business APIs.
+
+## PostgreSQL is not ready
+
+Run:
+
+```bash
+docker compose -f infra/docker-compose.yml logs postgres
+```
+
+The `pgvector/pgvector:pg16` image is used and `infra/postgres-init.sql` initializes the `vector` extension.
+
+## Redis is not ready
+
+Run:
+
+```bash
+docker compose -f infra/docker-compose.yml logs redis
+```
+
+The Redis healthcheck uses `redis-cli ping`.

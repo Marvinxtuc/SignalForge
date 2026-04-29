@@ -16,4 +16,4 @@ jobs:
       - uses: actions/checkout@v4
       - name: Phase -1 placeholder
         run: |
-          echo "Phase -1 placeholder only. Real Data checks will be enabled in later phases."
+          echo "Phase 0 placeholder only. Real migration checks will be enabled in Phase 1."

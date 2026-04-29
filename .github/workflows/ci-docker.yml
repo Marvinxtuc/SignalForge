@@ -10,10 +10,21 @@ permissions:
   contents: read
 
 jobs:
-  phase-aware-placeholder:
+  docker-smoke:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Phase -1 placeholder
+      - name: Docker Compose config
         run: |
-          echo "Phase -1 placeholder only. Real Docker checks will be enabled in later phases."
+          docker compose -f infra/docker-compose.yml config
+      - name: Docker Compose build
+        run: |
+          docker compose -f infra/docker-compose.yml build
+      - name: Docker Compose up and wait
+        run: |
+          docker compose -f infra/docker-compose.yml up -d
+          python3 scripts/wait_for_services.py
+      - name: Docker Compose down
+        if: always()
+        run: |
+          docker compose -f infra/docker-compose.yml down

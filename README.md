@@ -1,24 +1,23 @@
 # SignalForge
 
-Status: Phase -1 Governance Bootstrap
+Status: Phase 0 Infrastructure
 
 SignalForge is a local-first VOC Radar MVP. The MVP goal is to prove that the system can surface high-value, actionable user demand signals, not to maximize collection volume or platform coverage.
 
 ## Current Phase
 
-This repository is currently in Phase -1: Governance Bootstrap.
+This repository is currently in Phase 0: Infrastructure.
 
-This phase creates the GitOps-lite, Docs-as-Code, and SOP-as-Code governance skeleton only. It does not include business functionality.
+This phase creates the infrastructure skeleton for local startup. It includes a minimal FastAPI service, a minimal Next.js service, PostgreSQL with pgvector, Redis, Docker Compose, and service readiness checks.
 
 Not included in this phase:
 
-- FastAPI application
-- Next.js application
 - Connector implementation
 - Processing Pipeline
 - UI pages
-- Docker Compose runtime services
 - Database models
+- Business APIs
+- Celery task logic
 
 ## Platform Scope
 
@@ -28,7 +27,47 @@ Not included in this phase:
 
 CI must not depend on real platform tokens. Real Reddit and Product Hunt checks are local/manual acceptance items and must be recorded in the final acceptance report later.
 
-## Phase -1 Validation
+## Phase 0 Local Startup
+
+Docker Compose file:
+
+```bash
+infra/docker-compose.yml
+```
+
+Start services:
+
+```bash
+docker compose -f infra/docker-compose.yml up -d
+```
+
+Check readiness:
+
+```bash
+python3 scripts/wait_for_services.py
+```
+
+API health:
+
+```bash
+curl http://localhost:8000/health
+```
+
+Web:
+
+```bash
+open http://localhost:3000
+```
+
+Stop services:
+
+```bash
+docker compose -f infra/docker-compose.yml down
+```
+
+Phase 0 validates PostgreSQL and Redis readiness at the socket level, and initializes the PostgreSQL `vector` extension. Business tables and migrations start in Phase 1 Data Model.
+
+## Governance Validation
 
 Run:
 
@@ -42,7 +81,7 @@ Do not commit `.env` or real API credentials. `.env.example` must contain only v
 
 ## Next Phase
 
-Phase 0 Infrastructure may start only after Phase -1 is accepted.
+Phase 1 Data Model may start only after Phase 0 is accepted.
 
 ## Canonical v2.1 Phase Markers
 

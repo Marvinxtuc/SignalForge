@@ -28,6 +28,25 @@ This checklist is a skeleton and does not represent final MVP acceptance.
 
 CI does not require real platform tokens. Real platform acceptance is local/manual acceptance.
 
+## Phase 0 Checklist
+
+- Docker Compose config passes.
+- Docker Compose build passes.
+- Docker Compose up starts API, Web, PostgreSQL, and Redis.
+- API `/health` returns `status: ok`.
+- Web `/` is accessible.
+- PostgreSQL socket readiness passes.
+- Redis socket readiness passes.
+- `scripts/wait_for_services.py` passes.
+- Docker Compose down completes.
+
+## Later Phase Items
+
+- Data migration checks start in Phase 1 Data Model.
+- Business APIs start after Phase 1.
+- Connector and product acceptance checks start in later phases.
+- Signal Inbox and Opportunity Board start in Phase 6 Frontend MVP.
+
 ## Canonical v2.1 Phase Markers
 
 - `phase_-1_governance_bootstrap`

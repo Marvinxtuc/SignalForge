@@ -26,3 +26,16 @@ flowchart LR
 ```
 
 Phase -1 does not implement these modules. Phase 0 starts infrastructure.
+
+## Phase 0 Infrastructure Skeleton
+
+Phase 0 adds:
+
+- Minimal FastAPI service with `GET /health`.
+- Minimal Next.js web service with a static infrastructure shell.
+- PostgreSQL with pgvector extension initialization.
+- Redis service.
+- Docker Compose at `infra/docker-compose.yml`.
+- Readiness checker at `scripts/wait_for_services.py`.
+
+Business modules, connectors, data models, migrations, processing pipeline, and product UI are not implemented in Phase 0.

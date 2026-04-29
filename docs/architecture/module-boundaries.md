@@ -14,3 +14,17 @@ This document is a skeleton and does not represent final MVP acceptance.
 - Governance: CI, SOP, docs, acceptance reports, rollback runbook.
 
 Phase -1 creates only governance assets and does not create business modules.
+
+## Phase 0 Boundary
+
+Phase 0 may create `apps/api`, `apps/web`, `infra`, and `scripts/wait_for_services.py`.
+
+Phase 0 must not create:
+
+- Connectors
+- Processing Pipeline
+- Business database models
+- Signal Inbox
+- Dashboard
+- Opportunity Board
+- Logs or Settings business pages

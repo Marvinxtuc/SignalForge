@@ -2,11 +2,24 @@
 
 Status: NOT_STARTED
 Phase: Phase -1 Governance Bootstrap
+Current workstream: Phase 0 Infrastructure
 This document is a skeleton and does not represent final MVP acceptance.
 
 ## Summary
 
 Final MVP acceptance has not started.
+
+## Phase Status
+
+- Phase -1 Governance Bootstrap: PASS
+- Phase -1 SOP Marker Rectification: PASS
+- Phase 0 Infrastructure: CONDITIONAL PASS
+
+Phase 0 condition:
+
+- Infrastructure files are present and non-Docker validation passes.
+- Docker smoke validation is blocked because the local `docker` command is unavailable in the current environment.
+- This is not final MVP acceptance.
 
 ## Scope
 

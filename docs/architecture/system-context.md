@@ -21,3 +21,14 @@ This document is a skeleton and does not represent final MVP acceptance.
 - CI uses mock/demo data and must not require real platform tokens.
 - Real platform acceptance is local/manual acceptance.
 - Tag creation may require manual owner action.
+
+## Phase 0 Runtime Context
+
+Phase 0 runs only infrastructure services:
+
+- API shell
+- Web shell
+- PostgreSQL + pgvector
+- Redis
+
+No Reddit, Product Hunt, X, or Discord external API calls are made in Phase 0.
