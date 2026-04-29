@@ -2,239 +2,286 @@
 
 ## 任务判断
 
-结论：Round 1 目标是修复外部访问场景下前端无法稳定访问后端的问题，并将信号收件箱的平台筛选从自由文本升级为受控的平台选项。实施范围应限制在前端同源代理、前端 API client 调整和筛选 UI/参数构造，不涉及数据模型、迁移、后端业务 API 或真实外部平台调用。
+结论：PASS。
+
+Round 1 可以进入前端最小改动实施，无需数据结构调整、数据库迁移或后端业务 API 变更。当前未发现阻塞项，因此不生成 `blocking_issue.md`。
 
 依据：
-- 当前前端 API client 通过 `NEXT_PUBLIC_API_BASE_URL` 构造后端绝对地址；外部访问部署时容易暴露 `localhost`、内网地址或跨域限制。
-- 当前信号筛选组件的平台筛选是文本输入，已存在后端 `platform` 查询参数，可复用现有业务 API。
-- 已批准 PRD 明确为“外部可访问修复与平台筛选升级”。
+- Round 1 目标集中在外部访问可用性和信号收件箱筛选体验。
+- 仓库现有后端已提供 `/health` 与 `/api/*` 业务接口，信号列表接口已有 `platform` 查询参数。
+- 仓库现状已出现与 Round 1 相关的前端未提交改动痕迹，包括同源 proxy route、query helper、平台 select、backend status 展示；本计划仅定义实施与验收边界，不评价这些未提交改动是否已完成验收。
 
 ## 当前目标
 
-1. 外部可访问修复：前端浏览器请求改为访问同源路径，由 Next.js 前端侧 proxy 转发到既有后端。
-2. 平台筛选升级：信号收件箱平台筛选改为明确的平台选项，避免自由文本输入造成的无效筛选。
-3. 保持后端业务接口、数据结构和迁移不变。
-4. 保持 token、密钥和真实外部平台 API 不写入、不调用。
+1. 将浏览器侧后端访问改为前端同源 `/api/*` 路径，避免外部访问时暴露或依赖 `localhost:8000`。
+2. 新增前端同源 proxy，由 Next.js 前端层转发到既有 FastAPI 后端。
+3. 将信号收件箱 `platform` 筛选从自由文本升级为受控选项。
+4. 增加或保留前端 query helper，保证跨页面导航只携带批准的查询参数。
+5. 增加或保留前端 backend status 展示，便于用户识别后端连接状态。
+6. 不新增后端业务 API，不改变数据结构，不调用真实外部平台。
 
 ## 已确认事实
 
-- `apps/web/lib/constants.ts` 当前定义 `DEFAULT_API_BASE_URL = "http://localhost:8000"`，并读取 `NEXT_PUBLIC_API_BASE_URL`。
-- `apps/web/lib/api.ts` 当前通过 `new URL(normalizedPath, API_BASE_URL)` 生成后端请求 URL。
-- `apps/web/components/signals/SignalFilters.tsx` 当前平台筛选为文本输入。
-- `apps/web/components/signals/SignalInbox.tsx` 当前会将 `filters.platform.trim()` 映射为 `SignalListParams.platform`。
-- `apps/web/lib/types.ts` 已定义 `PlatformName = "reddit" | "product_hunt" | "x" | "discord"`。
-- 后端已有 `GET /api/projects/{project_id}/signals`，支持 `platform` 查询参数；Round 1 不需要新增后端业务 API。
+- 当前工作目录为 `/Users/marvin.x/Desktop/SignalForge`。
+- 仓库根目录已有 `implementation_plan.md`。
+- `git status --short` 显示多处未提交改动，本计划只修改 `implementation_plan.md`。
+- `apps/web/lib/constants.ts` 当前存在 `SERVER_API_BASE_URL`、`PUBLIC_API_BASE_URL` 和默认同源 `/api` 策略。
+- `apps/web/app/api/[...path]/route.ts` 当前存在 Next.js route handler，用于将前端 `/api/*` 请求转发到后端。
+- `apps/web/lib/api.ts` 当前集中构造后端请求 URL，并限制绝对外部 URL。
+- `apps/web/lib/query.ts` 当前存在允许列表式 query helper。
+- `apps/web/components/signals/SignalFilters.tsx` 当前平台筛选已呈现为 `<select>`，选项包含 `reddit`、`product_hunt`、`x`、`discord`。
+- `apps/web/components/signals/SignalInbox.tsx` 当前会将非空 `filters.platform` 传入 `SignalListParams.platform`。
+- `apps/web/components/layout/AppShell.tsx` 当前存在 backend status 状态与展示逻辑。
+- 后端 `apps/api/app/main.py` 存在 `/health`。
+- Round 1 未要求新增后端业务 API。
+
+## 判断
+
+- Round 1 的最小可行方案应限制在 `apps/web` 前端边界内。
+- 现有后端 API 能支撑本轮需求；如发现前端请求失败，应优先排查 proxy、环境变量和路径映射，而不是新增后端接口。
+- 当前仓库已有相关未提交改动，后续实施 agent 应先复核这些改动是否符合本计划，再决定是否补齐或修正。
+
+## 待验证事项
+
+- Docker Compose 与本地开发环境中 `SERVER_API_BASE_URL` 是否都能解析到后端服务。
+- `/api/health` 是否正确映射到后端 `/health`。
+- `/api/<path>` 是否正确映射到后端 `/api/<path>`，且 query 参数未丢失。
+- 生产外部访问时浏览器 Network 是否只请求同源 `/api/*`。
+- 平台筛选选择“全部平台”时是否不发送 `platform` 参数。
 
 ## 功能模块拆分
 
 ### 模块 1：前端同源 Proxy
 
-目标：让浏览器只请求 Web 同源 `/api/*` 路径，由 Next.js 侧转发到后端服务。
+目标：浏览器只访问 Web 同源 `/api/*`，由 Next.js 前端层代理到 FastAPI。
 
-建议改动：
-- 在 Next.js 配置或前端运行层新增同源 proxy 规则。
-- proxy 目标使用服务端环境变量，例如 `API_BASE_URL` 或保留既有后端地址变量的服务端版本。
-- 前端公开变量不再要求暴露后端绝对地址。
-- 保留请求超时、错误解析和 JSON envelope 处理逻辑。
+实施要点：
+- 使用 Next.js route handler 或 rewrite 实现 `/api/*` 代理。
+- `/api/health` 映射到后端 `/health`。
+- 其他 `/api/<path>` 映射到后端 `/api/<path>`。
+- 后端目标地址使用服务端环境变量，例如 `SERVER_API_BASE_URL`。
+- proxy 不转发敏感请求头，例如 cookie、authorization、sf_token 等。
 
-边界：
-- 不新增后端业务 API。
-- 不改变 FastAPI route、schema、service。
-- 不写入 token、密钥或真实平台凭据。
+验收：
+- 外部浏览器看不到后端内网地址或 `localhost:8000`。
+- `/api/health` 和至少一个业务接口可通过同源路径访问。
 
-### 模块 2：前端 API Client 调整
+### 模块 2：前端 API Base
 
-目标：让前端 API client 默认请求同源 `/api/*`，并继续禁止传入任意外部 URL。
+目标：前端 API client 默认使用同源 `/api`，避免生产浏览器依赖公开后端绝对地址。
 
-建议改动：
-- 将 API base 默认值从浏览器可见的后端绝对地址调整为同源空前缀或 `/`。
-- `buildBackendUrl` 继续只接受相对路径。
-- 生产和本地都通过同源路径访问，proxy 决定实际后端地址。
-- 错误信息可继续使用 “SignalForge backend” 表述，无需改业务语义。
+实施要点：
+- 默认 public API base 为 `/api`。
+- 服务端渲染或 route handler 使用 `SERVER_API_BASE_URL` 访问后端。
+- 继续拒绝任意 `http://` 或 `https://` path 输入，保持 API client 边界。
+- 保留超时、错误解析、JSON 解析等既有行为。
 
-边界：
-- 不改变 API response 类型。
-- 不改变分页、筛选、状态更新、处理运行等业务调用路径。
+验收：
+- `api.health()` 在浏览器侧请求 `/api/health`。
+- `api.signals.list()` 等业务调用仍通过集中 API client 发出。
 
-### 模块 3：平台筛选控件升级
+### 模块 3：Platform Select
 
-目标：将平台筛选从文本输入改为受控选项，降低无效输入和大小写不一致风险。
+目标：将平台筛选从自由文本改为受控选择，减少无效输入。
 
-建议改动：
-- `SignalFilters` 中平台筛选改为 `<select>`。
-- 选项包含“全部平台”、`reddit`、`product_hunt`、`x`、`discord`。
-- 选项值必须与后端已有 `RawItem.platform`/前端 `PlatformName` 保持一致。
-- `SignalInbox.buildSignalListParams` 继续将空值映射为 `undefined`，非空值传给 `platform`。
+实施要点：
+- `SignalFilters` 的平台控件使用 `<select>`。
+- 选项值固定为：
+  - 空值：全部平台
+  - `reddit`
+  - `product_hunt`
+  - `x`
+  - `discord`
+- 展示文案可使用 `Reddit`、`Product Hunt`、`X`、`Discord`，但提交值必须保留后端枚举/存储值。
+- `SignalInbox` 继续将空值映射为 `undefined`，非空值映射为 `platform` query。
 
-边界：
-- 不新增平台。
-- 不修改后端筛选语义。
-- 不修改数据展示字段。
+验收：
+- 选择每个平台时，请求 query 中的 `platform` 值准确。
+- 选择全部平台时，请求不包含 `platform`。
 
-### 模块 4：验证与回滚
+### 模块 4：Query Helper
 
-目标：通过本地静态检查和最小手动验证确认改动有效、可回滚。
+目标：集中管理前端页面间允许透传的 query 参数，避免无关参数扩散。
 
-建议验证：
-- 前端 TypeScript/构建检查通过。
-- 本地 Web 页面请求路径为同源 `/api/*`。
-- 平台筛选选择 `reddit`、`product_hunt`、`x`、`discord` 时，请求 query 中平台值准确。
-- 清空平台筛选时不发送 `platform` query。
-- 后端测试无需因本轮改动新增 migration 或业务 API 测试。
+实施要点：
+- 保留或新增 `apps/web/lib/query.ts`。
+- 只允许明确批准的查询参数，例如 `projectId`、`sf_token`。
+- 导航、项目选择器、机会详情返回路径统一使用 helper 构造 href。
+- 不扩大 token 使用范围，不将 token 写入日志或存储。
+
+验收：
+- 页面切换时 `projectId` 可保留。
+- 未列入允许列表的 query 参数不会被透传。
+
+### 模块 5：Backend Status
+
+目标：在前端 Shell 中展示后端连接状态，降低外部访问故障定位成本。
+
+实施要点：
+- 启动时并行请求 `api.health()` 和项目列表。
+- 根据结果展示 `connected`、`partial`、`unavailable`。
+- backend status 仅用于 UI 提示，不改变业务 API 语义。
+
+验收：
+- 后端可用时显示已连接。
+- health 或项目列表部分失败时显示部分可用。
+- 两者均失败时显示不可用，并保留错误提示。
 
 ## 数据结构变化
 
-无。
+明确无。
 
-说明：
-- 不修改数据库表。
-- 不新增 Alembic migration。
-- 不修改 Pydantic schema 的字段定义。
-- 不修改前后端业务实体结构。
+不修改：
+- 数据库表结构。
+- Alembic migration。
+- Pydantic schema 字段。
+- 前后端业务实体结构。
+- 既有 enum 的业务含义。
 
 ## API 变化
 
 新增前端同源 proxy，不新增后端业务 API。
 
-说明：
-- 浏览器访问路径变化为 Web 同源 `/api/*`。
+具体说明：
+- 浏览器访问路径新增或统一为 Web 同源 `/api/*`。
 - Next.js 前端层负责将 `/api/*` 转发到既有 FastAPI 后端。
-- FastAPI 现有业务 API 路径、请求参数、响应结构不变。
-- 不新增、删除或重命名后端业务 endpoint。
+- FastAPI 现有 endpoint、请求参数、响应结构不变。
+- 不新增、删除、重命名后端业务 endpoint。
+- 不改变 `/api/projects/{project_id}/signals` 的 `platform` 查询语义。
 
 ## 前端改动点
 
-1. `apps/web/next.config.mjs`
-   - 增加同源 proxy/rewrite 配置。
-   - 目标后端地址从服务端环境变量读取。
+1. `apps/web/app/api/[...path]/route.ts`
+   - 新增前端同源 proxy route。
+   - 处理 `/api/health` 与业务 `/api/*` 映射。
+   - 过滤敏感 headers 和不应透传的 query。
 
 2. `apps/web/lib/constants.ts`
-   - 调整 API base 策略，默认使用同源路径。
-   - 避免生产浏览器依赖 `localhost:8000`。
+   - 新增或调整 `SERVER_API_BASE_URL`。
+   - 默认 `PUBLIC_API_BASE_URL` 为 `/api`。
+   - 避免生产浏览器默认指向 `localhost:8000`。
 
 3. `apps/web/lib/api.ts`
-   - 保持仅允许相对路径。
-   - 确保 `/api/*` 请求能在同源模式下正确构造。
+   - API base 改为默认同源。
+   - 保持 backend-relative path 限制。
+   - 保持 query 参数构造、超时和错误处理。
 
-4. `apps/web/components/signals/SignalFilters.tsx`
-   - 将平台输入框替换为平台下拉选择。
-   - 保持 disabled、reset 和 `onChange` 行为一致。
+4. `apps/web/lib/query.ts`
+   - 新增或保留 query helper。
+   - 仅允许批准参数跨页面透传。
 
-5. `apps/web/components/signals/SignalInbox.tsx`
-   - 保持筛选参数构造逻辑。
-   - 必要时收紧 `platform` 类型，但不改变接口语义。
+5. `apps/web/components/signals/SignalFilters.tsx`
+   - 平台筛选改为 select。
+   - 选项值与后端平台值保持一致。
+
+6. `apps/web/components/signals/SignalInbox.tsx`
+   - 保持平台 query 构造逻辑。
+   - 空值不发送 `platform`。
+
+7. `apps/web/components/layout/AppShell.tsx`
+   - 新增或保留 backend status 展示。
+   - 使用 health 与项目列表结果判断连接状态。
+
+8. 相关导航组件
+   - `Navigation`、`ProjectSelector`、机会卡片/详情等如需保留 `projectId`，统一使用 query helper。
 
 ## 风险点
 
 ### P0
 
-- Proxy 路径循环或目标错误，导致所有 `/api/*` 请求不可用。
-- 生产环境未配置服务端后端地址，外部访问仍转发到不可达地址。
-- 同源 proxy 误转发 Next.js 自身 route，造成前端页面或静态资源异常。
+- Proxy 映射错误导致所有业务请求不可用。
+- `SERVER_API_BASE_URL` 在部署环境不可解析，外部访问仍失败。
+- `/api/health` 与 `/api/*` 路径映射不一致，导致状态显示与业务请求结果冲突。
+- Proxy 错误透传敏感 header 或 token，造成凭据泄露风险。
 
 ### P1
 
-- 平台选项值与后端实际存储值不一致，导致筛选结果为空。
-- 本地开发与部署环境变量命名不一致，造成环境可用性偏差。
-- API client URL 拼接处理不当，导致 query 参数丢失或双斜杠路径异常。
+- 平台 select 的 value 与后端实际 `platform` 值不一致，导致筛选结果为空。
+- API base 兼容逻辑过宽，允许生产浏览器继续访问 `localhost` 或任意外部 API。
+- Query helper 允许列表配置不当，导致 `projectId` 丢失或无关 query 扩散。
+- Backend status 判断过于粗糙，把部分接口故障误判为整体可用。
 
 ### P2
 
-- 平台筛选下拉文案不够清晰，用户难以区分 `product_hunt` 等技术值。
-- 只做前端筛选控件升级，不解决历史数据中可能存在的非标准平台值。
-- 错误提示仍使用通用 backend 文案，无法直接提示 proxy 配置问题。
+- 平台展示文案与技术值差异可能造成用户理解成本。
+- 历史数据如存在非标准平台值，本轮 select 不提供筛选入口。
+- 通用后端错误文案无法直接定位是 proxy、后端还是网络问题。
+- 同源 proxy 增加一次转发，可能带来轻微延迟。
 
 ## 不做事项
 
-- 不执行 `git add`、`git commit`、`git reset`、`git revert`。
-- 不修改应用代码，本文件仅作为实施计划交付。
-- 不新增 migration。
-- 不修改数据库结构或数据。
+- 不做代码实施以外的批量重构。
+- 本 PM/Requirement Agent 不修改业务代码。
 - 不新增后端业务 API。
-- 不调用真实 Reddit、Product Hunt、X、Discord 或其他外部平台 API。
-- 不写入 token、密钥、凭据或权限配置。
-- 不做批量重构。
-- 不改变信号处理、采集、评分、聚类、机会生成等生产逻辑。
+- 不修改生产业务逻辑。
+- 不修改数据库结构。
+- 不新增 migration。
+- 不执行数据迁移。
+- 不写入、读取或提交真实 token、密钥、凭据。
+- 不调用 Reddit、Product Hunt、X、Discord 或其他真实外部平台 API。
+- 不修改部署权限、云资源或生产配置。
+- 不执行 `git add`、`git commit`、`git reset`、`git revert`。
+- 不回滚或覆盖其他 agent 的未提交代码改动。
 
-## Subagent 工作流边界
+## 改动边界
 
-### PM / Requirement Agent
+允许后续实施 agent 修改：
+- `apps/web/app/api/[...path]/route.ts`
+- `apps/web/lib/constants.ts`
+- `apps/web/lib/api.ts`
+- `apps/web/lib/query.ts`
+- `apps/web/components/signals/SignalFilters.tsx`
+- `apps/web/components/signals/SignalInbox.tsx`
+- `apps/web/components/layout/AppShell.tsx`
+- 必要的前端导航 href 调用点
+- 必要的前端验证脚本或测试
 
-职责：
-- 将已批准 PRD 转化为最小可执行实施计划。
-- 明确目标、范围、风险、验收标准和不做事项。
-- 不改应用代码。
-- 不执行 git 暂存、提交、回滚。
-
-交付物：
-- `implementation_plan.md`
-
-### Frontend Agent
-
-职责：
-- 在批准后实现 Next.js 同源 proxy。
-- 调整前端 API client 的同源请求策略。
-- 将平台筛选 UI 从文本输入改为受控下拉。
-- 执行前端类型检查/构建验证。
-
-禁止：
-- 修改后端业务逻辑。
-- 写入密钥或调用真实外部平台。
-- 新增 migration。
-
-### Backend Agent
-
-职责：
-- 默认不参与代码改动。
-- 仅在验证发现现有 API 与 PRD 不一致时，提供事实确认和最小修复建议。
-
-禁止：
-- 新增业务 API。
-- 修改数据结构。
-- 新增 migration。
-- 调用真实外部平台 API。
-
-### QA / Verification Agent
-
-职责：
-- 验证同源 `/api/*` 请求路径。
-- 验证平台筛选 query 参数。
-- 验证“全部平台”不发送 `platform` 参数。
-- 验证前端构建或类型检查。
-
-禁止：
-- 使用真实外部平台 API。
-- 写入 token 或修改生产配置。
+禁止后续实施 agent 修改，除非另行审批：
+- `apps/api/app/api/routes/*`
+- `apps/api/app/services/*`
+- `apps/api/app/db/*`
+- `apps/api/migrations/*`
+- 生产部署配置、密钥、权限相关文件
 
 ## 实施步骤
 
-1. 获取审批：确认 Round 1 进入实现阶段，并确认允许修改前端代码。
-2. 实现前端同源 proxy：在 Next.js 层配置 `/api/*` 到后端目标的转发。
-3. 调整 API client：默认请求同源 `/api/*`，保留相对路径限制。
-4. 升级平台筛选：将平台文本框替换为下拉选择。
-5. 本地验证：运行前端类型检查/构建，启动本地 Web 和 API，验证请求路径与筛选行为。
-6. 输出实施报告：列出修改文件、命令、验证结果、残留风险和回滚方式。
+1. 复核当前未提交改动，确认是否已有 Round 1 实现痕迹。
+2. 补齐或修正前端同源 proxy。
+3. 调整 API base 策略为浏览器默认同源 `/api`。
+4. 接入或复核 query helper 的允许列表。
+5. 将平台筛选固定为 select，并确认 query 构造。
+6. 接入或复核 backend status 展示。
+7. 执行前端静态检查、构建或项目既有验证脚本。
+8. 输出实施报告，列出修改文件、执行命令、验证结果、残留风险和回滚方式。
 
 ## 验证标准
 
-- 浏览器 Network 中业务请求为同源 `/api/*`。
-- `/api/*` 能成功转发到既有 FastAPI 后端。
-- 信号收件箱选择平台后，请求 query 包含对应 `platform` 值。
-- 选择“全部平台”后，请求 query 不包含 `platform`。
-- 前端类型检查或构建通过。
-- 未出现数据库 migration 文件。
-- 未出现后端业务 API 新增。
-- 未写入 token、密钥或真实平台凭据。
-- 未调用真实外部平台 API。
+- `implementation_plan.md` 存在于仓库根目录。
+- 未生成 `blocking_issue.md`。
+- 浏览器业务请求使用同源 `/api/*`。
+- `/api/health` 成功映射到后端 `/health`。
+- `/api/projects/...` 等业务请求成功映射到后端 `/api/projects/...`。
+- 信号平台筛选为 select。
+- 平台 select 包含空值、`reddit`、`product_hunt`、`x`、`discord`。
+- 选择全部平台时不发送 `platform` query。
+- 选择具体平台时发送准确 `platform` query。
+- 页面导航只透传允许的 query 参数。
+- backend status 能区分 connected、partial、unavailable。
+- 没有新增 migration。
+- 没有新增后端业务 API。
+- 没有写入 token、密钥或真实平台凭据。
+- 没有调用真实外部平台 API。
 
 ## 回滚方式
 
-计划阶段回滚：
-- 删除 `implementation_plan.md` 或恢复到修改前状态。
+计划文件回滚：
+- 恢复 `implementation_plan.md` 到修改前版本。
 
-后续实现阶段建议回滚：
-- 回退 `apps/web/next.config.mjs` 中的 proxy/rewrite 配置。
-- 回退 `apps/web/lib/constants.ts` 与 `apps/web/lib/api.ts` 的同源请求调整。
-- 回退 `apps/web/components/signals/SignalFilters.tsx` 的平台下拉改动。
-- 若 `SignalInbox.tsx` 仅有类型收紧或参数构造微调，同步回退该文件。
+后续实施回滚建议：
+- 回退 `apps/web/app/api/[...path]/route.ts` 的 proxy route。
+- 回退 `apps/web/lib/constants.ts` 的 API base 调整。
+- 回退 `apps/web/lib/api.ts` 的同源 URL 构造调整。
+- 回退 `apps/web/lib/query.ts` 及调用点。
+- 回退 `SignalFilters.tsx` 的平台 select 改动。
+- 回退 `AppShell.tsx` 的 backend status 展示。
 
