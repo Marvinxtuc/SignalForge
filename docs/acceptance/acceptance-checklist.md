@@ -40,6 +40,8 @@ CI does not require real platform tokens. Real platform acceptance is local/manu
 - `scripts/wait_for_services.py` passes.
 - Docker Compose down completes.
 
+Phase 0 Docker Gate result: PASS.
+
 ## Later Phase Items
 
 - Data migration checks start in Phase 1 Data Model.

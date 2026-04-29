@@ -9,18 +9,23 @@ This document does not represent final MVP acceptance.
 
 - Phase -1 Governance Bootstrap: PASS
 - Phase -1 SOP Marker Rectification: PASS
-- Phase 0 Infrastructure: CONDITIONAL PASS
+- Phase 0 Infrastructure: PASS
 
 ## Phase 0 Local Results
 
 - Governance validation: PASS
 - Python syntax check: PASS
 - Forbidden path check: PASS
-- Docker Compose config/build/up/wait/down: BLOCKED
+- Docker Compose config: PASS
+- Docker Compose build: PASS
+- Docker Compose up -d: PASS
+- wait_for_services.py: PASS
+- Docker Compose down: PASS
 
-Blocker:
+Notes:
 
-- Local `docker` command is not available in the current environment.
+- Docker runtime was provided through Colima.
+- The Phase 0 Web shell dependency `next` was updated to 16.2.4 after build output reported a security warning for the original 15.1.4 baseline.
 
 Re-run after Docker is available:
 

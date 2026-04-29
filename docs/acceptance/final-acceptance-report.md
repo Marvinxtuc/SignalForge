@@ -13,12 +13,17 @@ Final MVP acceptance has not started.
 
 - Phase -1 Governance Bootstrap: PASS
 - Phase -1 SOP Marker Rectification: PASS
-- Phase 0 Infrastructure: CONDITIONAL PASS
+- Phase 0 Infrastructure: PASS
 
-Phase 0 condition:
+Phase 0 evidence:
 
-- Infrastructure files are present and non-Docker validation passes.
-- Docker smoke validation is blocked because the local `docker` command is unavailable in the current environment.
+- Docker Compose config: PASS
+- Docker Compose build: PASS
+- Docker Compose up -d: PASS
+- wait_for_services.py: PASS
+- Docker Compose down: PASS
+- Governance validation: PASS
+- No-secrets validation: PASS
 - This is not final MVP acceptance.
 
 ## Scope
