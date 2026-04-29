@@ -1,7 +1,6 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import { formatDateTime, formatNumber, platformLabel, truncateText } from "../../lib/format";
@@ -58,13 +57,13 @@ export function LogsPage() {
   }
 
   return (
-    <section style={{ display: "grid", gap: 16 }}>
-      <header style={{ display: "grid", gap: 4 }}>
-        <p className="sectionLabel">Logs</p>
-        <h1 style={{ fontSize: 24, lineHeight: 1.2, margin: 0 }}>Collection logs</h1>
-        <p className="stateText" style={{ maxWidth: 760 }}>
-          Read-only collection history for the selected project.
-        </p>
+    <section className="detailPage">
+      <header className="pageHeader">
+        <div>
+          <p className="pageEyebrow">Logs</p>
+          <h1 className="pageTitle">Collection logs</h1>
+          <p className="pageSubtitle">Read-only collection history for the selected project.</p>
+        </div>
       </header>
 
       {state.status === "loading" || state.status === "idle" ? (
@@ -84,8 +83,8 @@ export function LogsPage() {
       ) : null}
 
       {state.status === "ready" && state.response.items.length > 0 ? (
-        <div style={{ overflowX: "auto" }}>
-          <table style={tableStyle}>
+        <div className="dataTableWrap">
+          <table className="dataTable">
             <thead>
               <tr>
                 <Th>Status</Th>
@@ -102,17 +101,17 @@ export function LogsPage() {
             <tbody>
               {state.response.items.map((log) => (
                 <tr key={log.id}>
-                  <Td>
+                  <td>
                     <Badge tone={statusTone(log.status)}>{log.status}</Badge>
-                  </Td>
-                  <Td>{platformLabel(log.platform)}</Td>
-                  <Td>{formatNumber(log.items_collected)}</Td>
-                  <Td>{formatNumber(log.items_inserted)}</Td>
-                  <Td>{formatNumber(log.items_skipped)}</Td>
-                  <Td>{sanitizeErrorMessage(log.error_message)}</Td>
-                  <Td>{formatNumber(log.rate_limit_remaining)}</Td>
-                  <Td>{formatDateTime(log.rate_limit_reset_at)}</Td>
-                  <Td>{formatDateTime(log.created_at)}</Td>
+                  </td>
+                  <td>{platformLabel(log.platform)}</td>
+                  <td>{formatNumber(log.items_collected)}</td>
+                  <td>{formatNumber(log.items_inserted)}</td>
+                  <td>{formatNumber(log.items_skipped)}</td>
+                  <td>{sanitizeErrorMessage(log.error_message)}</td>
+                  <td>{formatNumber(log.rate_limit_remaining)}</td>
+                  <td>{formatDateTime(log.rate_limit_reset_at)}</td>
+                  <td>{formatDateTime(log.created_at)}</td>
                 </tr>
               ))}
             </tbody>
@@ -162,35 +161,6 @@ function statusTone(status: string): "neutral" | "success" | "warning" | "danger
   return "neutral";
 }
 
-function Th({ children }: { children: ReactNode }) {
-  return <th style={headerCellStyle}>{children}</th>;
+function Th({ children }: { children: string }) {
+  return <th>{children}</th>;
 }
-
-function Td({ children }: { children: ReactNode }) {
-  return <td style={bodyCellStyle}>{children}</td>;
-}
-
-const tableStyle: CSSProperties = {
-  width: "100%",
-  minWidth: 980,
-  borderCollapse: "collapse",
-  border: "1px solid var(--border)",
-  background: "var(--surface)"
-};
-
-const headerCellStyle: CSSProperties = {
-  padding: "10px 12px",
-  borderBottom: "1px solid var(--border)",
-  color: "var(--muted)",
-  fontSize: 12,
-  fontWeight: 750,
-  textAlign: "left",
-  whiteSpace: "nowrap"
-};
-
-const bodyCellStyle: CSSProperties = {
-  padding: "10px 12px",
-  borderBottom: "1px solid var(--border)",
-  color: "var(--text)",
-  verticalAlign: "top"
-};

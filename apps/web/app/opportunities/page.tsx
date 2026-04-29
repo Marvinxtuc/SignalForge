@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { OpportunityBoard } from "../../components/opportunities/OpportunityBoard";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { ErrorState } from "../../components/ui/ErrorState";
@@ -8,33 +7,6 @@ type SearchParams = Record<string, string | string[] | undefined>;
 
 type OpportunitiesPageProps = {
   searchParams?: Promise<SearchParams>;
-};
-
-const pageStyle: CSSProperties = {
-  display: "grid",
-  gap: 16
-};
-
-const headerStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "flex-start",
-  justifyContent: "space-between",
-  gap: 16,
-  flexWrap: "wrap"
-};
-
-const titleStyle: CSSProperties = {
-  margin: 0,
-  color: "var(--text)",
-  fontSize: 24,
-  fontWeight: 800,
-  lineHeight: 1.2
-};
-
-const subtitleStyle: CSSProperties = {
-  margin: "6px 0 0",
-  color: "var(--muted)",
-  lineHeight: 1.5
 };
 
 export default async function OpportunitiesPage({ searchParams }: OpportunitiesPageProps) {
@@ -54,11 +26,12 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
     const response = await api.opportunities.list(projectId, { page_size: 100 });
 
     return (
-      <section style={pageStyle}>
-        <header style={headerStyle}>
+      <section className="detailPage">
+        <header className="pageHeader">
           <div>
-            <h1 style={titleStyle}>Opportunity Board</h1>
-            <p style={subtitleStyle}>
+            <p className="pageEyebrow">Opportunities</p>
+            <h1 className="pageTitle">Opportunity Board</h1>
+            <p className="pageSubtitle">
               Grouped by status for project {projectId}. Showing {response.items.length} of{" "}
               {response.total} opportunities.
             </p>

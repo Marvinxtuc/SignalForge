@@ -53,8 +53,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="appShell">
       <header className="topBar">
         <div className="brandLockup" aria-label="SignalForge">
-          <p className="brandName">SignalForge</p>
-          <span className="brandPhase">Phase 6 Frontend MVP</span>
+          <p className="brandName">Signal Insight Radar</p>
+          <span className="brandPhase">Stitch-inspired UI refresh</span>
         </div>
         <div className="statusStrip" aria-label="Backend target">
           <span className="statusDot" aria-hidden="true" />
@@ -62,6 +62,18 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
       <aside className="sidebar" aria-label="Workspace navigation">
+        <div className="brandPanel" aria-label="SignalForge">
+          <span className="brandMark" aria-hidden="true">
+            SF
+          </span>
+          <div>
+            <p className="brandTitle">SignalForge</p>
+            <p className="brandSubtitle">Research Workstation</p>
+          </div>
+        </div>
+        <button className="sidebarAction" disabled type="button">
+          New Analysis
+        </button>
         <Suspense fallback={null}>
           <ProjectSelector
             errorMessage={projectState.errorMessage}

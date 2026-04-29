@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
 import { api } from "../../lib/api";
 import { formatDateTime, platformLabel } from "../../lib/format";
 import type {
@@ -70,13 +69,15 @@ export function SettingsPage() {
   }, [state]);
 
   return (
-    <section style={{ display: "grid", gap: 16 }}>
-      <header style={{ display: "grid", gap: 4 }}>
-        <p className="sectionLabel">Settings</p>
-        <h1 style={{ fontSize: 24, lineHeight: 1.2, margin: 0 }}>Platform settings</h1>
-        <p className="stateText" style={{ maxWidth: 760 }}>
+    <section className="detailPage">
+      <header className="pageHeader">
+        <div>
+          <p className="pageEyebrow">Settings</p>
+          <h1 className="pageTitle">Platform Integrations</h1>
+          <p className="pageSubtitle">
           Read-only platform and credential status. Secret payloads are not displayed.
-        </p>
+          </p>
+        </div>
       </header>
 
       {state.status === "loading" ? <LoadingState label="Loading settings" /> : null}
@@ -85,52 +86,49 @@ export function SettingsPage() {
       ) : null}
 
       {state.status === "ready" ? (
-        <div style={{ overflowX: "auto" }}>
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <Th>Platform</Th>
-                <Th>Phase</Th>
-                <Th>MVP</Th>
-                <Th>Platform status</Th>
-                <Th>Credential status</Th>
-                <Th>Last checked</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.platform}>
-                  <Td>{platformLabel(row.platform)}</Td>
-                  <Td>
-                    <Badge tone={phaseTone(row.phase)}>{row.phase}</Badge>
-                  </Td>
-                  <Td>{row.enabledForMvp ? "Enabled" : "Disabled"}</Td>
-                  <Td>
-                    <Badge tone={credentialTone(row.platformStatus)}>{row.platformStatus}</Badge>
-                  </Td>
-                  <Td>
-                    <Badge tone={credentialTone(row.credentialStatus)}>
-                      {row.credentialStatus}
-                    </Badge>
-                  </Td>
-                  <Td>{formatDateTime(row.lastCheckedAt)}</Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="integrationList">
+          {rows.map((row) => (
+            <article className="integrationRow" key={row.platform}>
+              <div className="integrationIdentity">
+                <span className="integrationIcon" aria-hidden="true">
+                  {platformInitial(row.platform)}
+                </span>
+                <div>
+                  <p className="integrationName">{platformLabel(row.platform)}</p>
+                  <p className="integrationMeta">
+                    Last checked {formatDateTime(row.lastCheckedAt)}. Read-only status for local MVP.
+                  </p>
+                </div>
+              </div>
+              <div className="integrationBadges">
+                <Badge tone={phaseTone(row.phase)}>{row.phase}</Badge>
+                <Badge tone={row.enabledForMvp ? "success" : "neutral"}>
+                  {row.enabledForMvp ? "MVP enabled" : "MVP disabled"}
+                </Badge>
+                <Badge tone={credentialTone(row.platformStatus)}>{row.platformStatus}</Badge>
+                <Badge tone={credentialTone(row.credentialStatus)}>
+                  credential {row.credentialStatus}
+                </Badge>
+              </div>
+            </article>
+          ))}
         </div>
       ) : null}
     </section>
   );
 }
 
-function fallbackPhase(platform: PlatformName): PlatformPhase {
-  if (platform === "reddit") {
-    return "P0";
+function platformInitial(platform: PlatformName): string {
+  if (platform === "product_hunt") {
+    return "PH";
   }
 
-  if (platform === "product_hunt") {
-    return "P1";
+  return platform.slice(0, 1).toUpperCase();
+}
+
+function fallbackPhase(platform: PlatformName): PlatformPhase {
+  if (platform === "reddit" || platform === "product_hunt") {
+    return "P0";
   }
 
   return "P2";
@@ -163,36 +161,3 @@ function credentialTone(status: CredentialStatus): "neutral" | "success" | "warn
 
   return "neutral";
 }
-
-function Th({ children }: { children: ReactNode }) {
-  return <th style={headerCellStyle}>{children}</th>;
-}
-
-function Td({ children }: { children: ReactNode }) {
-  return <td style={bodyCellStyle}>{children}</td>;
-}
-
-const tableStyle: CSSProperties = {
-  width: "100%",
-  minWidth: 760,
-  borderCollapse: "collapse",
-  border: "1px solid var(--border)",
-  background: "var(--surface)"
-};
-
-const headerCellStyle: CSSProperties = {
-  padding: "10px 12px",
-  borderBottom: "1px solid var(--border)",
-  color: "var(--muted)",
-  fontSize: 12,
-  fontWeight: 750,
-  textAlign: "left",
-  whiteSpace: "nowrap"
-};
-
-const bodyCellStyle: CSSProperties = {
-  padding: "10px 12px",
-  borderBottom: "1px solid var(--border)",
-  color: "var(--text)",
-  verticalAlign: "top"
-};

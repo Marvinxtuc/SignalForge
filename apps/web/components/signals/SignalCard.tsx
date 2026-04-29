@@ -53,7 +53,7 @@ export function SignalCard({
           <Badge>{platformLabel(signal.platform)}</Badge>
           <Badge>{signal.signal_type || "Unknown type"}</Badge>
           <Badge tone={painTone(signal.pain_level)}>Pain {formatScore(signal.pain_level)}</Badge>
-          {highValue ? <Badge tone="success">High Value</Badge> : null}
+          {highValue ? <Badge tone="warning">High Value</Badge> : null}
         </div>
 
         <div className={styles.cardTitleRow}>

@@ -16,7 +16,7 @@ export const ROUTES = {
 } as const;
 
 export const NAV_ITEMS = [
-  { href: ROUTES.signals, label: "Signals", hint: "Inbox" },
+  { href: ROUTES.signals, label: "Signal Inbox", hint: "Core" },
   { href: ROUTES.dashboard, label: "Dashboard", hint: "Summary" },
   { href: ROUTES.opportunities, label: "Opportunities", hint: "Pipeline" },
   { href: ROUTES.logs, label: "Logs", hint: "Collection" },

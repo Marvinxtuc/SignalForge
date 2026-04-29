@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { CSSProperties } from "react";
 import { useState } from "react";
 import { api, apiRequest } from "../../lib/api";
 import { formatDateTime, formatNumber, formatScore } from "../../lib/format";
@@ -21,100 +20,6 @@ import {
 type OpportunityDetailProps = {
   initialOpportunity: Opportunity;
   projectId: string | null;
-};
-
-const pageStyle: CSSProperties = {
-  display: "grid",
-  gap: 16
-};
-
-const headerStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "flex-start",
-  justifyContent: "space-between",
-  gap: 16,
-  flexWrap: "wrap"
-};
-
-const titleBlockStyle: CSSProperties = {
-  display: "grid",
-  gap: 8,
-  minWidth: 0
-};
-
-const titleStyle: CSSProperties = {
-  margin: 0,
-  color: "var(--text)",
-  fontSize: 24,
-  fontWeight: 800,
-  lineHeight: 1.2
-};
-
-const descriptionStyle: CSSProperties = {
-  margin: 0,
-  maxWidth: 820,
-  color: "var(--muted-strong)",
-  lineHeight: 1.55
-};
-
-const actionsStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  flexWrap: "wrap"
-};
-
-const metricsStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-  gap: 12
-};
-
-const sectionStyle: CSSProperties = {
-  display: "grid",
-  gap: 10,
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--surface)",
-  padding: 14
-};
-
-const sectionTitleStyle: CSSProperties = {
-  margin: 0,
-  color: "var(--text)",
-  fontSize: 15,
-  fontWeight: 760
-};
-
-const evidenceGridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-  gap: 10
-};
-
-const evidenceItemStyle: CSSProperties = {
-  display: "grid",
-  gap: 3,
-  minWidth: 0
-};
-
-const labelStyle: CSSProperties = {
-  margin: 0,
-  color: "var(--muted)",
-  fontSize: 12,
-  fontWeight: 700
-};
-
-const valueStyle: CSSProperties = {
-  margin: 0,
-  color: "var(--text)",
-  overflowWrap: "anywhere"
-};
-
-const mutedStyle: CSSProperties = {
-  margin: 0,
-  color: "var(--muted)",
-  lineHeight: 1.5
 };
 
 export function OpportunityDetail({ initialOpportunity, projectId }: OpportunityDetailProps) {
@@ -163,21 +68,21 @@ export function OpportunityDetail({ initialOpportunity, projectId }: Opportunity
   const backHref = projectId ? `/opportunities?projectId=${encodeURIComponent(projectId)}` : "/opportunities";
 
   return (
-    <section style={pageStyle}>
-      <div style={headerStyle}>
-        <div style={titleBlockStyle}>
+    <section className="detailPage">
+      <div className="detailHeader">
+        <div className="detailTitleBlock">
           <Link className="button buttonGhost buttonSmall" href={backHref}>
             Back to board
           </Link>
           <Badge>{opportunityStatusLabel(opportunity.status)}</Badge>
-          <h1 style={titleStyle}>{opportunity.title}</h1>
+          <h1 className="detailTitle">{opportunity.title}</h1>
           {opportunity.description ? (
-            <p style={descriptionStyle}>{opportunity.description}</p>
+            <p className="detailDescription">{opportunity.description}</p>
           ) : (
-            <p style={descriptionStyle}>No opportunity description available.</p>
+            <p className="detailDescription">No opportunity description available.</p>
           )}
         </div>
-        <div style={actionsStyle}>
+        <div className="detailActions">
           <select
             aria-label="Opportunity status"
             className="selectControl"
@@ -203,18 +108,18 @@ export function OpportunityDetail({ initialOpportunity, projectId }: Opportunity
 
       {error ? <ErrorState compact error={error} title="Unable to update opportunity" /> : null}
 
-      <section aria-label="Opportunity metrics" style={metricsStyle}>
+      <section aria-label="Opportunity metrics" className="metricGrid">
         <Metric label="Score" value={formatScore(opportunity.opportunity_score)} />
         <Metric label="Evidence" value={formatNumber(opportunity.evidence_count)} />
         <Metric label="Last seen" value={formatDateTime(opportunity.last_seen_at)} />
         <Metric label="Status" value={opportunityStatusLabel(opportunity.status)} />
       </section>
 
-      <section aria-labelledby="opportunity-evidence" style={sectionStyle}>
-        <h2 id="opportunity-evidence" style={sectionTitleStyle}>
+      <section aria-labelledby="opportunity-evidence" className="surfacePanel">
+        <h2 id="opportunity-evidence" className="opportunityCardTitle">
           Evidence
         </h2>
-        <div style={evidenceGridStyle}>
+        <div className="evidenceGrid">
           <EvidenceItem label="Cluster ID" value={opportunity.cluster_id ?? "Unavailable"} />
           <EvidenceItem label="Evidence count" value={formatNumber(opportunity.evidence_count)} />
           <EvidenceItem
@@ -223,7 +128,7 @@ export function OpportunityDetail({ initialOpportunity, projectId }: Opportunity
           />
           <EvidenceItem label="Last seen" value={formatDateTime(opportunity.last_seen_at)} />
         </div>
-        <p style={mutedStyle}>
+        <p className="stateText">
           Source evidence unavailable from current opportunity payload.
         </p>
       </section>
@@ -233,9 +138,9 @@ export function OpportunityDetail({ initialOpportunity, projectId }: Opportunity
 
 function EvidenceItem({ label, value }: { label: string; value: string }) {
   return (
-    <div style={evidenceItemStyle}>
-      <p style={labelStyle}>{label}</p>
-      <p style={valueStyle}>{value}</p>
+    <div className="compactMeta">
+      <p className="compactMetaLabel">{label}</p>
+      <p className="compactMetaValue">{value}</p>
     </div>
   );
 }
