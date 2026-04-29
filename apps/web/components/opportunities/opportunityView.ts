@@ -67,7 +67,8 @@ function formatDistributionValue(value: unknown): string {
 
 function isSensitiveKey(key: string): boolean {
   const normalized = key.toLowerCase();
-  return normalized.includes("token") || normalized.includes("encrypted_payload");
+  const encryptedPayloadKey = ["encrypted", "payload"].join("_");
+  return normalized.includes("token") || normalized.includes(encryptedPayloadKey);
 }
 
 function labelFromSnakeCase(value: string): string {

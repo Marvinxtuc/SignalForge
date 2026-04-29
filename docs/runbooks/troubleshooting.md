@@ -325,3 +325,61 @@ Expected Phase 6 validation behavior:
 If `http://localhost:3000` is not reachable, the HTTP smoke portion is skipped by default. Use `--require-http` only when a local web server is expected to be running.
 
 Do not mark Phase 7 final MVP acceptance complete from Phase 6 validation alone.
+
+## Phase 7 final acceptance validation fails
+
+Run:
+
+```bash
+python3 scripts/validate_final_acceptance.py
+python3 scripts/validate_release_freeze.py --mode pre-commit
+```
+
+Expected Phase 7 validation behavior:
+
+- Final acceptance report exists and records Phase -1 through Phase 7 status.
+- Test report records the full local regression result.
+- Release notes, rollback runbook, and tag checklist exist.
+- Manual smoke items are recorded as `NOT_EXECUTED / pending token` unless explicitly executed.
+- Backlog is separated from accepted scope.
+- Tag status is `pending_manual_owner_action` unless owner explicitly authorized tag creation.
+
+If validation fails because a required release document is missing or stale, make a docs-only correction. If validation fails because app behavior regressed, record a P0 blocking issue and wait for owner approval before changing app code.
+
+## Phase 7 release freeze validation modes
+
+Use the appropriate mode:
+
+```bash
+python3 scripts/validate_release_freeze.py --mode pre-commit
+python3 scripts/validate_release_freeze.py --mode final
+python3 scripts/validate_release_freeze.py --mode ci
+```
+
+Expected behavior:
+
+- `pre-commit` allows Phase 7 docs/scripts/CI changes but rejects unauthorized app code changes, new migrations, or tracked `.env` files.
+- `final` requires a clean git working tree after the Phase 7 commit.
+- `ci` does not require branch name `feature/mvp-p0` because GitHub Actions may run on detached refs.
+
+## Tag checklist confusion
+
+The target tag is:
+
+```text
+v0.1.0-mvp
+```
+
+Phase 7 does not create the tag by default. This is intentional. The expected tag checklist state is:
+
+```yaml
+tag_status: pending_manual_owner_action
+reason: tag creation requires explicit owner approval
+push_status: not_pushed
+```
+
+Do not create or push the tag unless the owner explicitly authorizes that action.
+
+## Branch protection remains manual
+
+Branch protection requires GitHub repository admin permissions and must be configured manually by the owner or repository admin. `@owner` must be replaced with the actual GitHub user or team before CODEOWNERS enforcement is enabled.

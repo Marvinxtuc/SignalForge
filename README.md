@@ -1,14 +1,25 @@
 # SignalForge
 
-Status: Phase 6 Frontend MVP PASS
+Status: Phase 7 Release Readiness PASS_WITH_MANUAL_ACTIONS
 
 SignalForge is a local-first VOC Radar MVP. The MVP goal is to prove that the system can surface high-value, actionable user demand signals, not to maximize collection volume or platform coverage.
 
 ## Current Phase
 
-This repository is currently in Phase 6: Frontend MVP PASS.
+This repository is currently in Phase 7: Testing / Acceptance / Release Freeze.
 
-Phase 0 Infrastructure is recorded as PASS. Phase 1 Data Model is recorded as PASS. Phase 2 Backend API is recorded as PASS. Phase 3 Connector Abstraction is recorded as PASS. Phase 4 P0 Connectors is recorded as PASS. Phase 5 Processing Pipeline is recorded as PASS with mock LLM, mock embedding, deterministic fallback, Signal Quality Gate, and mock-only CI validation. Phase 6 Frontend MVP is recorded as PASS for Signal Inbox, Dashboard, Opportunity Board, Logs, Settings, Reports, frontend build, and frontend MVP validation.
+Phase -1 Governance Bootstrap is recorded as PASS. Phase 0 Infrastructure is recorded as PASS. Phase 1 Data Model is recorded as PASS. Phase 2 Backend API is recorded as PASS. Phase 3 Connector Abstraction is recorded as PASS. Phase 4 P0 Connectors is recorded as PASS. Phase 5 Processing Pipeline is recorded as PASS with mock LLM, mock embedding, deterministic fallback, Signal Quality Gate, and mock-only CI validation. Phase 6 Frontend MVP is recorded as PASS for Signal Inbox, Dashboard, Opportunity Board, Logs, Settings, Reports, frontend build, and frontend MVP validation.
+
+Phase 7 final acceptance status:
+
+- MVP local/mock acceptance: PASS
+- Real platform smoke: NOT_EXECUTED / pending token
+- Real LLM smoke: NOT_EXECUTED / pending token
+- Real embedding smoke: NOT_EXECUTED / pending token
+- Release readiness: PASS_WITH_MANUAL_ACTIONS
+- Target tag: `v0.1.0-mvp`
+- Tag status: pending_manual_owner_action
+- Production deployment: NOT_INCLUDED
 
 Not included in this phase:
 
@@ -17,9 +28,12 @@ Not included in this phase:
 - CI real platform collection
 - CI real LLM or embedding provider calls
 - Browser automation, scraping, simulated login, automated posting, commenting, or messaging
-- Phase 7 final MVP acceptance, release freeze, or tag acceptance
+- Production deployment
+- Auth / multi-user
+- Billing or SaaS commercialization
+- Release tag creation without explicit owner approval
 
-Phase 4 owns P0 Connectors only. Phase 5 owns Processing Pipeline. Phase 6 owns Frontend MVP. Phase 7 owns final testing, acceptance, and release freeze.
+Phase 4 owns P0 Connectors only. Phase 5 owns Processing Pipeline. Phase 6 owns Frontend MVP. Phase 7 owns final testing, acceptance, and release freeze. Phase 7 does not imply production readiness.
 
 CI uses mocked Reddit and Product Hunt responses only and does not require real platform tokens. Manual smoke is local/manual only and is disabled unless `SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE=true` is set. Manual smoke does not write `raw_items` unless `SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE=true` is also set.
 
@@ -37,7 +51,7 @@ Phase 6 is not final MVP acceptance. It must prove the frontend can render the a
 - P1: X
 - P2: Discord
 
-CI must not depend on real platform tokens. Real Reddit and Product Hunt checks are local/manual acceptance items and must be recorded in the final acceptance report later.
+CI must not depend on real platform tokens. Real Reddit and Product Hunt checks are local/manual acceptance items and are recorded as NOT_EXECUTED / pending token in the final acceptance report until explicitly run by the owner.
 
 ## Phase 0 Local Startup
 
@@ -266,9 +280,73 @@ Expected Phase 6 behavior:
 - Forbidden real execution options remain absent: `reddit_real`, `product_hunt_real`, `p0_real`, `real_llm`, `real_embedding`, `x_real`, and `discord_real`.
 - No token-like values are present in frontend source.
 
-## Next Phase
+## Phase 7 Final Acceptance / Release Freeze
 
-Phase 7 Testing / Acceptance / Release Freeze requires explicit approval. Do not mark Phase 6 as final MVP acceptance completed.
+Phase 7 freezes the local/mock MVP for owner review. It does not add features, create production deployment, create a release tag, or execute real platform/provider smoke by default.
+
+Final acceptance command set:
+
+```bash
+python3 scripts/validate_docs.py
+python3 scripts/validate_acceptance.py
+python3 scripts/validate_no_secrets.py
+python3 scripts/validate_final_acceptance.py
+python3 scripts/validate_release_freeze.py --mode pre-commit
+```
+
+Full local regression remains Docker Compose based:
+
+```bash
+docker compose -f infra/docker-compose.yml config
+docker compose -f infra/docker-compose.yml build
+docker compose -f infra/docker-compose.yml up -d
+python3 scripts/wait_for_services.py
+docker compose -f infra/docker-compose.yml run --rm api alembic upgrade head
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/seed_demo_data.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_data_model.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_backend_api.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_connector_abstraction.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_p0_connectors.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_processing_pipeline.py
+docker compose -f infra/docker-compose.yml run --rm api pytest
+docker compose -f infra/docker-compose.yml run --rm web npm run build
+python3 scripts/validate_frontend_mvp.py --require-http
+docker compose -f infra/docker-compose.yml down
+```
+
+Manual smoke status for this release freeze:
+
+- Real Reddit smoke: NOT_EXECUTED / pending token
+- Real Product Hunt smoke: NOT_EXECUTED / pending token
+- Real LLM smoke: NOT_EXECUTED / pending token
+- Real embedding smoke: NOT_EXECUTED / pending token
+
+Manual smoke is not counted as PASS until explicitly authorized, supplied with tokens, executed, and recorded.
+
+Release freeze is for `v0.1.0-mvp` local/mock MVP readiness only. Production deployment, branch protection enforcement, tag creation, and real smoke remain manual owner actions.
+
+Manual owner actions:
+
+- Replace `@owner` with the actual GitHub user or team.
+- Configure branch protection.
+- Create local tag `v0.1.0-mvp` only after explicit owner approval.
+- Push tag only after separate explicit owner approval.
+- Run real Reddit smoke with token if required.
+- Run real Product Hunt smoke with token if required.
+- Run real LLM smoke if required.
+- Run real embedding smoke if required.
+- Complete Product Hunt commercial authorization review before commercial use.
+
+Post-MVP backlog:
+
+- Optional X Connector.
+- Optional Discord Connector.
+- Auth and multi-user support.
+- Production deployment.
+- Billing / SaaS administration.
+- Real platform smoke acceptance.
+- Real LLM / embedding provider acceptance.
+- Product Hunt commercial authorization review completion.
 
 ## Canonical v2.1 Phase Markers
 

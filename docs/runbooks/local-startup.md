@@ -238,4 +238,54 @@ Expected Phase 6 boundary:
 - Reports expose markdown and csv controls.
 - Frontend requests go through the SignalForge backend API client only.
 - No real execution options or token-like values appear in frontend source.
+
+## Phase 7 Release Freeze Local Execution
+
+Status: RELEASE_FREEZE_READY.
+
+Phase 7 does not add product functionality. It validates that the MVP can be started, tested, documented, rolled back, and prepared for owner-controlled release tagging.
+
+Run release governance checks:
+
+```bash
+python3 scripts/validate_docs.py
+python3 scripts/validate_acceptance.py
+python3 scripts/validate_no_secrets.py
+python3 scripts/validate_final_acceptance.py
+python3 scripts/validate_release_freeze.py --mode pre-commit
+```
+
+Run full local regression:
+
+```bash
+docker compose -f infra/docker-compose.yml config
+docker compose -f infra/docker-compose.yml build
+docker compose -f infra/docker-compose.yml up -d
+python3 scripts/wait_for_services.py
+docker compose -f infra/docker-compose.yml run --rm api alembic upgrade head
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/seed_demo_data.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_data_model.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_backend_api.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_connector_abstraction.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_p0_connectors.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_processing_pipeline.py
+docker compose -f infra/docker-compose.yml run --rm api pytest
+docker compose -f infra/docker-compose.yml run --rm web npm run build
+python3 scripts/validate_frontend_mvp.py --require-http
+docker compose -f infra/docker-compose.yml down
+```
+
+After the Phase 7 commit exists, run:
+
+```bash
+python3 scripts/validate_release_freeze.py --mode final
+```
+
+Expected Phase 7 boundary:
+
+- No new product functionality.
+- No new database schema or migration.
+- No real platform or provider smoke unless the owner explicitly authorizes it.
+- Tag creation remains pending manual owner action.
+- `v0.1.0-mvp` release notes, rollback runbook, and tag checklist are ready for owner review.
 - Phase 7 final MVP acceptance remains not started.

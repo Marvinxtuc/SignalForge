@@ -1,32 +1,32 @@
 # Acceptance Checklist
 
-Status: PHASE_6_FRONTEND_MVP_PASS
-Phase: Phase 6 Frontend MVP
+Status: PASS_WITH_MANUAL_ACTIONS
+Phase: Phase 7 Testing / Acceptance / Release Freeze
 
-This checklist records Phase 6 frontend gate completion and does not represent Phase 7 final MVP acceptance.
+This checklist records local/mock MVP acceptance and Phase 7 release freeze readiness. It does not record real platform or real provider smoke as PASS.
 
-## Must Pass Later
+## Final MVP Local / Mock Must Pass
 
-- Docker Compose up
-- API health OK
-- Web accessible
-- Demo seed OK
-- Mock collection OK
-- Reddit connector degraded or success
-- Product Hunt connector degraded or success
-- raw_items -> signals OK
-- signals -> clusters OK
-- clusters -> opportunities OK
-- Signal Inbox visible
-- High value signals highlighted
-- Open Source link visible
-- CSV export OK
-- Markdown export OK
-- No token leak
-- Docs complete
-- Final acceptance report present
+- Docker Compose up: PASS
+- API health OK: PASS
+- Web accessible: PASS
+- Demo seed OK: PASS
+- Mock collection OK: PASS
+- Reddit connector degraded or success in mocked/local mode: PASS
+- Product Hunt connector degraded or success in mocked/local mode: PASS
+- raw_items -> signals OK: PASS
+- signals -> clusters OK: PASS
+- clusters -> opportunities OK: PASS
+- Signal Inbox visible: PASS
+- High value signals highlighted: PASS
+- Open Source link visible: PASS
+- CSV export OK: PASS
+- Markdown export OK: PASS
+- No token leak: PASS
+- Docs complete: PASS
+- Final acceptance report present: PASS
 
-CI does not require real platform tokens. Real platform acceptance is local/manual acceptance.
+CI does not require real platform tokens. Real platform acceptance is local/manual acceptance and remains NOT_EXECUTED / pending token until explicitly run.
 
 ## Phase 0 Checklist
 
@@ -157,10 +157,6 @@ Status: PASS.
 - X / Discord remain unimplemented: REQUIRED
 - Phase 5 is not final MVP acceptance: REQUIRED
 
-## Later Phase Items
-
-- Phase 7 final testing, acceptance, and release freeze remain not started.
-
 ## Phase 6 Frontend MVP Checklist
 
 Status: PASS.
@@ -182,6 +178,59 @@ Status: PASS.
 - Forbidden real execution options absent: PASS
 - Localhost HTTP smoke: PASS
 - Phase 6 is not final MVP acceptance: REQUIRED
+
+## Phase 7 Final Acceptance / Release Freeze Checklist
+
+Status: PASS_WITH_MANUAL_ACTIONS.
+
+- MVP local/mock acceptance: PASS
+- Release readiness: PASS_WITH_MANUAL_ACTIONS
+- Final acceptance report finalized: PASS
+- Test report finalized: PASS
+- Coverage summary finalized: PASS
+- README final state updated: PASS
+- Manual smoke not misrepresented as PASS: PASS
+- Real Reddit smoke: NOT_EXECUTED / pending token
+- Real Product Hunt smoke: NOT_EXECUTED / pending token
+- Real LLM smoke: NOT_EXECUTED / pending token
+- Real embedding smoke: NOT_EXECUTED / pending token
+- Production deployment: NOT_INCLUDED
+- Auth / multi-user: NOT_INCLUDED
+- X connector: NOT_INCLUDED
+- Discord connector: NOT_INCLUDED
+- Commercial Product Hunt authorization review: PENDING_MANUAL_OWNER_ACTION
+- Tag creation: pending_manual_owner_action
+- Branch protection enforcement: pending_manual_owner_action
+- `@owner` replacement: pending_manual_owner_action
+
+Phase 7 freezes `v0.1.0-mvp` local/mock readiness. It does not create a tag, push a tag, configure branch protection, run real smoke, or claim production readiness.
+
+## Manual Owner Actions
+
+These items are not completed acceptance items:
+
+- Replace `@owner` with the actual GitHub user or team.
+- Configure branch protection.
+- Create local tag `v0.1.0-mvp` only after explicit owner approval.
+- Push tag only after separate explicit owner approval.
+- Run real Reddit smoke with token if required.
+- Run real Product Hunt smoke with token if required.
+- Run real LLM smoke if required.
+- Run real embedding smoke if required.
+- Complete Product Hunt commercial authorization review before commercial use.
+
+## Post-MVP Backlog
+
+These items are outside v0.1.0 local/mock acceptance:
+
+- Optional X Connector.
+- Optional Discord Connector.
+- Auth and multi-user support.
+- Production deployment.
+- Billing / SaaS administration.
+- Real platform smoke acceptance.
+- Real LLM / embedding provider acceptance.
+- Product Hunt commercial authorization review completion.
 
 ## Canonical v2.1 Phase Markers
 

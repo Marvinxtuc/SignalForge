@@ -1,11 +1,12 @@
 # Test Report
 
-Status: PHASE_6_FRONTEND_MVP_PASS
-Phase: Phase 6 Frontend MVP
-Current workstream: Phase 6 Frontend Tests / Docs / CI / Acceptance
+Status: PASS_WITH_MANUAL_ACTIONS
+Phase: Phase 7 Testing / Acceptance / Release Freeze
+Current workstream: Phase 7 Final Acceptance / Release Freeze
 Phase 3 workstream: Connector Abstraction validated
-This document does not represent Phase 7 final MVP acceptance.
-Phase 7 final acceptance compatibility markers: Status: NOT_STARTED; Phase: Phase -1 Governance Bootstrap.
+Legacy validation marker: Status: NOT_STARTED; Phase: Phase -1 Governance Bootstrap.
+
+This report records `v0.1.0-mvp` local/mock acceptance. Real platform and real provider smoke remain NOT_EXECUTED / pending token and are not counted as PASS.
 
 ## Phase Results
 
@@ -18,6 +19,7 @@ Phase 7 final acceptance compatibility markers: Status: NOT_STARTED; Phase: Phas
 - Phase 4 P0 Connectors: PASS
 - Phase 5 Processing Pipeline: PASS
 - Phase 6 Frontend MVP: PASS
+- Phase 7 Testing / Acceptance / Release Freeze: PASS_WITH_MANUAL_ACTIONS
 
 ## Phase 0 Local Results
 
@@ -35,7 +37,7 @@ Notes:
 - Docker runtime was provided through Colima.
 - The Phase 0 Web shell dependency `next` was updated to 16.2.4 after build output reported a security warning for the original 15.1.4 baseline.
 
-No final MVP tests have been run.
+Phase 0 was later included in local/mock MVP acceptance.
 
 ## Phase 1 Data Model Results
 
@@ -156,7 +158,7 @@ Phase 4 owns P0 Connectors for Reddit and Product Hunt. Phase 5 owns Processing 
 
 Status: PASS.
 
-Phase 4 is P0 Connectors only. It covers Reddit and Product Hunt connector implementation, mocked connector tests, optional local/manual smoke scripts, collection executor integration, and no-token-leak validation. It is not final MVP acceptance.
+Phase 4 is P0 Connectors only. It covers Reddit and Product Hunt connector implementation, mocked connector tests, optional local/manual smoke scripts, collection executor integration, and no-token-leak validation.
 
 Planned Phase 4 validation command set:
 
@@ -194,6 +196,8 @@ Phase 4 evidence to record after main-agent validation:
 - Reddit deletion handling and rate limit handling: REQUIRED
 - Product Hunt non-commercial default usage note: REQUIRED
 - X / Discord remain unimplemented: REQUIRED
+- Real Reddit smoke: NOT_EXECUTED / pending token
+- Real Product Hunt smoke: NOT_EXECUTED / pending token
 
 Phase 4 must not create `signals`, `clusters`, or `opportunities`. Phase 5 owns Processing Pipeline. Phase 6 owns Frontend MVP.
 
@@ -237,6 +241,8 @@ Phase 5 evidence after main-agent validation:
 - processing idempotency: PASS
 - CI uses mock LLM, mock embedding, and fallback only: REQUIRED
 - Real LLM / embedding smoke is optional manual only: REQUIRED
+- Real LLM smoke: NOT_EXECUTED / pending token
+- Real embedding smoke: NOT_EXECUTED / pending token
 - Signal Inbox / Dashboard / Opportunity Board remain unimplemented: REQUIRED
 - X / Discord remain unimplemented: REQUIRED
 
@@ -276,6 +282,75 @@ Phase 6 evidence:
 - Optional localhost HTTP smoke if `http://localhost:3000` is reachable: OPTIONAL
 
 Phase 6 must not mark final MVP acceptance complete. Phase 7 owns final acceptance, release freeze, and tag readiness.
+
+## Phase 7 Final Acceptance / Release Freeze Results
+
+Status: PASS_WITH_MANUAL_ACTIONS.
+
+Phase 7 is final testing, acceptance, documentation freeze, release readiness, and Git/release checklist closure. It does not add product features or claim production deployment.
+
+Final governance validation command set:
+
+```bash
+python3 scripts/validate_docs.py
+python3 scripts/validate_acceptance.py
+python3 scripts/validate_no_secrets.py
+python3 scripts/validate_final_acceptance.py
+python3 scripts/validate_release_freeze.py --mode pre-commit
+```
+
+Full local regression command set:
+
+```bash
+docker compose -f infra/docker-compose.yml config
+docker compose -f infra/docker-compose.yml build
+docker compose -f infra/docker-compose.yml up -d
+python3 scripts/wait_for_services.py
+docker compose -f infra/docker-compose.yml run --rm api alembic upgrade head
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/seed_demo_data.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_data_model.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_backend_api.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_connector_abstraction.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_p0_connectors.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_processing_pipeline.py
+docker compose -f infra/docker-compose.yml run --rm api pytest
+docker compose -f infra/docker-compose.yml run --rm web npm run build
+python3 scripts/validate_frontend_mvp.py --require-http
+docker compose -f infra/docker-compose.yml down
+```
+
+Phase 7 acceptance evidence:
+
+- MVP local/mock acceptance: PASS
+- Release readiness: PASS_WITH_MANUAL_ACTIONS
+- Final acceptance report: PASS
+- Acceptance checklist: PASS
+- Test report: PASS
+- Coverage summary: PASS
+- README final state: PASS
+- No-secrets final check: PASS
+- Real platform smoke: NOT_EXECUTED / pending token
+- Real LLM / embedding smoke: NOT_EXECUTED / pending token
+- Production deployment: NOT_INCLUDED
+
+Manual smoke status:
+
+- Real Reddit smoke: NOT_EXECUTED / pending token
+- Real Product Hunt smoke: NOT_EXECUTED / pending token
+- Real LLM smoke: NOT_EXECUTED / pending token
+- Real embedding smoke: NOT_EXECUTED / pending token
+
+Manual smoke items must not be marked PASS until explicitly authorized, provided with local credentials, executed, and documented.
+
+Release freeze caveats:
+
+- Target tag: `v0.1.0-mvp`
+- Tag status: pending_manual_owner_action
+- Branch protection: pending_manual_owner_action
+- `@owner` replacement: pending_manual_owner_action
+- Production deployment: NOT_INCLUDED
+- X / Discord: NOT_INCLUDED
+- Auth / multi-user: NOT_INCLUDED
 
 ## Canonical v2.1 Phase Markers
 

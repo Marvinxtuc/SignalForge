@@ -10,10 +10,21 @@ permissions:
   contents: read
 
 jobs:
-  phase-aware-placeholder:
+  phase-7-release-readiness:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Phase -1 placeholder
+      - name: Validate docs
+        run: python3 scripts/validate_docs.py
+      - name: Validate acceptance assets
+        run: python3 scripts/validate_acceptance.py
+      - name: Validate no secrets
+        run: python3 scripts/validate_no_secrets.py
+      - name: Validate final acceptance report
+        run: python3 scripts/validate_final_acceptance.py
+      - name: Validate release freeze readiness
+        run: python3 scripts/validate_release_freeze.py --mode ci
+      - name: Phase 7 acceptance boundary
         run: |
-          echo "Phase 0 placeholder only. Real product acceptance checks will be enabled in later phases."
+          echo "Phase 7 acceptance gate is mock-only release readiness."
+          echo "No real platform smoke, provider smoke, tag creation, or tag push is performed in CI."

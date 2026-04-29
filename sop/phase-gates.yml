@@ -187,6 +187,18 @@ phases:
       - release_notes
       - rollback_runbook
       - tag_or_tag_checklist
+      - manual_smoke_status
+      - manual_owner_actions
+      - post_mvp_backlog
     gates:
       - acceptance_gate
       - release_gate
+      - no_secrets_gate
+    notes:
+      - Phase 7 is final testing, acceptance, and release freeze only.
+      - Phase 7 must not add features, migrations, connectors, processing behavior, frontend product scope, production deployment, auth, billing, or multi-user support.
+      - Real Reddit, Product Hunt, LLM, and embedding smoke are NOT_EXECUTED unless explicitly authorized with local credentials.
+      - Tag creation requires explicit owner approval and defaults to pending_manual_owner_action.
+      - Branch protection and @owner replacement remain manual owner actions.
+      - X and Discord remain post-MVP backlog unless separately approved.
+      - Product Hunt commercial authorization review remains a manual backlog item before commercial use.

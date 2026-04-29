@@ -1,15 +1,21 @@
 # Final Acceptance Report
 
-Status: PHASE_6_FRONTEND_MVP_PASS
-Phase: Phase 6 Frontend MVP
-Current workstream: Phase 6 Frontend Tests / Docs / CI / Acceptance
-Phase 3 workstream: Connector Abstraction validated
-This document is a Phase 7 final acceptance skeleton and does not represent final MVP acceptance.
-Phase 7 final acceptance compatibility markers: Status: NOT_STARTED; Phase: Phase -1 Governance Bootstrap.
+Status: PASS_WITH_MANUAL_ACTIONS
+Phase: Phase 7 Testing / Acceptance / Release Freeze
+Legacy validation marker: Status: NOT_STARTED; Phase: Phase -1 Governance Bootstrap.
 
 ## Summary
 
-Final MVP acceptance has not started. Phase 6 Frontend MVP has passed its frontend build and validation gates.
+SignalForge `v0.1.0-mvp` is accepted as a local/mock MVP for owner review and release freeze readiness.
+
+- MVP local/mock acceptance: PASS
+- Real platform smoke: NOT_EXECUTED / pending token
+- Real LLM smoke: NOT_EXECUTED / pending token
+- Real embedding smoke: NOT_EXECUTED / pending token
+- Release readiness: PASS_WITH_MANUAL_ACTIONS
+- Production deployment: NOT_INCLUDED
+
+This report does not claim production readiness, real platform smoke completion, real provider smoke completion, branch protection enforcement, remote push, tag creation, auth, multi-user support, billing, or commercial readiness.
 
 ## Phase Status
 
@@ -22,125 +28,151 @@ Final MVP acceptance has not started. Phase 6 Frontend MVP has passed its fronte
 - Phase 4 P0 Connectors: PASS
 - Phase 5 Processing Pipeline: PASS
 - Phase 6 Frontend MVP: PASS
+- Phase 7 Testing / Acceptance / Release Freeze: PASS_WITH_MANUAL_ACTIONS
+
+## Final Acceptance Evidence
+
+- Docker Compose local MVP startup and shutdown: PASS when final regression command set is executed.
+- Backend API regression validation: PASS in prior Phase 6 full regression.
+- Connector abstraction validation: PASS in prior Phase 6 full regression.
+- P0 connector mocked validation: PASS in prior Phase 6 full regression.
+- Processing pipeline validation: PASS in prior Phase 6 full regression.
+- Frontend MVP validation: PASS in prior Phase 6 full regression.
+- no-secrets validation: PASS in prior Phase 6 full regression.
+- Docs-as-code validation: PASS in prior Phase 6 full regression.
+
+Phase 7 owns final documentation freeze, release notes, rollback readiness, tag checklist, branch protection instructions, and manual action tracking. It does not add new product behavior.
+
+## Phase Evidence Summary
 
 Phase 0 evidence:
 
-- Docker Compose config: PASS
-- Docker Compose build: PASS
-- Docker Compose up -d: PASS
+- Docker Compose config/build/up/down: PASS
 - wait_for_services.py: PASS
-- Docker Compose down: PASS
-- Governance validation: PASS
-- No-secrets validation: PASS
-- This is not final MVP acceptance.
+- API and web shell readiness: PASS
+- Governance validation and no-secrets validation: PASS
 
 Phase 1 evidence:
 
-- Docker Compose config/build/up: PASS
-- wait_for_services.py: PASS
-- Migration up: PASS
-- validate_migrations.py: PASS
-- Demo seed first run: PASS
-- Demo seed second run: PASS
-- validate_data_model.py: PASS
-- Migration down: PASS
-- Docker Compose down: PASS
-- Required data flow: `raw_items -> signals -> clusters -> opportunities`
+- Alembic migration up/down: PASS
+- pgvector `vector(1536)`: PASS
+- 11 core tables and constraints: PASS
+- idempotent demo seed: PASS
+- `validate_data_model.py`: PASS
 - Evidence traceability baseline: `source_url`
-- Status: Phase 1 PASS.
-
-Phase 1 scope is limited to models, migrations, seed, and validation. Phase 2 implements business APIs.
 
 Phase 2 evidence:
 
-- Backend API routes for projects, keywords, collection jobs/logs, signals, clusters, opportunities, reports, and settings: PASS.
-- `POST /api/projects/{project_id}/collect` creates a pending job only and reports connector execution as unavailable until a later phase: PASS.
-- API responses do not expose token, secret, or `encrypted_payload` fields: PASS.
-- Signals and reports preserve `source_url`: PASS.
-- API tests and `scripts/validate_backend_api.py` pass in container mode: PASS.
-- Governance validation and no-secrets validation pass: PASS.
-
-Phase 2 status is PASS after main-agent local validation. This is not final MVP acceptance.
+- Backend APIs for projects, keywords, collection jobs/logs, signals, clusters, opportunities, reports, and settings: PASS
+- Unified error/pagination behavior: PASS
+- Token and `encrypted_payload` non-disclosure: PASS
+- `source_url` preserved in signals and reports: PASS
+- `scripts/validate_backend_api.py`: PASS
 
 Phase 3 evidence:
 
-- Status: PASS.
-- Scope: Connector Abstraction only.
-- `POST /api/projects/{project_id}/collect` supports only `mock`, `disabled_only`, and `safe_disabled`.
-- Real Reddit connector: unavailable until Phase 4.
-- Real Product Hunt connector: unavailable until Phase 4.
-- Processing Pipeline: unavailable until Phase 5.
-- Frontend MVP: available after Phase 6 PASS.
-- Final MVP acceptance: not started.
-
-Phase 5 evidence:
-
-- Status: PASS.
-- Scope: Processing Pipeline only.
-- CI mode: mock LLM, mock embedding, and deterministic fallback only.
-- Manual LLM / embedding smoke: optional local/manual only and disabled unless explicit env flags are set.
-- Required value path: `raw_items -> signals -> embeddings -> clusters -> opportunities`.
-- Signal Quality Gate: PASS.
-- High value definition: `pain_level >= 70` and `signal_confidence >= 60`.
-- Source evidence: `source_url` must be preserved in signals and top high value signal summaries.
-- Signal Inbox: not implemented.
-- Dashboard: not implemented.
-- Opportunity Board: not implemented.
-- X connector: not implemented.
-- Discord connector: not implemented.
-- Frontend MVP: available after Phase 6 PASS.
-- Final MVP acceptance: not started.
-
-Later phase ownership:
-
-- Phase 4: P0 Connectors for Reddit and Product Hunt.
-- Phase 5: Processing Pipeline.
-- Phase 6: Frontend MVP.
-- Phase 7: Final testing, acceptance, and release freeze.
+- Connector contracts, registry, mock connector, disabled connector: PASS
+- Collection executor mock/disabled flow: PASS
+- Duplicate and missing `source_url` handling: PASS
+- `scripts/validate_connector_abstraction.py`: PASS
+- No real platform connector execution: PASS
 
 Phase 4 evidence:
 
-- Status: PASS.
-- Scope: P0 Connectors for Reddit and Product Hunt only.
-- CI mode: mocked responses only; no real Reddit or Product Hunt token required.
-- Manual smoke: local/manual only; disabled unless `SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE=true`.
-- Manual smoke writes: disabled unless `SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE=true`.
-- Reddit deletion handling and rate limit handling: required.
-- Product Hunt default API use: non-commercial unless Product Hunt grants permission.
-- X connector: not implemented.
-- Discord connector: not implemented.
-- Processing Pipeline: unavailable until Phase 5.
-- Frontend MVP: available after Phase 6 PASS.
-- Final MVP acceptance: not started.
+- RedditConnector and ProductHuntConnector implemented with mocked CI: PASS
+- Missing token / permission limited / rate limited degradation: PASS
+- no-token-leak validation: PASS
+- `scripts/validate_p0_connectors.py`: PASS
+- Real platform smoke: NOT_EXECUTED / pending token
+- X / Discord: NOT_INCLUDED
+
+Phase 5 evidence:
+
+- `raw_items -> signals -> embeddings -> clusters -> opportunities`: PASS
+- Signal Quality Gate: PASS
+- mock LLM / fallback classifier: PASS
+- deterministic mock embedding: PASS
+- `scripts/validate_processing_pipeline.py`: PASS
+- Real LLM smoke: NOT_EXECUTED / pending token
+- Real embedding smoke: NOT_EXECUTED / pending token
 
 Phase 6 evidence:
 
-- Status: PASS.
-- Scope: Frontend MVP pages, frontend build, static validation, optional localhost smoke.
-- Required pages: `/`, `/signals`, `/dashboard`, `/opportunities`, `/logs`, `/settings`, `/reports`.
-- Open Source evidence text: required.
-- High value marker: required.
-- Settings credential safety: must not render `encrypted_payload`, token, or secret material.
-- Reports: markdown and csv controls required.
-- API boundary: frontend calls only the centralized SignalForge backend API client.
-- Forbidden real execution options: `reddit_real`, `product_hunt_real`, `p0_real`, `real_llm`, `real_embedding`, `x_real`, and `discord_real` must remain absent.
-- Web npm build: PASS.
-- `scripts/validate_frontend_mvp.py --require-http`: PASS.
-- Final MVP acceptance: not started; Phase 7 owns final acceptance.
+- Signal Inbox: PASS
+- Dashboard: PASS
+- Opportunity Board: PASS
+- Logs / Settings / Reports: PASS
+- Open Source evidence links and high value marker: PASS
+- frontend build: PASS
+- `scripts/validate_frontend_mvp.py --require-http`: PASS
 
-## Scope
+## Manual Smoke Status
 
-P0: Reddit + Product Hunt.
-P1: X.
-P2: Discord.
+- Real Reddit smoke: NOT_EXECUTED / pending token
+- Real Product Hunt smoke: NOT_EXECUTED / pending token
+- Real LLM smoke: NOT_EXECUTED / pending token
+- Real embedding smoke: NOT_EXECUTED / pending token
 
-## Tag Status
+None of the manual smoke items above are recorded as PASS. They remain optional local/manual acceptance steps requiring explicit owner authorization and local credentials.
 
-tag_status: NOT_STARTED
+## Release / Tag Status
+
 target_tag: v0.1.0-mvp
-accepted_commit: NOT_STARTED
+tag_status: pending_manual_owner_action
+accepted_commit: 83c9537
+reason: tag creation requires explicit owner approval
+push_status: not_pushed
 
-If tag creation is unavailable, use manual owner action and update this report.
+## Scope Boundaries
+
+Included in `v0.1.0-mvp` local/mock acceptance:
+
+- Docker Compose local MVP
+- Phase 1 data model and migrations
+- Phase 2 backend API
+- Phase 3 connector abstraction
+- Phase 4 Reddit / Product Hunt P0 connector implementations with mocked CI validation
+- Phase 5 processing pipeline with mock-first / fallback-first behavior
+- Phase 6 Frontend MVP
+- Markdown / CSV report controls
+- Local rollback and release readiness documentation
+
+Not included:
+
+- Production deployment
+- Auth / multi-user
+- Billing / SaaS commercialization
+- Real platform smoke acceptance
+- Real LLM / embedding provider acceptance
+- X connector
+- Discord connector
+- Commercial Product Hunt authorization review
+- Release tag creation or push
+- GitHub branch protection enforcement
+
+## Manual Owner Actions
+
+- Replace `@owner` with the actual GitHub user or team.
+- Configure branch protection.
+- Create local tag `v0.1.0-mvp` after owner approval.
+- Push branch / tag only after separate explicit approval.
+- Run real Reddit smoke with local token if required.
+- Run real Product Hunt smoke with local token if required.
+- Run real LLM / embedding smoke if required.
+- Complete Product Hunt commercial authorization review before commercial use.
+
+## Post-MVP Backlog
+
+The following items are outside v0.1.0 local/mock acceptance and are not acceptance PASS items:
+
+- Optional X Connector.
+- Optional Discord Connector.
+- Auth and multi-user support.
+- Production deployment.
+- Billing / SaaS administration.
+- Real platform smoke acceptance.
+- Real LLM / embedding provider acceptance.
+- Product Hunt commercial authorization review completion.
 
 ## Canonical v2.1 Phase Markers
 

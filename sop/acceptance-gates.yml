@@ -32,6 +32,10 @@ acceptance:
     - real_llm_embedding_not_required_in_ci
     - docs_complete
     - final_acceptance_report_present
+    - manual_smoke_status_recorded
+    - tag_status_pending_manual_owner_action_recorded
+    - branch_protection_manual_action_recorded
+    - post_mvp_backlog_separated_from_acceptance
 
   hard_fail:
     - token_in_logs
@@ -59,3 +63,7 @@ acceptance:
     - missing_signal_quality_gate
     - missing_signal_to_opportunity_flow
     - p0_scope_drift_to_x_or_discord
+    - manual_smoke_marked_pass_without_execution
+    - tag_created_without_owner_approval
+    - backlog_marked_as_completed_acceptance
+    - production_readiness_claimed_without_deployment_gate
