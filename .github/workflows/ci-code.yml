@@ -1,0 +1,24 @@
+name: Code Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - feature/mvp-p0
+
+permissions:
+  contents: read
+
+jobs:
+  phase-1-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Phase -1 governance structure check
+        run: |
+          test -f README.md
+          test -f .env.example
+          test -f .gitignore
+          test -f CODEOWNERS
+          test -f .github/pull_request_template.md
+          echo "Phase -1 code gate checks governance structure only. Business lint, tests, and build will be enabled in later phases."

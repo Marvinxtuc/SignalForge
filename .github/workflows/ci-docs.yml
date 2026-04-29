@@ -1,0 +1,22 @@
+name: Docs SOP Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - feature/mvp-p0
+
+permissions:
+  contents: read
+
+jobs:
+  docs-sop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate docs
+        run: python3 scripts/validate_docs.py
+      - name: Validate acceptance assets
+        run: python3 scripts/validate_acceptance.py
+      - name: Validate no secrets
+        run: python3 scripts/validate_no_secrets.py

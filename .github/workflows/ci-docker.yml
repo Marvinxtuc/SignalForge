@@ -1,0 +1,19 @@
+name: Docker Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - feature/mvp-p0
+
+permissions:
+  contents: read
+
+jobs:
+  phase-aware-placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Phase -1 placeholder
+        run: |
+          echo "Phase -1 placeholder only. Real Docker checks will be enabled in later phases."

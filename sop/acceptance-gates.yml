@@ -1,0 +1,33 @@
+acceptance:
+  must_pass:
+    - docker_compose_up
+    - api_health_ok
+    - web_accessible
+    - demo_seed_ok
+    - mock_collection_ok
+    - reddit_connector_degraded_or_success
+    - product_hunt_connector_degraded_or_success
+    - raw_items_to_signals_ok
+    - signals_to_clusters_ok
+    - clusters_to_opportunities_ok
+    - signal_inbox_visible
+    - high_value_signals_highlighted
+    - open_source_link_visible
+    - csv_export_ok
+    - markdown_export_ok
+    - no_token_leak
+    - docs_complete
+    - final_acceptance_report_present
+
+  hard_fail:
+    - token_in_logs
+    - token_in_frontend_response
+    - source_url_missing
+    - signal_inbox_missing
+    - llm_json_failure_crashes_job
+    - connector_failure_crashes_system
+    - no_rollback_doc
+    - no_test_report
+    - missing_signal_quality_gate
+    - missing_signal_to_opportunity_flow
+    - p0_scope_drift_to_x_or_discord

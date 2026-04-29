@@ -1,0 +1,113 @@
+phases:
+  phase_-1_governance_bootstrap:
+    required_outputs:
+      - git_repo
+      - github_workflows
+      - pr_template
+      - codeowners
+      - docs_structure
+      - sop_yaml
+      - validation_scripts
+      - readme
+      - env_example
+      - gitignore
+    gates:
+      - docs_gate
+      - no_secrets_gate
+    notes:
+      - Phase -1 does not implement business functionality.
+
+  phase_0_infrastructure:
+    required_outputs:
+      - docker_compose
+      - fastapi_health
+      - nextjs_app
+      - postgres_pgvector
+      - redis
+      - wait_for_ready
+    gates:
+      - docker_gate
+      - code_gate
+
+  phase_1_data_model:
+    required_outputs:
+      - sqlalchemy_models
+      - alembic_migrations
+      - demo_seed
+      - opportunities_model
+    gates:
+      - migration_gate
+      - data_integrity_gate
+
+  phase_2_backend_api:
+    required_outputs:
+      - projects_api
+      - keywords_api
+      - signals_api
+      - clusters_api
+      - opportunities_api
+      - reports_api
+      - settings_api
+    gates:
+      - api_gate
+      - no_token_leak_gate
+
+  phase_3_connector_abstraction:
+    required_outputs:
+      - base_connector
+      - normalized_raw_item
+      - connector_result
+      - rate_limit_state
+      - collection_job_lifecycle
+    gates:
+      - connector_gate
+      - logs_gate
+
+  phase_4_p0_connectors:
+    required_outputs:
+      - mock_connector
+      - reddit_connector
+      - product_hunt_connector
+      - collection_logs
+    gates:
+      - connector_gate
+      - no_token_leak_gate
+
+  phase_5_processing_pipeline:
+    required_outputs:
+      - cleaning
+      - redaction
+      - dedupe
+      - duplicate_collapse
+      - llm_classification
+      - fallback
+      - embeddings
+      - clustering
+      - signal_quality_gate
+      - opportunity_generation
+    gates:
+      - pipeline_gate
+      - signal_quality_gate
+
+  phase_6_frontend_mvp:
+    required_outputs:
+      - signal_inbox
+      - dashboard
+      - opportunity_board
+      - logs
+      - settings
+      - reports
+    gates:
+      - frontend_gate
+      - ui_acceptance_gate
+
+  phase_7_testing_acceptance_release_freeze:
+    required_outputs:
+      - final_test_report
+      - acceptance_report
+      - release_notes
+      - rollback_runbook
+      - tag_or_tag_checklist
+    gates:
+      - acceptance_gate
+      - release_gate

@@ -1,0 +1,35 @@
+project: SignalForge
+version: v0.1.0-mvp
+phase: phase_-1_governance_bootstrap
+north_star_metric: High Value Signal Density
+
+p0_platforms:
+  - reddit
+  - product_hunt
+p1_platforms:
+  - x
+p2_platforms:
+  - discord
+
+required_flows:
+  - raw_items_to_signals
+  - signals_to_clusters
+  - clusters_to_opportunities
+  - signal_inbox_review
+  - markdown_csv_export
+
+required_docs:
+  - docs/architecture/overview.md
+  - docs/adr/0001-tech-stack.md
+  - docs/adr/0002-p0-platform-strategy.md
+  - docs/adr/0003-gitops-lite-delivery.md
+  - docs/testing/test-plan.md
+  - docs/testing/test-report.md
+  - docs/acceptance/acceptance-checklist.md
+  - docs/acceptance/final-acceptance-report.md
+  - docs/runbooks/rollback.md
+
+governance_notes:
+  - CI does not require real Reddit or Product Hunt tokens.
+  - Real platform acceptance is local/manual acceptance.
+  - Phase -1 is a governance skeleton and does not represent final MVP acceptance.
