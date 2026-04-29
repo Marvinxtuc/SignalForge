@@ -1,4 +1,14 @@
 phases:
+  # Canonical v2.1 phase marker set:
+  # - phase_-1_governance_bootstrap
+  # - phase_0_infrastructure
+  # - phase_1_data_model
+  # - phase_2_backend_api
+  # - phase_3_connector_abstraction
+  # - phase_4_p0_connectors
+  # - phase_5_processing_pipeline
+  # - phase_6_frontend_mvp
+  # - phase_7_testing_acceptance_release_freeze
   phase_-1_governance_bootstrap:
     required_outputs:
       - git_repo

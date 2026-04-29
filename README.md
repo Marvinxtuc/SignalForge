@@ -43,3 +43,15 @@ Do not commit `.env` or real API credentials. `.env.example` must contain only v
 ## Next Phase
 
 Phase 0 Infrastructure may start only after Phase -1 is accepted.
+
+## Canonical v2.1 Phase Markers
+
+- `phase_-1_governance_bootstrap`
+- `phase_0_infrastructure`
+- `phase_1_data_model`
+- `phase_2_backend_api`
+- `phase_3_connector_abstraction`
+- `phase_4_p0_connectors`
+- `phase_5_processing_pipeline`
+- `phase_6_frontend_mvp`
+- `phase_7_testing_acceptance_release_freeze`
