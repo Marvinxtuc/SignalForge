@@ -42,9 +42,26 @@ CI does not require real platform tokens. Real platform acceptance is local/manu
 
 Phase 0 Docker Gate result: PASS.
 
+## Phase 1 Data Model Checklist
+
+Status: PASS after local container-mode validation.
+
+- Migration up: PASS
+- Migration down: PASS
+- pgvector extension: PASS
+- `embeddings.embedding` as `vector(1536)`: PASS
+- 11 core tables: PASS
+- raw_items unique/platform source URL constraints: PASS
+- cluster_signals composite primary key: PASS
+- demo seed idempotency: PASS
+- data model validation: PASS
+- Required data flow documented: `raw_items -> signals -> clusters -> opportunities`
+- Evidence traceability baseline documented: `source_url`
+- Phase 1 limited to models, migrations, seed, and validation.
+- Phase 2 owns business API implementation.
+
 ## Later Phase Items
 
-- Data migration checks start in Phase 1 Data Model.
 - Business APIs start after Phase 1.
 - Connector and product acceptance checks start in later phases.
 - Signal Inbox and Opportunity Board start in Phase 6 Frontend MVP.

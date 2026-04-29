@@ -3,10 +3,12 @@ services:
     build:
       context: ../apps/api
     environment:
-      DATABASE_URL: postgresql://signalforge:signalforge_dev_password@postgres:5432/signalforge
+      DATABASE_URL: postgresql+psycopg://signalforge:signalforge_dev_password@postgres:5432/signalforge
       REDIS_URL: redis://redis:6379/0
     ports:
       - "8000:8000"
+    volumes:
+      - ../scripts:/app/scripts:ro
     depends_on:
       postgres:
         condition: service_healthy

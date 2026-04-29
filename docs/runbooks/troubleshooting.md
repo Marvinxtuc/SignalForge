@@ -75,3 +75,35 @@ docker compose -f infra/docker-compose.yml logs redis
 ```
 
 The Redis healthcheck uses `redis-cli ping`.
+
+## Phase 1 migration fails
+
+Run:
+
+```bash
+docker compose -f infra/docker-compose.yml logs postgres
+docker compose -f infra/docker-compose.yml run --rm api alembic current
+docker compose -f infra/docker-compose.yml run --rm api alembic history
+```
+
+Record the failure as Phase 1 Data Model requires scoped rectification. Do not mark final MVP acceptance complete.
+
+## Phase 1 seed fails
+
+Run:
+
+```bash
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/seed_demo_data.py
+```
+
+Check that migrations have run before seed execution. Seed data must support the `raw_items -> signals -> clusters -> opportunities` path.
+
+## Phase 1 data validation fails
+
+Run:
+
+```bash
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_data_model.py
+```
+
+Confirm that seeded signals preserve `source_url`. `source_url` is the evidence traceability baseline for Phase 1 and later acceptance review.

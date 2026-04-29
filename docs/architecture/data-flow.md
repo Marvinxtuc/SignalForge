@@ -1,9 +1,9 @@
 # Data Flow
 
-Status: PHASE-1_SKELETON
-Phase: Phase -1 Governance Bootstrap
+Status: PHASE_1_DATA_MODEL_VALIDATED
+Phase: Phase 1 Data Model
 
-This document is a skeleton and does not represent final MVP acceptance.
+This document records the Phase 1 Data Model target flow. It does not represent final MVP acceptance.
 
 ## MVP Flow
 
@@ -20,4 +20,23 @@ flowchart TD
   I --> J[Signal Inbox and Opportunity Board]
 ```
 
-All signals must preserve source_url. Product Hunt permission limits can degrade safely if logs are readable and mock Product Hunt data still completes the flow.
+## Phase 1 Data Model Flow
+
+Phase 1 explicitly models the evidence path:
+
+```text
+raw_items -> signals -> clusters -> opportunities
+```
+
+- `raw_items` store normalized source evidence collected from approved platforms or demo seed data.
+- `signals` represent classified demand evidence derived from `raw_items`.
+- `clusters` group related `signals` for repeated pain, need, or opportunity patterns.
+- `opportunities` summarize actionable product opportunities derived from `clusters`.
+
+`source_url` is the evidence traceability baseline. Each signal must preserve a source URL so reviewers can open the original evidence when evaluating clusters and opportunities.
+
+Product Hunt permission limits can degrade safely in later connector phases if logs are readable and mock Product Hunt data still completes the flow.
+
+## Phase Ownership
+
+Phase 1 implements only models, migrations, demo seed, and data validation for the flow above. Phase 2 implements the business API surface that exposes these records.
