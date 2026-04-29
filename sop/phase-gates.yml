@@ -138,15 +138,27 @@ phases:
       - redaction
       - dedupe
       - duplicate_collapse
-      - llm_classification
+      - mock_llm_classification
       - fallback
-      - embeddings
+      - mock_embeddings
       - clustering
       - signal_quality_gate
       - opportunity_generation
+      - processing_api
+      - processing_validation
     gates:
       - pipeline_gate
       - signal_quality_gate
+      - mock_provider_gate
+      - no_secrets_gate
+    notes:
+      - Phase 5 implements Processing Pipeline only.
+      - CI uses mock LLM, mock embedding, and deterministic fallback only.
+      - Real LLM and embedding smoke are optional local/manual checks.
+      - Signal Inbox, Dashboard, and Opportunity Board remain unimplemented until Phase 6.
+      - X and Discord remain unimplemented.
+      - Phase 5 must not add database migrations or processing job/log tables.
+      - Phase 5 is not final MVP acceptance.
 
   phase_6_frontend_mvp:
     required_outputs:

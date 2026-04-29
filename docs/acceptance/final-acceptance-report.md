@@ -2,7 +2,7 @@
 
 Status: NOT_STARTED
 Phase: Phase -1 Governance Bootstrap
-Current workstream: Phase 4 P0 Connectors
+Current workstream: Phase 5 Processing Pipeline
 Phase 3 workstream: Connector Abstraction validated
 This document is a skeleton and does not represent final MVP acceptance.
 
@@ -19,6 +19,7 @@ Final MVP acceptance has not started.
 - Phase 2 Backend API: PASS
 - Phase 3 Connector Abstraction: PASS
 - Phase 4 P0 Connectors: PASS
+- Phase 5 Processing Pipeline: PASS
 
 Phase 0 evidence:
 
@@ -67,6 +68,24 @@ Phase 3 evidence:
 - Real Reddit connector: unavailable until Phase 4.
 - Real Product Hunt connector: unavailable until Phase 4.
 - Processing Pipeline: unavailable until Phase 5.
+- Frontend MVP: unavailable until Phase 6.
+- Final MVP acceptance: not started.
+
+Phase 5 evidence:
+
+- Status: PASS.
+- Scope: Processing Pipeline only.
+- CI mode: mock LLM, mock embedding, and deterministic fallback only.
+- Manual LLM / embedding smoke: optional local/manual only and disabled unless explicit env flags are set.
+- Required value path: `raw_items -> signals -> embeddings -> clusters -> opportunities`.
+- Signal Quality Gate: PASS.
+- High value definition: `pain_level >= 70` and `signal_confidence >= 60`.
+- Source evidence: `source_url` must be preserved in signals and top high value signal summaries.
+- Signal Inbox: not implemented.
+- Dashboard: not implemented.
+- Opportunity Board: not implemented.
+- X connector: not implemented.
+- Discord connector: not implemented.
 - Frontend MVP: unavailable until Phase 6.
 - Final MVP acceptance: not started.
 

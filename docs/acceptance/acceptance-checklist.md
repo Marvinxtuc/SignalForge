@@ -129,9 +129,36 @@ Status: PASS.
 - Phase 6 owns Frontend MVP: REQUIRED
 - Phase 4 is not final MVP acceptance: REQUIRED
 
+## Phase 5 Processing Pipeline Checklist
+
+Status: PASS.
+
+- Processing tests: PASS
+- `scripts/validate_processing_pipeline.py`: PASS
+- isolated raw-only validation project: PASS
+- raw_items process into signals: PASS
+- high value signals `>= 2`: PASS
+- high value definition is `pain_level >= 70` and `signal_confidence >= 60`: PASS
+- `source_url` preserved in signals and top high value signals: PASS
+- PII / wallet / seed phrase suspicious content redacted before classification and embeddings: PASS
+- fallback classifier available: PASS
+- LLM JSON failure falls back without crashing: PASS
+- score fields clamped to 0-100 before persistence: PASS
+- deterministic mock embedding is 1536-dimensional and stable across runs: PASS
+- embeddings persist to pgvector: PASS
+- clusters created or updated: PASS
+- opportunities created or updated: PASS
+- archived/manual opportunity fields are not overwritten: PASS
+- Signal Quality Gate summary complete: PASS
+- repeated processing is idempotent for signals, embeddings, cluster links, opportunities, and high value counts: PASS
+- CI uses mock LLM, mock embedding, and fallback only: REQUIRED
+- Real LLM / embedding smoke is optional manual only: REQUIRED
+- Signal Inbox / Dashboard / Opportunity Board remain unimplemented: REQUIRED
+- X / Discord remain unimplemented: REQUIRED
+- Phase 5 is not final MVP acceptance: REQUIRED
+
 ## Later Phase Items
 
-- Processing Pipeline acceptance checks start in Phase 5.
 - Signal Inbox and Opportunity Board start in Phase 6 Frontend MVP.
 
 ## Canonical v2.1 Phase Markers

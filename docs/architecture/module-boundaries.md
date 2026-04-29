@@ -1,9 +1,9 @@
 # Module Boundaries
 
-Status: PHASE_4_P0_CONNECTORS_IN_IMPLEMENTATION
-Phase: Phase 4 P0 Connectors
+Status: PHASE_5_PROCESSING_PIPELINE_PASS
+Phase: Phase 5 Processing Pipeline
 
-This document records module boundaries through Phase 4 P0 Connectors and later phases. It does not represent final MVP acceptance.
+This document records module boundaries through Phase 5 Processing Pipeline and later phases. It does not represent final MVP acceptance.
 
 ## Planned Boundaries
 
@@ -126,7 +126,28 @@ Reddit deletion handling and rate limit handling are mandatory. Deleted or remov
 
 Phase 4 is P0 Connectors only and is not final MVP acceptance.
 
+## Phase 5 Boundary
+
+Phase 5 may implement:
+
+- Processing Pipeline modules for cleaning, redaction, language detection, noise filtering, duplicate collapse, fallback classification, mock LLM behavior, mock embedding generation, clustering, opportunity scoring, and Signal Quality Gate.
+- Processing API endpoints for project processing and processing summary.
+- Mock-only processing tests and `scripts/validate_processing_pipeline.py`.
+- Optional manual LLM and embedding smoke scripts guarded by explicit env flags.
+
+Phase 5 CI must use mock LLM, mock embedding, and deterministic fallback. CI must not require real LLM or embedding provider tokens.
+
+Phase 5 must not implement:
+
+- Signal Inbox, Dashboard, Opportunity Board, or other Frontend MVP pages.
+- X or Discord connectors.
+- Reddit, Product Hunt, X, Discord, real LLM, or real embedding provider calls during CI.
+- Platform content model training.
+- New database tables, Alembic migrations, `processing_jobs`, or `processing_logs`.
+- Token persistence in logs, API responses, reports, docs, or raw payload fields.
+
+Phase 5 is Processing Pipeline only and is not final MVP acceptance.
+
 ## Later Boundaries
 
-- Phase 5 implements Processing Pipeline.
 - Phase 6 implements Frontend MVP.

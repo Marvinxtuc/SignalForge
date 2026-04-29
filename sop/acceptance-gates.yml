@@ -21,6 +21,12 @@ acceptance:
     - reddit_deletion_handling_ok
     - reddit_rate_limit_handling_ok
     - product_hunt_non_commercial_scope_documented
+    - processing_pipeline_mock_gate_ok
+    - signal_quality_gate_ok
+    - high_value_signals_present
+    - mock_embedding_1536_ok
+    - processing_idempotency_ok
+    - real_llm_embedding_not_required_in_ci
     - docs_complete
     - final_acceptance_report_present
 
@@ -36,6 +42,12 @@ acceptance:
     - real_platform_smoke_writes_without_explicit_flag
     - deleted_reddit_body_retained
     - product_hunt_commercial_use_claim_without_permission
+    - real_llm_token_required_in_ci
+    - real_embedding_token_required_in_ci
+    - provider_token_in_logs
+    - processing_overwrites_archived_opportunity
+    - processing_creates_frontend_ui
+    - processing_requires_new_migration
     - no_rollback_doc
     - no_test_report
     - missing_signal_quality_gate

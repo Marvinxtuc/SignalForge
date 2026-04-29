@@ -10,11 +10,11 @@ permissions:
   contents: read
 
 jobs:
-  phase-4-p0-connectors:
+  phase-5-processing-pipeline:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Phase 4 file structure check
+      - name: Phase 5 file structure check
         run: |
           test -f README.md
           test -f .env.example
@@ -28,6 +28,7 @@ jobs:
           test -f scripts/validate_backend_api.py
           test -f scripts/validate_connector_abstraction.py
           test -f scripts/validate_p0_connectors.py
+          test -f scripts/validate_processing_pipeline.py
           test -f apps/api/tests/test_connector_base.py
           test -f apps/api/tests/test_connector_registry.py
           test -f apps/api/tests/test_disabled_connector.py
@@ -37,7 +38,15 @@ jobs:
           test -f apps/api/tests/test_p0_connector_degradation.py
           test -f apps/api/tests/test_p0_connector_rate_limits.py
           test -f apps/api/tests/test_p0_connector_no_token_leak.py
-          echo "Phase 4 code gate validates P0 connectors with mocked responses only. Real tokens, processing, frontend acceptance, X, and Discord are not required."
+          test -f apps/api/tests/test_processing_cleaner.py
+          test -f apps/api/tests/test_processing_redactor.py
+          test -f apps/api/tests/test_processing_classifier.py
+          test -f apps/api/tests/test_processing_fallback.py
+          test -f apps/api/tests/test_processing_embedding.py
+          test -f apps/api/tests/test_processing_clustering.py
+          test -f apps/api/tests/test_signal_quality_gate.py
+          test -f apps/api/tests/test_processing_pipeline.py
+          echo "Phase 5 code gate validates Processing Pipeline with mock LLM, mock embedding, and fallback only. Real provider tokens, frontend acceptance, X, and Discord are not required."
       - name: Python syntax check
         run: |
           python3 -m compileall apps/api/app scripts
@@ -91,6 +100,18 @@ jobs:
         run: |
           docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_p0_connectors.py
           docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_p0_connectors.py --no-token-leak
+      - name: Processing pipeline tests
+        env:
+          SIGNALFORGE_ALLOW_REAL_LLM_SMOKE: "false"
+          SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE: "false"
+        run: |
+          docker compose -f infra/docker-compose.yml run --rm api pytest /app/tests/test_processing_cleaner.py /app/tests/test_processing_redactor.py /app/tests/test_processing_classifier.py /app/tests/test_processing_fallback.py /app/tests/test_processing_embedding.py /app/tests/test_processing_clustering.py /app/tests/test_signal_quality_gate.py /app/tests/test_processing_pipeline.py
+      - name: Processing pipeline validation
+        env:
+          SIGNALFORGE_ALLOW_REAL_LLM_SMOKE: "false"
+          SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE: "false"
+        run: |
+          docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_processing_pipeline.py
       - name: Docker Compose down
         if: always()
         run: |

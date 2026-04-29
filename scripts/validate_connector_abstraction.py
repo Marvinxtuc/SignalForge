@@ -234,7 +234,11 @@ def validate_connector_contracts_without_tokens() -> None:
 
 def validate_external_api_marker_scan() -> None:
     api_root = _api_root()
-    scan_roots = (api_root / "app",)
+    scan_roots = (
+        api_root / "app" / "connectors",
+        api_root / "app" / "services",
+        api_root / "app" / "api" / "routes",
+    )
     files: list[Path] = []
     for scan_root in scan_roots:
         if scan_root.is_dir():

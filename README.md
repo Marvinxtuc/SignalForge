@@ -1,23 +1,23 @@
 # SignalForge
 
-Status: Phase 4 P0 Connectors PASS
+Status: Phase 5 Processing Pipeline PASS
 
 SignalForge is a local-first VOC Radar MVP. The MVP goal is to prove that the system can surface high-value, actionable user demand signals, not to maximize collection volume or platform coverage.
 
 ## Current Phase
 
-This repository is currently in Phase 4: P0 Connectors PASS.
+This repository is currently in Phase 5: Processing Pipeline PASS.
 
-Phase 0 Infrastructure is recorded as PASS. Phase 1 Data Model is recorded as PASS. Phase 2 Backend API is recorded as PASS. Phase 3 Connector Abstraction is recorded as PASS. Phase 4 is limited to P0 connectors for Reddit and Product Hunt, mocked CI validation, optional local/manual real-platform smoke scripts, and documentation.
+Phase 0 Infrastructure is recorded as PASS. Phase 1 Data Model is recorded as PASS. Phase 2 Backend API is recorded as PASS. Phase 3 Connector Abstraction is recorded as PASS. Phase 4 P0 Connectors is recorded as PASS. Phase 5 Processing Pipeline is recorded as PASS with mock LLM, mock embedding, deterministic fallback, Signal Quality Gate, and mock-only CI validation.
 
 Not included in this phase:
 
-- Processing Pipeline
 - Frontend MVP or UI pages
+- Signal Inbox, Dashboard, or Opportunity Board UI
 - Celery task logic
 - X or Discord connectors
 - CI real platform collection
-- LLM or embedding provider calls
+- CI real LLM or embedding provider calls
 - Browser automation, scraping, simulated login, automated posting, commenting, or messaging
 
 Phase 4 owns P0 Connectors only. Phase 5 owns Processing Pipeline. Phase 6 owns Frontend MVP.
@@ -27,6 +27,8 @@ CI uses mocked Reddit and Product Hunt responses only and does not require real 
 `POST /api/projects/{project_id}/collect` keeps the Phase 3 modes `mock`, `disabled_only`, and `safe_disabled`, and Phase 4 adds P0 modes `reddit`, `product_hunt`, and `p0_real`. Missing credentials, permission limits, and rate limits must degrade into readable collection logs and must not crash jobs.
 
 Phase 4 is not final MVP acceptance.
+
+Phase 5 is not final MVP acceptance. It must prove `raw_items -> signals -> embeddings -> clusters -> opportunities` through mock-first and fallback-first processing, not through real provider dependency.
 
 ## Platform Scope
 
@@ -201,9 +203,47 @@ To allow manual smoke to write `raw_items`, explicitly add:
 SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE=true
 ```
 
+## Phase 5 Processing Pipeline Commands
+
+Phase 5 validates processing with mock LLM, mock embedding, deterministic fallback, and isolated raw-only validation data. CI does not require real LLM or embedding tokens.
+
+```bash
+docker compose -f infra/docker-compose.yml up -d
+python3 scripts/wait_for_services.py
+docker compose -f infra/docker-compose.yml run --rm api alembic upgrade head
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/seed_demo_data.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_data_model.py
+docker compose -f infra/docker-compose.yml run --rm api pytest
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_backend_api.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_connector_abstraction.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_p0_connectors.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_processing_pipeline.py
+docker compose -f infra/docker-compose.yml down
+```
+
+Expected Phase 5 behavior:
+
+- `raw_items` can be processed into `signals`.
+- High value signals use `pain_level >= 70` and `signal_confidence >= 60`.
+- Redaction happens before classification, summaries, embeddings, and clustering.
+- Mock embeddings are deterministic, 1536-dimensional, and do not use provider calls.
+- LLM JSON failure falls back without crashing processing.
+- Clusters and opportunities are created or updated from processed signals.
+- Signal Quality Gate reports processing coverage, high value ratio, fallback counts, cluster coverage, opportunity count, and top high value signals with `source_url`.
+- Repeated processing is idempotent for signals, embeddings, cluster links, opportunities, and high value signal counts.
+- Real LLM and embedding smoke are optional local/manual checks only.
+- Signal Inbox, Dashboard, Opportunity Board, X, and Discord remain unimplemented.
+
+Manual provider smoke is optional and disabled by default:
+
+```bash
+SIGNALFORGE_ALLOW_REAL_LLM_SMOKE=true docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/manual_llm_smoke.py
+SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE=true docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/manual_embedding_smoke.py
+```
+
 ## Next Phase
 
-Phase 5 Processing Pipeline requires explicit approval. Do not implement processing, LLM classification, embedding generation, clustering, frontend MVP, X, or Discord in Phase 4.
+Phase 6 Frontend MVP requires explicit approval. Do not implement Signal Inbox, Dashboard, Opportunity Board, X, or Discord in Phase 5.
 
 ## Canonical v2.1 Phase Markers
 

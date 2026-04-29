@@ -233,3 +233,56 @@ SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE=true
 If manual smoke reports Product Hunt permission limits, record the result as `permission_limited` unless the connector itself crashes or leaks a token. Product Hunt default API use is non-commercial unless Product Hunt grants permission.
 
 If manual smoke reports Reddit rate limits, record `rate_limited` and do not retry aggressively. Reddit rate limit headers and deleted/removed content handling are mandatory Phase 4 safety checks.
+
+## Phase 5 processing tests fail
+
+Run:
+
+```bash
+docker compose -f infra/docker-compose.yml run --rm api pytest /app/tests/test_processing_cleaner.py /app/tests/test_processing_redactor.py /app/tests/test_processing_classifier.py /app/tests/test_processing_fallback.py /app/tests/test_processing_embedding.py /app/tests/test_processing_clustering.py /app/tests/test_signal_quality_gate.py /app/tests/test_processing_pipeline.py
+```
+
+Expected Phase 5 test behavior:
+
+- Tests use mock LLM, mock embedding, and fallback only.
+- Real LLM or embedding provider tokens are not required.
+- Redaction happens before classification, summaries, embeddings, and clustering.
+- Repeated processing remains idempotent.
+- Signal Inbox, Dashboard, Opportunity Board, X, and Discord remain unimplemented.
+
+Do not fix Phase 5 test failures by adding frontend UI, X/Discord connectors, external platform calls, real provider CI dependencies, new migrations, or token persistence.
+
+## Phase 5 processing validation fails
+
+Run:
+
+```bash
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_processing_pipeline.py
+python3 scripts/validate_no_secrets.py
+```
+
+Expected Phase 5 validation behavior:
+
+- Validation creates or uses an isolated raw-only project.
+- The project starts without signals, embeddings, clusters, or opportunities.
+- The pipeline proves `raw_items -> signals -> embeddings -> clusters -> opportunities`.
+- Signal Quality Gate reports high value signals, fallback counts, cluster coverage, opportunities, and top evidence with `source_url`.
+- CI uses mock LLM and mock embedding only.
+
+If validation requires real provider tokens or external platform access, treat it as scope drift.
+
+## Phase 5 manual LLM or embedding smoke is disabled
+
+Manual LLM smoke must not run unless the operator sets:
+
+```bash
+SIGNALFORGE_ALLOW_REAL_LLM_SMOKE=true
+```
+
+Manual embedding smoke must not run unless the operator sets:
+
+```bash
+SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE=true
+```
+
+If either flag is missing, the manual smoke scripts should exit with a disabled explanation. This is expected and is not a CI failure. Manual smoke must not print provider tokens or write docs containing provider responses.

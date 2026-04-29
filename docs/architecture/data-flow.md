@@ -1,9 +1,9 @@
 # Data Flow
 
-Status: PHASE_4_P0_CONNECTORS_IN_IMPLEMENTATION
-Phase: Phase 4 P0 Connectors
+Status: PHASE_5_PROCESSING_PIPELINE_PASS
+Phase: Phase 5 Processing Pipeline
 
-This document records the data access flow through Phase 4 P0 Connectors. It does not represent final MVP acceptance.
+This document records the data access and processing flow through Phase 5 Processing Pipeline. It does not represent final MVP acceptance.
 
 ## MVP Flow
 
@@ -120,3 +120,37 @@ Phase 4 connector safety rules:
 - X and Discord remain unimplemented.
 
 Phase 4 is P0 Connectors only and is not final MVP acceptance.
+
+## Phase 5 Processing Pipeline Flow
+
+Phase 5 activates the product value path after `raw_items` already exist:
+
+```text
+raw_items
+  -> clean raw text
+  -> redact sensitive content
+  -> language / noise / duplicate checks
+  -> mock or fallback classification
+  -> signals
+  -> deterministic mock embeddings
+  -> clusters
+  -> opportunities
+  -> Signal Quality Gate summary
+```
+
+Redaction must happen before classification, summaries, embeddings, and clustering. `summary_zh`, `recommended_action`, and embedding input must use redacted or otherwise safe text, not unredacted source text.
+
+Phase 5 CI uses mock LLM, mock embedding, and deterministic fallback only. Real LLM and embedding smoke is optional, local/manual, and disabled unless explicit smoke flags are set. CI must not require provider tokens.
+
+Phase 5 must not call Reddit, Product Hunt, X, Discord, real LLM providers, or real embedding providers during CI validation.
+
+Phase 5 output constraints:
+
+- `source_url` must remain available in signals and Signal Quality Gate top high value signals.
+- High value signals are `pain_level >= 70` and `signal_confidence >= 60`.
+- `deleted_at_source=true` raw items must not enter high value signals or top high value lists.
+- Repeated processing must not cause abnormal growth in signals, embeddings, cluster links, opportunities, or high value signal counts.
+- Existing archived or manually edited opportunities must not be overwritten by processing.
+- Signal Inbox, Dashboard, Opportunity Board, X, and Discord remain unimplemented until later approved phases.
+
+Phase 5 is Processing Pipeline only and is not final MVP acceptance.

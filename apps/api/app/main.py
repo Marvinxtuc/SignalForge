@@ -8,6 +8,7 @@ from app.api.routes import (
     collection_logs,
     keywords,
     opportunities,
+    processing,
     projects,
     reports,
     settings,
@@ -28,6 +29,7 @@ app.include_router(clusters.router)
 app.include_router(opportunities.router)
 app.include_router(reports.router)
 app.include_router(settings.router)
+app.include_router(processing.router)
 
 
 @app.get("/health")
