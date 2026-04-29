@@ -12,12 +12,12 @@ export function ErrorState({
   action,
   compact = false,
   error,
-  title = "Unable to load data"
+  title = "无法加载数据"
 }: ErrorStateProps) {
   const message =
     error instanceof ApiClientError
       ? `${error.code}${error.status ? ` (${error.status})` : ""}: ${error.message}`
-      : "Unexpected frontend error.";
+      : "未知前端错误。";
 
   return (
     <section className={`stateBlock errorBlock${compact ? " stateBlockCompact" : ""}`} role="alert">

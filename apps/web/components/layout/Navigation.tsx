@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { NAV_ITEMS } from "../../lib/constants";
+import { buildAllowedQueryHref } from "../../lib/query";
 
 export function Navigation({ selectedProjectId }: { selectedProjectId: string | null }) {
   const pathname = usePathname();
@@ -10,13 +11,11 @@ export function Navigation({ selectedProjectId }: { selectedProjectId: string | 
   const projectId = searchParams.get("projectId") ?? selectedProjectId;
 
   return (
-    <nav aria-label="Primary">
-      <p className="sectionLabel">Navigation</p>
+    <nav aria-label="主导航">
+      <p className="sectionLabel">导航</p>
       <div className="navList">
         {NAV_ITEMS.map((item) => {
-          const href = projectId
-            ? `${item.href}?projectId=${encodeURIComponent(projectId)}`
-            : item.href;
+          const href = buildAllowedQueryHref(item.href, searchParams, { projectId });
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
           return (

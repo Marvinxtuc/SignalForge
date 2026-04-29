@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
-import type { CSSProperties } from "react";
+import { useSearchParams } from "next/navigation";
 import { Badge } from "../ui/Badge";
 import { formatDateTime, formatNumber, formatScore } from "../../lib/format";
+import { buildAllowedQueryHref } from "../../lib/query";
 import type { Opportunity } from "../../lib/types";
 import { formatPlatformDistribution, opportunityStatusLabel } from "./opportunityView";
 
@@ -10,80 +13,32 @@ type OpportunityCardProps = {
   projectId: string;
 };
 
-const cardStyle: CSSProperties = {
-  display: "grid",
-  gap: 10,
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--surface)",
-  padding: 12,
-  boxShadow: "var(--shadow)"
-};
-
-const headerStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "flex-start",
-  justifyContent: "space-between",
-  gap: 10
-};
-
-const titleStyle: CSSProperties = {
-  margin: 0,
-  color: "var(--text)",
-  fontSize: 14,
-  fontWeight: 760,
-  lineHeight: 1.35
-};
-
-const metaGridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-  gap: 8
-};
-
-const metaItemStyle: CSSProperties = {
-  display: "grid",
-  gap: 2,
-  minWidth: 0
-};
-
-const metaLabelStyle: CSSProperties = {
-  margin: 0,
-  color: "var(--muted)",
-  fontSize: 11,
-  fontWeight: 700,
-  textTransform: "uppercase"
-};
-
-const metaValueStyle: CSSProperties = {
-  margin: 0,
-  color: "var(--text)",
-  overflowWrap: "anywhere"
-};
-
 export function OpportunityCard({ opportunity, projectId }: OpportunityCardProps) {
-  const detailHref = `/opportunities/${encodeURIComponent(opportunity.id)}?projectId=${encodeURIComponent(
-    projectId
-  )}`;
+  const searchParams = useSearchParams();
+  const detailHref = buildAllowedQueryHref(
+    `/opportunities/${encodeURIComponent(opportunity.id)}`,
+    searchParams,
+    { projectId }
+  );
 
   return (
-    <article style={cardStyle}>
-      <div style={headerStyle}>
-        <h3 style={titleStyle}>{opportunity.title}</h3>
+    <article className="opportunityCard">
+      <div className="opportunityCardHeader">
+        <h3 className="opportunityCardTitle">{opportunity.title}</h3>
         <Badge>{opportunityStatusLabel(opportunity.status)}</Badge>
       </div>
-      <div style={metaGridStyle}>
-        <MetaItem label="Score" value={formatScore(opportunity.opportunity_score)} />
-        <MetaItem label="Evidence" value={formatNumber(opportunity.evidence_count)} />
-        <MetaItem label="Last seen" value={formatDateTime(opportunity.last_seen_at)} />
-        <MetaItem label="Status" value={opportunityStatusLabel(opportunity.status)} />
+      <div className="opportunityMetaGrid">
+        <MetaItem label="机会评分" value={formatScore(opportunity.opportunity_score)} />
+        <MetaItem label="证据数量" value={formatNumber(opportunity.evidence_count)} />
+        <MetaItem label="最近出现" value={formatDateTime(opportunity.last_seen_at)} />
+        <MetaItem label="状态" value={opportunityStatusLabel(opportunity.status)} />
       </div>
       <MetaItem
-        label="Platforms"
+        label="平台分布"
         value={formatPlatformDistribution(opportunity.platform_distribution)}
       />
       <Link className="button buttonSecondary buttonSmall" href={detailHref}>
-        Open detail
+        查看详情
       </Link>
     </article>
   );
@@ -91,9 +46,9 @@ export function OpportunityCard({ opportunity, projectId }: OpportunityCardProps
 
 function MetaItem({ label, value }: { label: string; value: string }) {
   return (
-    <div style={metaItemStyle}>
-      <p style={metaLabelStyle}>{label}</p>
-      <p style={metaValueStyle}>{value}</p>
+    <div className="compactMeta">
+      <p className="compactMetaLabel">{label}</p>
+      <p className="compactMetaValue">{value}</p>
     </div>
   );
 }

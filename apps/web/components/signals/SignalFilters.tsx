@@ -40,57 +40,62 @@ export function SignalFilters({ filters, isDisabled, onChange }: SignalFiltersPr
   }
 
   return (
-    <aside className={styles.filters} aria-label="Signal filters">
+    <aside className={styles.filters} aria-label="信号筛选器">
       <div>
-        <p className={styles.eyebrow}>Filters</p>
-        <h2 className={styles.panelTitle}>Review Queue</h2>
+        <p className={styles.eyebrow}>筛选器</p>
+        <h2 className={styles.panelTitle}>待审信号</h2>
       </div>
 
       <label className={styles.field}>
-        <span className={styles.fieldLabel}>Platform</span>
-        <input
+        <span className={styles.fieldLabel}>平台</span>
+        <select
           className={styles.input}
           disabled={isDisabled}
           onChange={(event) => updateFilter("platform", event.target.value)}
-          placeholder="Any platform"
           value={filters.platform}
-        />
+        >
+          <option value="">全部平台</option>
+          <option value="reddit">Reddit</option>
+          <option value="product_hunt">Product Hunt</option>
+          <option value="x">X</option>
+          <option value="discord">Discord</option>
+        </select>
       </label>
 
       <label className={styles.field}>
-        <span className={styles.fieldLabel}>Signal type</span>
+        <span className={styles.fieldLabel}>信号类型</span>
         <input
           className={styles.input}
           disabled={isDisabled}
           onChange={(event) => updateFilter("signalType", event.target.value)}
-          placeholder="Any type"
+          placeholder="全部类型"
           value={filters.signalType}
         />
       </label>
 
       <label className={styles.field}>
-        <span className={styles.fieldLabel}>Status</span>
+        <span className={styles.fieldLabel}>状态</span>
         <select
           className={styles.input}
           disabled={isDisabled}
           onChange={(event) => updateFilter("status", event.target.value)}
           value={filters.status}
         >
-          <option value="">Any status</option>
-          <option value="new">new</option>
-          <option value="saved">saved</option>
-          <option value="ignored">ignored</option>
-          <option value="reviewed">reviewed</option>
+          <option value="">全部状态</option>
+          <option value="new">新建</option>
+          <option value="saved">已保存</option>
+          <option value="ignored">已忽略</option>
+          <option value="reviewed">已复核</option>
         </select>
       </label>
 
       <label className={styles.field}>
-        <span className={styles.fieldLabel}>Keyword</span>
+        <span className={styles.fieldLabel}>关键词</span>
         <input
           className={styles.input}
           disabled={isDisabled}
           onChange={(event) => updateFilter("keyword", event.target.value)}
-          placeholder="Search summary or hit"
+          placeholder="搜索摘要或关键词"
           value={filters.keyword}
         />
       </label>
@@ -103,13 +108,13 @@ export function SignalFilters({ filters, isDisabled, onChange }: SignalFiltersPr
           type="checkbox"
         />
         <span>
-          <strong>High Value only</strong>
-          <small>min_pain_level=70 plus confidence 60+</small>
+          <strong>仅看高价值</strong>
+          <small>痛点分不低于 70，信号置信度不低于 60</small>
         </span>
       </label>
 
       <label className={styles.field}>
-        <span className={styles.fieldLabel}>Minimum pain level</span>
+        <span className={styles.fieldLabel}>最低痛点分</span>
         <input
           className={styles.input}
           disabled={isDisabled || filters.highValueOnly}
@@ -124,7 +129,7 @@ export function SignalFilters({ filters, isDisabled, onChange }: SignalFiltersPr
 
       <div className={styles.dateGrid}>
         <label className={styles.field}>
-          <span className={styles.fieldLabel}>Date from</span>
+          <span className={styles.fieldLabel}>开始日期</span>
           <input
             className={styles.input}
             disabled={isDisabled}
@@ -134,7 +139,7 @@ export function SignalFilters({ filters, isDisabled, onChange }: SignalFiltersPr
           />
         </label>
         <label className={styles.field}>
-          <span className={styles.fieldLabel}>Date to</span>
+          <span className={styles.fieldLabel}>结束日期</span>
           <input
             className={styles.input}
             disabled={isDisabled}
@@ -146,7 +151,7 @@ export function SignalFilters({ filters, isDisabled, onChange }: SignalFiltersPr
       </div>
 
       <Button disabled={isDisabled} onClick={() => onChange(EMPTY_FILTERS)} size="small">
-        Reset Filters
+        重置筛选
       </Button>
     </aside>
   );

@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { OpportunityBoard } from "../../components/opportunities/OpportunityBoard";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { ErrorState } from "../../components/ui/ErrorState";
@@ -10,33 +9,6 @@ type OpportunitiesPageProps = {
   searchParams?: Promise<SearchParams>;
 };
 
-const pageStyle: CSSProperties = {
-  display: "grid",
-  gap: 16
-};
-
-const headerStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "flex-start",
-  justifyContent: "space-between",
-  gap: 16,
-  flexWrap: "wrap"
-};
-
-const titleStyle: CSSProperties = {
-  margin: 0,
-  color: "var(--text)",
-  fontSize: 24,
-  fontWeight: 800,
-  lineHeight: 1.2
-};
-
-const subtitleStyle: CSSProperties = {
-  margin: "6px 0 0",
-  color: "var(--muted)",
-  lineHeight: 1.5
-};
-
 export default async function OpportunitiesPage({ searchParams }: OpportunitiesPageProps) {
   const resolvedSearchParams: SearchParams = searchParams ? await searchParams : {};
   const projectId = getSingleSearchParam(resolvedSearchParams.projectId);
@@ -44,8 +16,8 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
   if (!projectId) {
     return (
       <EmptyState
-        description="Select a project from the sidebar to load project opportunities."
-        title="No project selected"
+        description="请先在侧边栏选择项目，以加载项目机会。"
+        title="请选择项目"
       />
     );
   }
@@ -54,20 +26,21 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
     const response = await api.opportunities.list(projectId, { page_size: 100 });
 
     return (
-      <section style={pageStyle}>
-        <header style={headerStyle}>
+      <section className="detailPage">
+        <header className="pageHeader">
           <div>
-            <h1 style={titleStyle}>Opportunity Board</h1>
-            <p style={subtitleStyle}>
-              Grouped by status for project {projectId}. Showing {response.items.length} of{" "}
-              {response.total} opportunities.
+            <p className="pageEyebrow">机会</p>
+            <h1 className="pageTitle">机会看板</h1>
+            <p className="pageSubtitle">
+              按状态分组展示项目 {projectId} 的机会。当前显示 {response.items.length} /{" "}
+              {response.total} 个机会。
             </p>
           </div>
         </header>
         {response.items.length === 0 ? (
           <EmptyState
-            description="No opportunities returned by the backend for this project."
-            title="No opportunities"
+            description="后端未返回当前项目的机会。"
+            title="暂无机会"
           />
         ) : (
           <OpportunityBoard opportunities={response.items} projectId={projectId} />
@@ -75,7 +48,7 @@ export default async function OpportunitiesPage({ searchParams }: OpportunitiesP
       </section>
     );
   } catch (error) {
-    return <ErrorState error={error} title="Unable to load opportunities" />;
+    return <ErrorState error={error} title="无法加载机会" />;
   }
 }
 

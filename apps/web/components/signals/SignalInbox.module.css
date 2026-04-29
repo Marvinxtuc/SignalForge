@@ -1,31 +1,50 @@
 .inbox {
   display: grid;
-  grid-template-columns: 260px minmax(360px, 1fr) 340px;
-  gap: 16px;
-  align-items: start;
+  grid-template-columns: 280px minmax(420px, 1fr) 360px;
+  min-height: calc(100vh - 96px);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow-raised);
 }
 
 .filters,
 .signalList,
 .detailPreview {
   min-width: 0;
-  border: 1px solid var(--border);
-  border-radius: 8px;
   background: var(--surface);
-  padding: 14px;
 }
 
 .filters,
 .detailPreview {
   position: sticky;
-  top: 20px;
+  top: 0;
   display: grid;
+  align-content: start;
   gap: 14px;
+  height: calc(100vh - 96px);
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.filters {
+  border-right: 1px solid var(--border);
+  box-shadow: 2px 0 8px -6px rgba(15, 23, 42, 0.3);
+}
+
+.detailPreview {
+  border-left: 1px solid var(--border);
 }
 
 .signalList {
   display: grid;
+  align-content: start;
   gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+  background: #f8fafc;
 }
 
 .listHeader {
@@ -37,10 +56,10 @@
 
 .eyebrow {
   margin: 0 0 4px;
-  color: var(--muted);
+  color: var(--muted-strong);
   font-size: 11px;
-  font-weight: 750;
-  letter-spacing: 0.04em;
+  font-weight: 800;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
@@ -53,7 +72,7 @@
 }
 
 .title {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 780;
 }
 
@@ -72,18 +91,26 @@
 
 .fieldLabel {
   color: var(--muted-strong);
-  font-size: 12px;
-  font-weight: 720;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .input {
   width: 100%;
-  min-height: 34px;
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
   background: var(--surface);
   color: var(--text);
-  padding: 7px 9px;
+  padding: 8px 10px;
+}
+
+.input:focus {
+  border-color: var(--accent);
+  outline: 0;
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 .input:disabled {
@@ -123,7 +150,8 @@
 }
 
 .cards {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
@@ -131,19 +159,20 @@
   display: grid;
   gap: 10px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--surface);
   padding: 12px;
+  box-shadow: var(--shadow);
 }
 
 .selectedSignal {
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px rgba(36, 95, 115, 0.18);
+  box-shadow: 0 0 0 1px rgba(29, 43, 62, 0.18);
 }
 
 .highValueSignal {
-  border-color: #9fd2b9;
-  background: #f4fbf7;
+  border-color: var(--high-value);
+  background: var(--high-value-bg);
 }
 
 .cardBodyButton {
@@ -179,7 +208,7 @@
 .cardTitle {
   margin: 0;
   color: var(--text);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 760;
   line-height: 1.35;
 }
@@ -195,7 +224,7 @@
 .excerpt {
   margin: 0;
   color: var(--muted-strong);
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
 .keyword {
@@ -204,7 +233,7 @@
   align-items: center;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: var(--surface-subtle);
+  background: #f8fafc;
   color: var(--muted-strong);
   padding: 2px 8px;
   font-size: 12px;
@@ -222,16 +251,21 @@
   min-height: 28px;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
   padding: 4px 9px;
   font-size: 12px;
   font-weight: 700;
 }
 
 .sourceLink {
-  color: var(--accent-strong);
-  background: var(--surface);
+  color: #ffffff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.sourceLink:hover {
+  background: var(--accent-strong);
 }
 
 .disabledLink {
@@ -259,7 +293,7 @@
 }
 
 .detailGrid dt {
-  color: var(--muted);
+  color: var(--muted-strong);
   font-size: 12px;
   font-weight: 700;
 }
@@ -311,11 +345,13 @@
 @media (max-width: 1180px) {
   .inbox {
     grid-template-columns: 240px minmax(0, 1fr);
+    overflow: visible;
   }
 
   .detailPreview {
     position: static;
     grid-column: 1 / -1;
+    height: auto;
   }
 }
 
@@ -327,6 +363,7 @@
   .filters,
   .detailPreview {
     position: static;
+    height: auto;
   }
 
   .cardTitleRow {

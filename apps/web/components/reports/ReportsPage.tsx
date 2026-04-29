@@ -1,7 +1,6 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import { formatDateTime } from "../../lib/format";
@@ -29,8 +28,8 @@ export function ReportsPage() {
   if (!projectId) {
     return (
       <EmptyState
-        description="Select a project to export markdown or csv reports."
-        title="No project selected"
+        description="请选择项目以导出 Markdown 或 CSV 报告。"
+        title="请选择项目"
       />
     );
   }
@@ -78,27 +77,29 @@ export function ReportsPage() {
   const loadingFormat = state.status === "loading" ? state.format : null;
 
   return (
-    <section style={{ display: "grid", gap: 16 }}>
-      <header style={{ display: "grid", gap: 4 }}>
-        <p className="sectionLabel">Reports</p>
-        <h1 style={{ fontSize: 24, lineHeight: 1.2, margin: 0 }}>Report exports</h1>
-        <p className="stateText" style={{ maxWidth: 760 }}>
-          Export markdown and csv reports with source_url preserved from the backend response.
-        </p>
+    <section className="detailPage">
+      <header className="pageHeader">
+        <div>
+          <p className="pageEyebrow">报告导出</p>
+          <h1 className="pageTitle">报告导出</h1>
+          <p className="pageSubtitle">
+            导出 Markdown 和 CSV 报告，并保留后端返回的 source_url。
+          </p>
+        </div>
       </header>
 
-      <section style={panelStyle}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+      <section className="surfacePanel">
+        <div className="detailActions">
           <Button
             disabled={loadingFormat !== null}
             onClick={exportMarkdown}
             type="button"
             variant="primary"
           >
-            {loadingFormat === "markdown" ? "Exporting markdown" : "Export markdown"}
+            {loadingFormat === "markdown" ? "正在导出 Markdown" : "Markdown 导出"}
           </Button>
           <Button disabled={loadingFormat !== null} onClick={exportCsv} type="button">
-            {loadingFormat === "csv" ? "Exporting csv" : "Export csv"}
+            {loadingFormat === "csv" ? "正在导出 CSV" : "CSV 导出"}
           </Button>
           <Button
             disabled={state.status !== "markdown" || loadingFormat !== null}
@@ -106,41 +107,41 @@ export function ReportsPage() {
             type="button"
             variant="secondary"
           >
-            Download markdown
+            下载 Markdown
           </Button>
         </div>
       </section>
 
       {state.status === "error" ? (
-        <ErrorState error={state.error} title="Unable to export report" />
+        <ErrorState error={state.error} title="无法导出报告" />
       ) : null}
 
       {state.status === "markdown" ? (
-        <section style={panelStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-            <h2 style={{ fontSize: 16, margin: 0 }}>Markdown preview</h2>
+        <section className="surfacePanel">
+          <div className="pageHeader">
+            <h2 className="opportunityCardTitle">Markdown 预览</h2>
             <span className="selectorMeta">
-              Generated {formatDateTime(state.report.generated_at)}
+              生成时间 {formatDateTime(state.report.generated_at)}
             </span>
           </div>
           <textarea
-            aria-label="Markdown preview"
+            aria-label="Markdown 预览"
             readOnly
             spellCheck={false}
-            style={previewStyle}
+            className="reportsPreview"
             value={state.report.content}
           />
         </section>
       ) : null}
 
       {state.status === "csv" ? (
-        <section style={panelStyle}>
-          <h2 style={{ fontSize: 16, margin: 0 }}>CSV export</h2>
+        <section className="surfacePanel">
+          <h2 className="opportunityCardTitle">CSV 导出</h2>
           <p className="stateText">
-            Downloaded {state.report.filename || fallbackCsvFilename(currentProjectId)}. Generated{" "}
-            {formatDateTime(state.report.generated_at)}.
+            已下载 {state.report.filename || fallbackCsvFilename(currentProjectId)}。生成时间{" "}
+            {formatDateTime(state.report.generated_at)}。
           </p>
-          <pre style={csvPreviewStyle}>{state.report.content}</pre>
+          <pre className="csvPreview">{state.report.content}</pre>
         </section>
       ) : null}
     </section>
@@ -174,40 +175,3 @@ function fallbackCsvFilename(projectId: string): string {
 function fallbackMarkdownFilename(projectId: string): string {
   return `signalforge-report-${projectId}.md`;
 }
-
-const panelStyle: CSSProperties = {
-  display: "grid",
-  gap: 12,
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--surface)",
-  padding: 16
-};
-
-const previewStyle: CSSProperties = {
-  minHeight: 360,
-  width: "100%",
-  resize: "vertical",
-  border: "1px solid var(--border-strong)",
-  borderRadius: 6,
-  color: "var(--text)",
-  background: "var(--surface-subtle)",
-  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-  fontSize: 13,
-  lineHeight: 1.55,
-  padding: 12
-};
-
-const csvPreviewStyle: CSSProperties = {
-  maxHeight: 260,
-  overflow: "auto",
-  margin: 0,
-  border: "1px solid var(--border-strong)",
-  borderRadius: 6,
-  background: "var(--surface-subtle)",
-  color: "var(--text)",
-  fontSize: 12,
-  lineHeight: 1.5,
-  padding: 12,
-  whiteSpace: "pre"
-};
