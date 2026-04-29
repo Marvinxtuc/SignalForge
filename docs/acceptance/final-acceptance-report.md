@@ -2,7 +2,7 @@
 
 Status: NOT_STARTED
 Phase: Phase -1 Governance Bootstrap
-Current workstream: Phase 1 Data Model
+Current workstream: Phase 2 Backend API
 This document is a skeleton and does not represent final MVP acceptance.
 
 ## Summary
@@ -15,6 +15,7 @@ Final MVP acceptance has not started.
 - Phase -1 SOP Marker Rectification: PASS
 - Phase 0 Infrastructure: PASS
 - Phase 1 Data Model: PASS
+- Phase 2 Backend API: PASS
 
 Phase 0 evidence:
 
@@ -43,6 +44,24 @@ Phase 1 evidence:
 - Status: Phase 1 PASS.
 
 Phase 1 scope is limited to models, migrations, seed, and validation. Phase 2 implements business APIs.
+
+Phase 2 evidence:
+
+- Backend API routes for projects, keywords, collection jobs/logs, signals, clusters, opportunities, reports, and settings: PASS.
+- `POST /api/projects/{project_id}/collect` creates a pending job only and reports connector execution as unavailable until a later phase: PASS.
+- API responses do not expose token, secret, or `encrypted_payload` fields: PASS.
+- Signals and reports preserve `source_url`: PASS.
+- API tests and `scripts/validate_backend_api.py` pass in container mode: PASS.
+- Governance validation and no-secrets validation pass: PASS.
+
+Phase 2 status is PASS after main-agent local validation. This is not final MVP acceptance.
+
+Later phase ownership:
+
+- Phase 3: Connector Abstraction.
+- Phase 4: P0 Connectors for Reddit and Product Hunt.
+- Phase 5: Processing Pipeline.
+- Phase 6: Frontend MVP.
 
 ## Scope
 

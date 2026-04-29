@@ -60,9 +60,34 @@ Status: PASS after local container-mode validation.
 - Phase 1 limited to models, migrations, seed, and validation.
 - Phase 2 owns business API implementation.
 
+## Phase 2 Backend API Checklist
+
+Status: PASS.
+
+- Health API reports Phase 2 status: PASS
+- Projects CRUD: PASS
+- Keywords CRUD: PASS
+- Collection job pending creation without connector execution: PASS
+- Collection logs list: PASS
+- Signals list and `min_pain_level` filter: PASS
+- Signal feedback and status updates: PASS
+- Clusters list, detail, update, archive: PASS
+- Opportunities list, detail, create, update, archive: PASS
+- Markdown report export with `source_url`: PASS
+- CSV report export with `source_url`: PASS
+- Settings platform status: PASS
+- Credential status excludes `encrypted_payload`: PASS
+- API response token leak check: PASS
+- Unified error response: PASS
+- Pagination response: PASS
+- pytest: PASS
+- `scripts/validate_backend_api.py`: PASS
+- Governance validation and no-secrets validation: PASS
+
+Phase 2 is backend API only. Connector abstraction starts in Phase 3, P0 connectors start in Phase 4, processing starts in Phase 5, and frontend MVP starts in Phase 6.
+
 ## Later Phase Items
 
-- Business APIs start after Phase 1.
 - Connector and product acceptance checks start in later phases.
 - Signal Inbox and Opportunity Board start in Phase 6 Frontend MVP.
 

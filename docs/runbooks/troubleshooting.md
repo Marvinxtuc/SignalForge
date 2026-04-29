@@ -107,3 +107,37 @@ docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/vali
 ```
 
 Confirm that seeded signals preserve `source_url`. `source_url` is the evidence traceability baseline for Phase 1 and later acceptance review.
+
+## Phase 2 API tests fail
+
+Run:
+
+```bash
+docker compose -f infra/docker-compose.yml run --rm api pytest
+```
+
+Confirm migrations and demo seed have run before tests:
+
+```bash
+docker compose -f infra/docker-compose.yml run --rm api alembic upgrade head
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/seed_demo_data.py
+```
+
+Do not fix Phase 2 test failures by adding connectors, processing jobs, LLM calls, embedding provider calls, or frontend code.
+
+## Phase 2 backend validation fails
+
+Run:
+
+```bash
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_backend_api.py
+```
+
+Expected Phase 2 behavior:
+
+- API reads and writes local database records only.
+- `POST /api/projects/{project_id}/collect` returns connector execution as unavailable until a later phase.
+- Settings responses do not include `encrypted_payload`.
+- Reports and signals preserve `source_url`.
+
+If the failure is related to connector execution, external API access, LLM calls, or frontend behavior, treat it as scope drift rather than a Phase 2 requirement.

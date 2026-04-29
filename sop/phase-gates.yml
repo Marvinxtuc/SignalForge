@@ -56,14 +56,27 @@ phases:
     required_outputs:
       - projects_api
       - keywords_api
+      - collection_jobs_api
+      - collection_logs_api
       - signals_api
       - clusters_api
       - opportunities_api
       - reports_api
       - settings_api
+      - api_tests
+      - backend_api_validation
     gates:
       - api_gate
+      - code_gate
+      - docs_gate
       - no_token_leak_gate
+    notes:
+      - Phase 2 implements Backend API only.
+      - POST collect creates a pending job only and must not execute connectors.
+      - Phase 3 owns connector abstraction.
+      - Phase 4 owns P0 connectors.
+      - Phase 5 owns processing pipeline.
+      - Phase 6 owns frontend MVP.
 
   phase_3_connector_abstraction:
     required_outputs:

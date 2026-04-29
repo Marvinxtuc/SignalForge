@@ -1,9 +1,9 @@
 # Data Flow
 
-Status: PHASE_1_DATA_MODEL_VALIDATED
-Phase: Phase 1 Data Model
+Status: PHASE_2_BACKEND_API_VALIDATED
+Phase: Phase 2 Backend API
 
-This document records the Phase 1 Data Model target flow. It does not represent final MVP acceptance.
+This document records the Phase 2 Backend API data access flow. It does not represent final MVP acceptance.
 
 ## MVP Flow
 
@@ -40,3 +40,26 @@ Product Hunt permission limits can degrade safely in later connector phases if l
 ## Phase Ownership
 
 Phase 1 implements only models, migrations, demo seed, and data validation for the flow above. Phase 2 implements the business API surface that exposes these records.
+
+## Phase 2 API Data Flow
+
+Phase 2 exposes the Phase 1 data model through backend APIs:
+
+```text
+projects / keywords -> API CRUD
+raw_items + signals -> Signals API with source_url evidence
+clusters -> Clusters API
+signals or clusters -> Opportunities API
+signals + clusters + opportunities -> Reports API
+platform_credentials -> Settings status API without encrypted_payload
+```
+
+Collection is not active in Phase 2:
+
+```text
+POST /api/projects/{project_id}/collect -> collection_jobs(status=pending) -> collection_logs(explanatory status)
+```
+
+No connector runs in Phase 2, and no `raw_items` are created by the collect endpoint. Real connector execution begins only after Phase 3 Connector Abstraction and Phase 4 P0 Connectors are explicitly approved.
+
+Reports in Phase 2 are database-only exports. They must preserve `source_url` and must not include token, secret, or `encrypted_payload` fields.

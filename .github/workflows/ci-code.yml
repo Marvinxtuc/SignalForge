@@ -10,11 +10,11 @@ permissions:
   contents: read
 
 jobs:
-  phase-0-code:
+  phase-2-backend-api:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Phase 0 file structure check
+      - name: Phase 2 file structure check
         run: |
           test -f README.md
           test -f .env.example
@@ -23,14 +23,43 @@ jobs:
           test -f .github/pull_request_template.md
           test -f apps/api/app/main.py
           test -f apps/api/Dockerfile
-          test -f apps/web/package.json
-          test -f apps/web/Dockerfile
           test -f infra/docker-compose.yml
           test -f scripts/wait_for_services.py
-          echo "Phase 0 code gate checks infrastructure skeleton only. Business tests will be enabled in later phases."
+          test -f scripts/validate_backend_api.py
+          echo "Phase 2 code gate validates Backend API only. Connector, processing, and frontend acceptance are later phases."
       - name: Python syntax check
         run: |
-          python3 -m py_compile apps/api/app/main.py apps/api/app/config.py scripts/wait_for_services.py
-      - name: Web package manifest check
+          python3 -m compileall apps/api/app scripts
+      - name: Governance validation
         run: |
-          node -e "const pkg=require('./apps/web/package.json'); if (!pkg.scripts || !pkg.scripts.build) process.exit(1);"
+          python3 scripts/validate_docs.py
+          python3 scripts/validate_acceptance.py
+          python3 scripts/validate_no_secrets.py
+      - name: Build Docker images
+        run: |
+          docker compose -f infra/docker-compose.yml build
+      - name: Start services
+        run: |
+          docker compose -f infra/docker-compose.yml up -d
+      - name: Wait for services
+        run: |
+          python3 scripts/wait_for_services.py
+      - name: Apply migrations
+        run: |
+          docker compose -f infra/docker-compose.yml run --rm api alembic upgrade head
+      - name: Seed demo data
+        run: |
+          docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/seed_demo_data.py
+      - name: Validate data model
+        run: |
+          docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_data_model.py
+      - name: API tests
+        run: |
+          docker compose -f infra/docker-compose.yml run --rm api pytest
+      - name: Backend API validation
+        run: |
+          docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_backend_api.py
+      - name: Docker Compose down
+        if: always()
+        run: |
+          docker compose -f infra/docker-compose.yml down

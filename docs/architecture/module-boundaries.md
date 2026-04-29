@@ -1,9 +1,9 @@
 # Module Boundaries
 
-Status: PHASE_1_DATA_MODEL_VALIDATED
-Phase: Phase 1 Data Model
+Status: PHASE_2_BACKEND_API_VALIDATED
+Phase: Phase 2 Backend API
 
-This document records module boundaries for Phase 1 Data Model and later phases. It does not represent final MVP acceptance.
+This document records module boundaries for Phase 2 Backend API and later phases. It does not represent final MVP acceptance.
 
 ## Planned Boundaries
 
@@ -54,3 +54,30 @@ Phase 1 must not implement:
 - Production collection logic
 
 Phase 2 Backend API owns business API implementation for projects, keywords, signals, clusters, opportunities, reports, and settings.
+
+## Phase 2 Boundary
+
+Phase 2 may implement:
+
+- Backend API routes for projects, keywords, collection jobs, collection logs, signals, clusters, opportunities, reports, and settings.
+- Pydantic schemas, service-layer CRUD, pagination, filtering, and unified error responses.
+- API tests and backend API validation.
+- Settings status reads that do not return `encrypted_payload`, token, or secret values.
+- Reports generated only from existing database records.
+
+Phase 2 collection behavior is intentionally degraded: `POST /api/projects/{project_id}/collect` may create a `pending` job and explanatory log, but it must not execute a connector or create `raw_items`.
+
+Phase 2 must not implement:
+
+- Connector abstraction or platform connectors.
+- Reddit or Product Hunt API calls.
+- Processing Pipeline jobs, LLM calls, embedding provider calls, or clustering algorithms.
+- Frontend MVP pages such as Signal Inbox, Dashboard, or Opportunity Board.
+- X or Discord implementation.
+
+## Later Boundaries
+
+- Phase 3 implements Connector Abstraction.
+- Phase 4 implements P0 Connectors for Reddit and Product Hunt.
+- Phase 5 implements Processing Pipeline.
+- Phase 6 implements Frontend MVP.

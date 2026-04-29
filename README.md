@@ -1,24 +1,25 @@
 # SignalForge
 
-Status: Phase 1 Data Model validated
+Status: Phase 2 Backend API validated
 
 SignalForge is a local-first VOC Radar MVP. The MVP goal is to prove that the system can surface high-value, actionable user demand signals, not to maximize collection volume or platform coverage.
 
 ## Current Phase
 
-This repository is currently in Phase 1: Data Model, validated locally through Docker container-mode migration, seed, and data checks.
+This repository is currently in Phase 2: Backend API implementation.
 
-Phase 0 Infrastructure is recorded as PASS. Phase 1 is limited to data model work: models, migrations, demo seed, and data validation.
+Phase 0 Infrastructure is recorded as PASS. Phase 1 Data Model is recorded as PASS. Phase 2 is limited to backend API routes, schemas, services, tests, validation, and API documentation.
 
 Not included in this phase:
 
 - Connector implementation
 - Processing Pipeline
-- UI pages
-- Business APIs
+- Frontend MVP or UI pages
 - Celery task logic
+- Real platform collection
+- LLM or embedding provider calls
 
-Business APIs start in Phase 2 Backend API.
+Phase 3 owns Connector Abstraction. Phase 4 owns P0 Connectors. Phase 5 owns Processing Pipeline. Phase 6 owns Frontend MVP.
 
 ## Platform Scope
 
@@ -92,6 +93,30 @@ raw_items -> signals -> clusters -> opportunities
 
 `source_url` is the evidence traceability baseline and must be preserved from source evidence through signal review and opportunity evaluation.
 
+## Phase 2 Backend API Commands
+
+Phase 2 uses the existing Phase 1 schema and demo seed data. It exposes backend APIs only; it does not execute connectors, processing jobs, LLM calls, embedding generation, or frontend product UI.
+
+Start infrastructure, apply migrations, seed demo data, and run API checks:
+
+```bash
+docker compose -f infra/docker-compose.yml up -d
+python3 scripts/wait_for_services.py
+docker compose -f infra/docker-compose.yml run --rm api alembic upgrade head
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/seed_demo_data.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_data_model.py
+docker compose -f infra/docker-compose.yml run --rm api pytest
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_backend_api.py
+docker compose -f infra/docker-compose.yml down
+```
+
+Expected Phase 2 behavior:
+
+- `GET /health` reports `phase-2-backend-api`.
+- Project, keyword, signal, cluster, opportunity, collection, report, and settings APIs read or update local database state only.
+- `POST /api/projects/{project_id}/collect` creates a pending job and does not execute a connector.
+- Reports preserve `source_url` and must not expose token or credential payload data.
+
 ## Governance Validation
 
 Run:
@@ -106,7 +131,7 @@ Do not commit `.env` or real API credentials. `.env.example` must contain only v
 
 ## Next Phase
 
-Phase 2 Backend API requires explicit approval. Do not add business API routes in Phase 1; `apps/api/app/main.py` remains limited to `/health`.
+Phase 3 Connector Abstraction requires explicit approval. Do not implement connectors, processing, frontend MVP, X, or Discord in Phase 2.
 
 ## Canonical v2.1 Phase Markers
 
