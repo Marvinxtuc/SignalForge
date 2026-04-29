@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Badge } from "../ui/Badge";
 import { formatDateTime, formatNumber, formatScore } from "../../lib/format";
+import { buildAllowedQueryHref } from "../../lib/query";
 import type { Opportunity } from "../../lib/types";
 import { formatPlatformDistribution, opportunityStatusLabel } from "./opportunityView";
 
@@ -10,9 +14,12 @@ type OpportunityCardProps = {
 };
 
 export function OpportunityCard({ opportunity, projectId }: OpportunityCardProps) {
-  const detailHref = `/opportunities/${encodeURIComponent(opportunity.id)}?projectId=${encodeURIComponent(
-    projectId
-  )}`;
+  const searchParams = useSearchParams();
+  const detailHref = buildAllowedQueryHref(
+    `/opportunities/${encodeURIComponent(opportunity.id)}`,
+    searchParams,
+    { projectId }
+  );
 
   return (
     <article className="opportunityCard">

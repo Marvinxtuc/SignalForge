@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { api, apiRequest } from "../../lib/api";
 import { formatDateTime, formatNumber, formatScore } from "../../lib/format";
+import { buildAllowedQueryHref } from "../../lib/query";
 import type { Opportunity, OpportunityStatus } from "../../lib/types";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
@@ -24,6 +25,7 @@ type OpportunityDetailProps = {
 
 export function OpportunityDetail({ initialOpportunity, projectId }: OpportunityDetailProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [opportunity, setOpportunity] = useState(initialOpportunity);
   const [error, setError] = useState<unknown>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
@@ -65,7 +67,7 @@ export function OpportunityDetail({ initialOpportunity, projectId }: Opportunity
   }
 
   const selectedStatus = isOpportunityStatus(opportunity.status) ? opportunity.status : "new";
-  const backHref = projectId ? `/opportunities?projectId=${encodeURIComponent(projectId)}` : "/opportunities";
+  const backHref = buildAllowedQueryHref("/opportunities", searchParams, { projectId });
 
   return (
     <section className="detailPage">

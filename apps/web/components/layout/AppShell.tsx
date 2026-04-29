@@ -9,6 +9,8 @@ import { Navigation } from "./Navigation";
 import { ProjectSelector } from "./ProjectSelector";
 
 type ProjectSelectorState = {
+  backendStatus: "connected" | "partial" | "unavailable";
+  backendStatusLabel: string;
   projects: Project[];
   selectedProjectId: string | null;
   selectedProjectName: string | null;
@@ -17,6 +19,8 @@ type ProjectSelectorState = {
 };
 
 const INITIAL_PROJECT_STATE: ProjectSelectorState = {
+  backendStatus: "unavailable",
+  backendStatusLabel: "后端不可用",
   projects: [],
   selectedProjectId: null,
   selectedProjectName: null,
@@ -39,6 +43,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         if (active) {
           setProjectState({
             ...INITIAL_PROJECT_STATE,
+            backendStatus: "unavailable",
+            backendStatusLabel: "后端不可用",
             errorMessage: "无法从 SignalForge 后端加载项目。"
           });
         }
@@ -56,9 +62,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           <p className="brandName">信号洞察雷达</p>
           <span className="brandPhase">前端 MVP</span>
         </div>
-        <div className="statusStrip" aria-label="后端目标">
-          <span className="statusDot" aria-hidden="true" />
-          后端 API 已就绪
+        <div className="statusStrip" aria-label="后端状态">
+          <span
+            className="statusDot"
+            style={{ background: BACKEND_STATUS_COLOR[projectState.backendStatus] }}
+            aria-hidden="true"
+          />
+          {projectState.backendStatusLabel}
         </div>
       </header>
       <aside className="sidebar" aria-label="工作区导航">
@@ -95,29 +105,69 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 async function getProjectSelectorState(): Promise<ProjectSelectorState> {
-  try {
-    const response = await api.projects.list({ page_size: 100 });
-    const projects = response.items;
+  const [healthResult, projectsResult] = await Promise.allSettled([
+    api.health(),
+    api.projects.list({ page_size: 100 })
+  ]);
+  const healthOk = healthResult.status === "fulfilled";
+  const projectsOk = projectsResult.status === "fulfilled";
+  const backendStatus = getBackendStatus(healthOk, projectsOk);
+
+  if (projectsOk) {
+    const projects = projectsResult.value.items;
     const selected =
       projects.find((project) => project.name === DEFAULT_PROJECT_NAME) ?? projects[0] ?? null;
 
     return {
+      backendStatus,
+      backendStatusLabel: BACKEND_STATUS_LABEL[backendStatus],
       projects,
       selectedProjectId: selected?.id ?? null,
       selectedProjectName: selected?.name ?? null,
       matchedDefaultProject: selected?.name === DEFAULT_PROJECT_NAME,
       errorMessage: null
     };
-  } catch (error) {
-    return {
-      projects: [],
-      selectedProjectId: null,
-      selectedProjectName: null,
-      matchedDefaultProject: false,
-      errorMessage:
-        error instanceof ApiClientError
-          ? `${error.code}: ${error.message}`
-          : "无法从 SignalForge 后端加载项目。"
-    };
   }
+
+  const projectsError = projectsResult.reason;
+
+  return {
+    backendStatus,
+    backendStatusLabel: BACKEND_STATUS_LABEL[backendStatus],
+    projects: [],
+    selectedProjectId: null,
+    selectedProjectName: null,
+    matchedDefaultProject: false,
+    errorMessage:
+      projectsError instanceof ApiClientError
+        ? `${projectsError.code}: ${projectsError.message}`
+        : "无法从 SignalForge 后端加载项目。"
+  };
+}
+
+const BACKEND_STATUS_LABEL: Record<ProjectSelectorState["backendStatus"], string> = {
+  connected: "后端已连接",
+  partial: "后端部分可用",
+  unavailable: "后端不可用"
+};
+
+const BACKEND_STATUS_COLOR: Record<ProjectSelectorState["backendStatus"], string> = {
+  connected: "var(--positive)",
+  partial: "#f59e0b",
+  unavailable: "#ef4444"
+};
+
+function getBackendStatus(
+  healthOk: boolean,
+  projectsOk: boolean
+): ProjectSelectorState["backendStatus"] {
+  if (healthOk && projectsOk) {
+    return "connected";
+  }
+
+  if (healthOk || projectsOk) {
+    return "partial";
+  }
+
+  return "unavailable";
 }

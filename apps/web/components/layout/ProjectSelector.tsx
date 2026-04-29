@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { DEFAULT_PROJECT_NAME, ROUTES } from "../../lib/constants";
+import { buildAllowedQueryHref } from "../../lib/query";
 import type { Project } from "../../lib/types";
 
 type ProjectSelectorProps = {
@@ -33,9 +34,11 @@ export function ProjectSelector({
       return;
     }
 
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("projectId", selectedProjectId);
-    router.replace(`${pathname || ROUTES.signals}?${params.toString()}`);
+    router.replace(
+      buildAllowedQueryHref(pathname || ROUTES.signals, searchParams, {
+        projectId: selectedProjectId
+      })
+    );
   }, [pathname, queryProjectId, router, searchParams, selectedProjectId]);
 
   function handleProjectChange(nextProjectId: string) {
@@ -43,9 +46,11 @@ export function ProjectSelector({
       return;
     }
 
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("projectId", nextProjectId);
-    router.push(`${pathname || ROUTES.signals}?${params.toString()}`);
+    router.push(
+      buildAllowedQueryHref(pathname || ROUTES.signals, searchParams, {
+        projectId: nextProjectId
+      })
+    );
   }
 
   return (
