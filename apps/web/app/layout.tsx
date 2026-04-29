@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { AppShell } from "../components/layout/AppShell";
 import "./styles.css";
 
 export const metadata: Metadata = {
   title: "SignalForge",
-  description: "SignalForge Phase 0 infrastructure shell"
+  description: "SignalForge research workstation"
 };
 
 export default function RootLayout({
@@ -14,7 +15,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AppShell>{children}</AppShell>
+      </body>
     </html>
   );
 }

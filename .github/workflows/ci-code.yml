@@ -10,11 +10,11 @@ permissions:
   contents: read
 
 jobs:
-  phase-5-processing-pipeline:
+  phase-6-frontend-mvp:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Phase 5 file structure check
+      - name: Phase 6 file structure check
         run: |
           test -f README.md
           test -f .env.example
@@ -29,6 +29,8 @@ jobs:
           test -f scripts/validate_connector_abstraction.py
           test -f scripts/validate_p0_connectors.py
           test -f scripts/validate_processing_pipeline.py
+          test -f scripts/validate_frontend_mvp.py
+          test -f apps/web/package.json
           test -f apps/api/tests/test_connector_base.py
           test -f apps/api/tests/test_connector_registry.py
           test -f apps/api/tests/test_disabled_connector.py
@@ -46,10 +48,21 @@ jobs:
           test -f apps/api/tests/test_processing_clustering.py
           test -f apps/api/tests/test_signal_quality_gate.py
           test -f apps/api/tests/test_processing_pipeline.py
-          echo "Phase 5 code gate validates Processing Pipeline with mock LLM, mock embedding, and fallback only. Real provider tokens, frontend acceptance, X, and Discord are not required."
+          echo "Phase 6 code gate validates Frontend MVP with static checks, optional localhost smoke, web build, and mock-only backend/processing validations. Real provider tokens, Phase 7 final acceptance, X, and Discord are not required."
       - name: Python syntax check
         run: |
           python3 -m compileall apps/api/app scripts
+      - name: Web dependency install
+        working-directory: apps/web
+        run: |
+          npm install --no-audit --no-fund --package-lock=false
+      - name: Web build
+        working-directory: apps/web
+        run: |
+          npm run build
+      - name: Frontend MVP validation
+        run: |
+          python3 scripts/validate_frontend_mvp.py
       - name: Governance validation
         run: |
           python3 scripts/validate_docs.py

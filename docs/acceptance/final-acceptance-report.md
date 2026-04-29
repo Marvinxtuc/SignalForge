@@ -1,14 +1,15 @@
 # Final Acceptance Report
 
-Status: NOT_STARTED
-Phase: Phase -1 Governance Bootstrap
-Current workstream: Phase 5 Processing Pipeline
+Status: PHASE_6_FRONTEND_MVP_PASS
+Phase: Phase 6 Frontend MVP
+Current workstream: Phase 6 Frontend Tests / Docs / CI / Acceptance
 Phase 3 workstream: Connector Abstraction validated
-This document is a skeleton and does not represent final MVP acceptance.
+This document is a Phase 7 final acceptance skeleton and does not represent final MVP acceptance.
+Phase 7 final acceptance compatibility markers: Status: NOT_STARTED; Phase: Phase -1 Governance Bootstrap.
 
 ## Summary
 
-Final MVP acceptance has not started.
+Final MVP acceptance has not started. Phase 6 Frontend MVP has passed its frontend build and validation gates.
 
 ## Phase Status
 
@@ -20,6 +21,7 @@ Final MVP acceptance has not started.
 - Phase 3 Connector Abstraction: PASS
 - Phase 4 P0 Connectors: PASS
 - Phase 5 Processing Pipeline: PASS
+- Phase 6 Frontend MVP: PASS
 
 Phase 0 evidence:
 
@@ -68,7 +70,7 @@ Phase 3 evidence:
 - Real Reddit connector: unavailable until Phase 4.
 - Real Product Hunt connector: unavailable until Phase 4.
 - Processing Pipeline: unavailable until Phase 5.
-- Frontend MVP: unavailable until Phase 6.
+- Frontend MVP: available after Phase 6 PASS.
 - Final MVP acceptance: not started.
 
 Phase 5 evidence:
@@ -86,7 +88,7 @@ Phase 5 evidence:
 - Opportunity Board: not implemented.
 - X connector: not implemented.
 - Discord connector: not implemented.
-- Frontend MVP: unavailable until Phase 6.
+- Frontend MVP: available after Phase 6 PASS.
 - Final MVP acceptance: not started.
 
 Later phase ownership:
@@ -94,6 +96,7 @@ Later phase ownership:
 - Phase 4: P0 Connectors for Reddit and Product Hunt.
 - Phase 5: Processing Pipeline.
 - Phase 6: Frontend MVP.
+- Phase 7: Final testing, acceptance, and release freeze.
 
 Phase 4 evidence:
 
@@ -107,8 +110,23 @@ Phase 4 evidence:
 - X connector: not implemented.
 - Discord connector: not implemented.
 - Processing Pipeline: unavailable until Phase 5.
-- Frontend MVP: unavailable until Phase 6.
+- Frontend MVP: available after Phase 6 PASS.
 - Final MVP acceptance: not started.
+
+Phase 6 evidence:
+
+- Status: PASS.
+- Scope: Frontend MVP pages, frontend build, static validation, optional localhost smoke.
+- Required pages: `/`, `/signals`, `/dashboard`, `/opportunities`, `/logs`, `/settings`, `/reports`.
+- Open Source evidence text: required.
+- High value marker: required.
+- Settings credential safety: must not render `encrypted_payload`, token, or secret material.
+- Reports: markdown and csv controls required.
+- API boundary: frontend calls only the centralized SignalForge backend API client.
+- Forbidden real execution options: `reddit_real`, `product_hunt_real`, `p0_real`, `real_llm`, `real_embedding`, `x_real`, and `discord_real` must remain absent.
+- Web npm build: PASS.
+- `scripts/validate_frontend_mvp.py --require-http`: PASS.
+- Final MVP acceptance: not started; Phase 7 owns final acceptance.
 
 ## Scope
 

@@ -1,9 +1,9 @@
 # Module Boundaries
 
-Status: PHASE_5_PROCESSING_PIPELINE_PASS
-Phase: Phase 5 Processing Pipeline
+Status: PHASE_6_FRONTEND_MVP_PASS
+Phase: Phase 6 Frontend MVP
 
-This document records module boundaries through Phase 5 Processing Pipeline and later phases. It does not represent final MVP acceptance.
+This document records module boundaries through Phase 6 Frontend MVP completion. It does not represent Phase 7 final MVP acceptance.
 
 ## Planned Boundaries
 
@@ -148,6 +148,27 @@ Phase 5 must not implement:
 
 Phase 5 is Processing Pipeline only and is not final MVP acceptance.
 
+## Phase 6 Boundary
+
+Phase 6 may implement:
+
+- Frontend pages for Signal Inbox, Dashboard, Opportunity Board, Logs, Settings, and Reports.
+- A centralized frontend API client that calls only SignalForge backend-relative paths.
+- UI evidence links labeled with Open Source text.
+- High value signal markers for `pain_level >= 70` and `signal_confidence >= 60` views.
+- Report controls for markdown and csv export.
+- Frontend build, static validation, and optional localhost smoke checks.
+
+Phase 6 must not implement:
+
+- Backend business logic, service changes, database migrations, or data migrations.
+- X or Discord connectors.
+- Real provider execution options in the UI: `reddit_real`, `product_hunt_real`, `p0_real`, `real_llm`, `real_embedding`, `x_real`, or `discord_real`.
+- Token persistence or rendering, including `encrypted_payload` in Settings.
+- Phase 7 final MVP acceptance, release freeze, or tag acceptance.
+
+Phase 6 is Frontend MVP only and is not final MVP acceptance.
+
 ## Later Boundaries
 
-- Phase 6 implements Frontend MVP.
+- Phase 7 performs final testing, acceptance, and release freeze.

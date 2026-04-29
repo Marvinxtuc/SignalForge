@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.errors import ApiError, api_error_handler, http_exception_handler, validation_error_handler
 from app.api.routes import (
@@ -16,6 +17,13 @@ from app.api.routes import (
 )
 
 app = FastAPI(title="SignalForge API", version="0.1.0-phase-2")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+)
 app.add_exception_handler(ApiError, api_error_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_error_handler)

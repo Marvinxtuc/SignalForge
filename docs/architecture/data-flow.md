@@ -1,9 +1,9 @@
 # Data Flow
 
-Status: PHASE_5_PROCESSING_PIPELINE_PASS
-Phase: Phase 5 Processing Pipeline
+Status: PHASE_6_FRONTEND_MVP_PASS
+Phase: Phase 6 Frontend MVP
 
-This document records the data access and processing flow through Phase 5 Processing Pipeline. It does not represent final MVP acceptance.
+This document records the data access and processing flow through Phase 6 Frontend MVP completion. It does not represent Phase 7 final MVP acceptance.
 
 ## MVP Flow
 
@@ -18,6 +18,7 @@ flowchart TD
   G --> H[clusters]
   H --> I[opportunities]
   I --> J[Signal Inbox and Opportunity Board]
+  G --> K[Dashboard Logs Settings Reports]
 ```
 
 ## Phase 1 Data Model Flow
@@ -154,3 +155,30 @@ Phase 5 output constraints:
 - Signal Inbox, Dashboard, Opportunity Board, X, and Discord remain unimplemented until later approved phases.
 
 Phase 5 is Processing Pipeline only and is not final MVP acceptance.
+
+## Phase 6 Frontend MVP Flow
+
+Phase 6 renders the approved frontend views over the existing backend APIs:
+
+```text
+Projects API -> project selector
+Signals API -> Signal Inbox with high value markers and Open Source evidence links
+Processing Summary API -> Dashboard metrics and top high value signals
+Opportunities API -> Opportunity Board
+Collection Logs API -> Logs page
+Settings APIs -> platform and credential status without encrypted_payload
+Reports APIs -> markdown and csv export controls
+```
+
+Phase 6 frontend source must call the backend through the centralized SignalForge API client only. Direct browser calls to Reddit, Product Hunt, X, Discord, LLM providers, embedding providers, credential endpoints, or secret endpoints are forbidden.
+
+Phase 6 output constraints:
+
+- Required routes: `/`, `/signals`, `/dashboard`, `/opportunities`, `/logs`, `/settings`, and `/reports`.
+- Open Source text must be visible in the frontend source for evidence traceability.
+- High value signal markers must be present for review workflows.
+- Settings must not render `encrypted_payload`, token, or secret material.
+- Reports must expose markdown and csv exports.
+- Real execution options remain unavailable in frontend source: `reddit_real`, `product_hunt_real`, `p0_real`, `real_llm`, `real_embedding`, `x_real`, and `discord_real`.
+
+Phase 6 is Frontend MVP only and is not Phase 7 final MVP acceptance.

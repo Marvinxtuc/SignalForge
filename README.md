@@ -1,26 +1,25 @@
 # SignalForge
 
-Status: Phase 5 Processing Pipeline PASS
+Status: Phase 6 Frontend MVP PASS
 
 SignalForge is a local-first VOC Radar MVP. The MVP goal is to prove that the system can surface high-value, actionable user demand signals, not to maximize collection volume or platform coverage.
 
 ## Current Phase
 
-This repository is currently in Phase 5: Processing Pipeline PASS.
+This repository is currently in Phase 6: Frontend MVP PASS.
 
-Phase 0 Infrastructure is recorded as PASS. Phase 1 Data Model is recorded as PASS. Phase 2 Backend API is recorded as PASS. Phase 3 Connector Abstraction is recorded as PASS. Phase 4 P0 Connectors is recorded as PASS. Phase 5 Processing Pipeline is recorded as PASS with mock LLM, mock embedding, deterministic fallback, Signal Quality Gate, and mock-only CI validation.
+Phase 0 Infrastructure is recorded as PASS. Phase 1 Data Model is recorded as PASS. Phase 2 Backend API is recorded as PASS. Phase 3 Connector Abstraction is recorded as PASS. Phase 4 P0 Connectors is recorded as PASS. Phase 5 Processing Pipeline is recorded as PASS with mock LLM, mock embedding, deterministic fallback, Signal Quality Gate, and mock-only CI validation. Phase 6 Frontend MVP is recorded as PASS for Signal Inbox, Dashboard, Opportunity Board, Logs, Settings, Reports, frontend build, and frontend MVP validation.
 
 Not included in this phase:
 
-- Frontend MVP or UI pages
-- Signal Inbox, Dashboard, or Opportunity Board UI
 - Celery task logic
 - X or Discord connectors
 - CI real platform collection
 - CI real LLM or embedding provider calls
 - Browser automation, scraping, simulated login, automated posting, commenting, or messaging
+- Phase 7 final MVP acceptance, release freeze, or tag acceptance
 
-Phase 4 owns P0 Connectors only. Phase 5 owns Processing Pipeline. Phase 6 owns Frontend MVP.
+Phase 4 owns P0 Connectors only. Phase 5 owns Processing Pipeline. Phase 6 owns Frontend MVP. Phase 7 owns final testing, acceptance, and release freeze.
 
 CI uses mocked Reddit and Product Hunt responses only and does not require real platform tokens. Manual smoke is local/manual only and is disabled unless `SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE=true` is set. Manual smoke does not write `raw_items` unless `SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE=true` is also set.
 
@@ -29,6 +28,8 @@ CI uses mocked Reddit and Product Hunt responses only and does not require real 
 Phase 4 is not final MVP acceptance.
 
 Phase 5 is not final MVP acceptance. It must prove `raw_items -> signals -> embeddings -> clusters -> opportunities` through mock-first and fallback-first processing, not through real provider dependency.
+
+Phase 6 is not final MVP acceptance. It must prove the frontend can render the approved MVP pages, highlight high value signals, preserve Open Source evidence links, expose markdown/csv report controls, keep settings credential-safe, and use only the SignalForge backend API client.
 
 ## Platform Scope
 
@@ -241,9 +242,33 @@ SIGNALFORGE_ALLOW_REAL_LLM_SMOKE=true docker compose -f infra/docker-compose.yml
 SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE=true docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/manual_embedding_smoke.py
 ```
 
+## Phase 6 Frontend MVP Commands
+
+Phase 6 validates frontend build and static acceptance boundaries. It does not run Phase 7 final acceptance.
+
+```bash
+cd apps/web
+npm install --no-audit --no-fund --package-lock=false
+npm run build
+cd ../..
+python3 scripts/validate_frontend_mvp.py
+```
+
+If `http://localhost:3000` is reachable, `scripts/validate_frontend_mvp.py` also performs optional HTTP smoke checks for `/`, `/signals`, `/dashboard`, `/opportunities`, `/logs`, `/settings`, and `/reports`.
+
+Expected Phase 6 behavior:
+
+- Required frontend pages exist.
+- The UI includes Open Source evidence text and a high value marker.
+- Settings does not render `encrypted_payload`.
+- Reports expose markdown and csv export controls.
+- The frontend API client accepts only SignalForge backend-relative paths.
+- Forbidden real execution options remain absent: `reddit_real`, `product_hunt_real`, `p0_real`, `real_llm`, `real_embedding`, `x_real`, and `discord_real`.
+- No token-like values are present in frontend source.
+
 ## Next Phase
 
-Phase 6 Frontend MVP requires explicit approval. Do not implement Signal Inbox, Dashboard, Opportunity Board, X, or Discord in Phase 5.
+Phase 7 Testing / Acceptance / Release Freeze requires explicit approval. Do not mark Phase 6 as final MVP acceptance completed.
 
 ## Canonical v2.1 Phase Markers
 

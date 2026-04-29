@@ -1,7 +1,7 @@
 # Troubleshooting Runbook
 
-Status: PHASE-1_SKELETON
-Phase: Phase -1 Governance Bootstrap
+Status: PHASE_6_FRONTEND_MVP_PASS
+Phase: Phase 6 Frontend MVP
 
 ## Validation Fails
 
@@ -175,7 +175,7 @@ Expected Phase 3 collect behavior:
 - `POST /api/projects/{project_id}/collect` supports only `mock`, `disabled_only`, and `safe_disabled`.
 - Real platform connectors are unavailable until Phase 4.
 - Processing Pipeline is unavailable until Phase 5.
-- Frontend MVP is unavailable until Phase 6.
+- Frontend MVP is available after Phase 6 PASS.
 
 If validation requires real platform tokens or external API access, treat it as scope drift.
 
@@ -286,3 +286,42 @@ SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE=true
 ```
 
 If either flag is missing, the manual smoke scripts should exit with a disabled explanation. This is expected and is not a CI failure. Manual smoke must not print provider tokens or write docs containing provider responses.
+
+## Phase 6 frontend build fails
+
+Run:
+
+```bash
+cd apps/web
+npm install --no-audit --no-fund --package-lock=false
+npm run build
+```
+
+Expected Phase 6 build behavior:
+
+- Next.js builds the frontend without requiring real platform tokens.
+- Build-time code uses `NEXT_PUBLIC_API_BASE_URL` or the default local SignalForge backend URL only.
+- Build failures must not be fixed by changing backend business logic, migrations, connector behavior, or provider credentials.
+
+## Phase 6 frontend validation fails
+
+Run:
+
+```bash
+python3 scripts/validate_frontend_mvp.py
+```
+
+Expected Phase 6 validation behavior:
+
+- Required routes exist: `/`, `/signals`, `/dashboard`, `/opportunities`, `/logs`, `/settings`, and `/reports`.
+- Open Source evidence text is present.
+- High value signal markers are present.
+- Settings does not render `encrypted_payload`.
+- Reports expose markdown and csv controls.
+- Frontend source calls only the centralized SignalForge backend API client.
+- Forbidden real execution options are absent: `reddit_real`, `product_hunt_real`, `p0_real`, `real_llm`, `real_embedding`, `x_real`, and `discord_real`.
+- Token-like values are absent from frontend source.
+
+If `http://localhost:3000` is not reachable, the HTTP smoke portion is skipped by default. Use `--require-http` only when a local web server is expected to be running.
+
+Do not mark Phase 7 final MVP acceptance complete from Phase 6 validation alone.

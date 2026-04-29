@@ -1,10 +1,11 @@
 # Test Report
 
-Status: NOT_STARTED
-Phase: Phase -1 Governance Bootstrap
-Current workstream: Phase 5 Processing Pipeline
+Status: PHASE_6_FRONTEND_MVP_PASS
+Phase: Phase 6 Frontend MVP
+Current workstream: Phase 6 Frontend Tests / Docs / CI / Acceptance
 Phase 3 workstream: Connector Abstraction validated
-This document does not represent final MVP acceptance.
+This document does not represent Phase 7 final MVP acceptance.
+Phase 7 final acceptance compatibility markers: Status: NOT_STARTED; Phase: Phase -1 Governance Bootstrap.
 
 ## Phase Results
 
@@ -16,6 +17,7 @@ This document does not represent final MVP acceptance.
 - Phase 3 Connector Abstraction: PASS
 - Phase 4 P0 Connectors: PASS
 - Phase 5 Processing Pipeline: PASS
+- Phase 6 Frontend MVP: PASS
 
 ## Phase 0 Local Results
 
@@ -239,6 +241,41 @@ Phase 5 evidence after main-agent validation:
 - X / Discord remain unimplemented: REQUIRED
 
 Phase 5 must not implement frontend MVP, X/Discord, real provider CI dependencies, new migrations, or final MVP acceptance.
+
+## Phase 6 Frontend MVP Results
+
+Status: PASS.
+
+Phase 6 owns Frontend MVP routes, frontend build, static validation, and optional localhost smoke. It is not Phase 7 final MVP acceptance.
+
+Executed Phase 6 validation command set:
+
+```bash
+python3 scripts/validate_docs.py
+python3 scripts/validate_acceptance.py
+python3 scripts/validate_no_secrets.py
+cd apps/web
+npm install --no-audit --no-fund --package-lock=false
+npm run build
+cd ../..
+python3 scripts/validate_frontend_mvp.py
+```
+
+Phase 6 evidence:
+
+- Web npm build: PASS
+- `scripts/validate_frontend_mvp.py --require-http`: PASS
+- Required pages `/`, `/signals`, `/dashboard`, `/opportunities`, `/logs`, `/settings`, `/reports`: PASS
+- Open Source evidence text: PASS
+- High value marker: PASS
+- Settings excludes `encrypted_payload`: PASS
+- Reports markdown and csv controls: PASS
+- Frontend API client only calls SignalForge backend-relative paths: PASS
+- Forbidden real execution options absent: PASS
+- Token-like frontend values absent: PASS
+- Optional localhost HTTP smoke if `http://localhost:3000` is reachable: OPTIONAL
+
+Phase 6 must not mark final MVP acceptance complete. Phase 7 owns final acceptance, release freeze, and tag readiness.
 
 ## Canonical v2.1 Phase Markers
 

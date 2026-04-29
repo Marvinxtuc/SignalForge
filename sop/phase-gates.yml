@@ -168,9 +168,17 @@ phases:
       - logs
       - settings
       - reports
+      - frontend_build
+      - frontend_mvp_validation
     gates:
       - frontend_gate
       - ui_acceptance_gate
+    notes:
+      - Phase 6 implements Frontend MVP only.
+      - Phase 6 validates required pages, Open Source evidence text, high value markers, Settings credential safety, and Reports markdown/csv controls.
+      - Frontend API calls must go through the SignalForge backend API client only.
+      - Phase 6 must not add backend business logic, database migrations, X or Discord connectors, provider credentials, or real execution entry options.
+      - Phase 6 is not Phase 7 final MVP acceptance.
 
   phase_7_testing_acceptance_release_freeze:
     required_outputs:

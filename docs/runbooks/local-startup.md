@@ -1,9 +1,9 @@
 # Local Startup Runbook
 
-Status: PHASE_4_P0_CONNECTORS_IN_IMPLEMENTATION
-Phase: Phase 4 P0 Connectors
+Status: PHASE_6_FRONTEND_MVP_PASS
+Phase: Phase 6 Frontend MVP
 
-Phase 0 provides local runtime services for infrastructure smoke testing only.
+Phase 6 uses the local runtime services plus frontend build and validation gates and is recorded as PASS. It is not Phase 7 final MVP acceptance.
 
 ## Services
 
@@ -142,7 +142,7 @@ Expected Phase 3 boundary:
 - `POST /api/projects/{project_id}/collect` supports only `mock`, `disabled_only`, and `safe_disabled`.
 - Real Reddit and Product Hunt connectors remain unavailable until Phase 4.
 - Processing Pipeline remains unavailable until Phase 5.
-- Frontend MVP remains unavailable until Phase 6.
+- Frontend MVP is available after Phase 6 PASS.
 
 ## Phase 4 P0 Connectors Local Execution
 
@@ -196,3 +196,46 @@ Expected Phase 4 boundary:
 - Phase 5 owns Processing Pipeline.
 - Phase 6 owns Frontend MVP.
 - Phase 4 is not final MVP acceptance.
+
+## Phase 6 Frontend MVP Local Execution
+
+Status: PASS.
+
+Start infrastructure if HTTP smoke is desired:
+
+```bash
+docker compose -f infra/docker-compose.yml up -d
+python3 scripts/wait_for_services.py
+```
+
+Build and validate the frontend:
+
+```bash
+cd apps/web
+npm install --no-audit --no-fund --package-lock=false
+npm run build
+cd ../..
+python3 scripts/validate_frontend_mvp.py
+```
+
+If `http://localhost:3000` is reachable, `scripts/validate_frontend_mvp.py` checks:
+
+```text
+/
+/signals
+/dashboard
+/opportunities
+/logs
+/settings
+/reports
+```
+
+Expected Phase 6 boundary:
+
+- Required frontend pages exist.
+- Open Source evidence text and high value markers are present.
+- Settings does not render `encrypted_payload`.
+- Reports expose markdown and csv controls.
+- Frontend requests go through the SignalForge backend API client only.
+- No real execution options or token-like values appear in frontend source.
+- Phase 7 final MVP acceptance remains not started.

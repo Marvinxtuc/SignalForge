@@ -1,9 +1,9 @@
 # Acceptance Checklist
 
-Status: PHASE-1_SKELETON
-Phase: Phase -1 Governance Bootstrap
+Status: PHASE_6_FRONTEND_MVP_PASS
+Phase: Phase 6 Frontend MVP
 
-This checklist is a skeleton and does not represent final MVP acceptance.
+This checklist records Phase 6 frontend gate completion and does not represent Phase 7 final MVP acceptance.
 
 ## Must Pass Later
 
@@ -159,7 +159,29 @@ Status: PASS.
 
 ## Later Phase Items
 
-- Signal Inbox and Opportunity Board start in Phase 6 Frontend MVP.
+- Phase 7 final testing, acceptance, and release freeze remain not started.
+
+## Phase 6 Frontend MVP Checklist
+
+Status: PASS.
+
+- Web npm build: PASS
+- `scripts/validate_frontend_mvp.py --require-http`: PASS
+- Required pages `/`, `/signals`, `/dashboard`, `/opportunities`, `/logs`, `/settings`, `/reports`: PASS
+- Signal Inbox visible: PASS
+- Dashboard visible: PASS
+- Opportunity Board visible: PASS
+- Logs visible: PASS
+- Settings visible without `encrypted_payload`: PASS
+- Reports visible with markdown and csv controls: PASS
+- Open Source evidence text visible: PASS
+- High value signals highlighted: PASS
+- Frontend API client only calls SignalForge backend-relative paths: PASS
+- Forbidden endpoints absent from frontend source: PASS
+- No token-like values in frontend source: PASS
+- Forbidden real execution options absent: PASS
+- Localhost HTTP smoke: PASS
+- Phase 6 is not final MVP acceptance: REQUIRED
 
 ## Canonical v2.1 Phase Markers
 

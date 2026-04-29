@@ -15,6 +15,9 @@ acceptance:
     - open_source_link_visible
     - csv_export_ok
     - markdown_export_ok
+    - frontend_mvp_static_validation_ok
+    - frontend_npm_build_ok
+    - frontend_api_client_backend_only
     - no_token_leak
     - ci_uses_mocked_p0_connector_responses
     - manual_smoke_default_no_raw_items_write
@@ -44,6 +47,9 @@ acceptance:
     - product_hunt_commercial_use_claim_without_permission
     - real_llm_token_required_in_ci
     - real_embedding_token_required_in_ci
+    - frontend_direct_external_api_call
+    - frontend_renders_encrypted_payload
+    - frontend_real_execution_option_present
     - provider_token_in_logs
     - processing_overwrites_archived_opportunity
     - processing_creates_frontend_ui
