@@ -14,6 +14,9 @@ WEB_ROOT = ROOT / "apps" / "web"
 APP_ROOT = WEB_ROOT / "app"
 API_CLIENT = WEB_ROOT / "lib" / "api.ts"
 CONSTANTS = WEB_ROOT / "lib" / "constants.ts"
+QUERY_HELPER = WEB_ROOT / "lib" / "query.ts"
+API_ROUTE_PROXY = APP_ROOT / "api" / "[...path]" / "route.ts"
+SIGNAL_FILTERS = WEB_ROOT / "components" / "signals" / "SignalFilters.tsx"
 
 REQUIRED_ROUTES = ("/", "/signals", "/dashboard", "/opportunities", "/logs", "/settings", "/reports")
 HTTP_SMOKE_ROUTES = REQUIRED_ROUTES
@@ -171,21 +174,35 @@ def validate_api_client_boundary(files: list[Path]) -> None:
         _fail("apps/web/lib/api.ts is missing")
     if not CONSTANTS.is_file():
         _fail("apps/web/lib/constants.ts is missing")
+    if not API_ROUTE_PROXY.is_file():
+        _fail("apps/web/app/api/[...path]/route.ts is missing")
 
     api_text = _read(API_CLIENT)
     constants_text = _read(CONSTANTS)
+    proxy_text = _read(API_ROUTE_PROXY)
 
-    if "API_BASE_URL" not in api_text or "new URL(" not in api_text:
+    if "SERVER_API_BASE_URL" not in api_text or "PUBLIC_API_BASE_URL" not in api_text or "new URL(" not in api_text:
         _fail("API client does not centralize backend URL construction")
     if "invalid_backend_path" not in api_text or "https?:\\/\\/" not in api_text:
         _fail("API client does not reject absolute request paths")
-    if "DEFAULT_API_BASE_URL" not in constants_text or "http://localhost:8000" not in constants_text:
-        _fail("SignalForge backend default URL is missing")
+    if "DEFAULT_SERVER_API_BASE_URL" not in constants_text or "http://api:8000" not in constants_text:
+        _fail("SignalForge server backend default URL is missing")
+    if "api.health" not in api_text and "health:" not in api_text:
+        _fail("API client is missing health helper")
+    if "/api/health" not in api_text or "/health" not in proxy_text:
+        _fail("/api/health proxy mapping is missing")
+    if "/api/${path}" not in proxy_text and "`/api/${path}`" not in proxy_text:
+        _fail("route proxy does not map non-health paths to backend /api/*")
+    for marker in ("cookie", "authorization", "sf_token"):
+        if marker not in proxy_text:
+            _fail(f"route proxy does not block forwarding {marker}")
+    if "NODE_ENV" not in api_text or "production" not in api_text or "localhost" not in api_text or "invalid_public_api_base" not in api_text:
+        _fail("API client is missing production localhost public API base guard")
 
     direct_fetch_files = []
     for path in files:
         text = _read(path)
-        if "fetch(" in text and path != API_CLIENT:
+        if "fetch(" in text and path not in {API_CLIENT, API_ROUTE_PROXY}:
             direct_fetch_files.append(str(path.relative_to(ROOT)))
         if re.search(r"\baxios\b", text):
             direct_fetch_files.append(str(path.relative_to(ROOT)))
@@ -199,6 +216,51 @@ def validate_api_client_boundary(files: list[Path]) -> None:
                 _fail(f"forbidden endpoint marker {marker!r} found in {path.relative_to(ROOT)}")
 
     _pass("API client is limited to the SignalForge backend boundary")
+
+
+def validate_query_helper_usage() -> None:
+    if not QUERY_HELPER.is_file():
+        _fail("apps/web/lib/query.ts is missing")
+
+    query_text = _read(QUERY_HELPER)
+    if "projectId" not in query_text or "sf_token" not in query_text:
+        _fail("query helper does not preserve projectId and sf_token")
+    if re.search(r"ALLOWED_QUERY_KEYS\s*=.*\.\.\.", query_text, re.DOTALL):
+        _fail("query helper allowed keys are not explicit")
+
+    required_users = (
+        WEB_ROOT / "components" / "layout" / "Navigation.tsx",
+        WEB_ROOT / "components" / "layout" / "ProjectSelector.tsx",
+        WEB_ROOT / "components" / "opportunities" / "OpportunityCard.tsx",
+        WEB_ROOT / "components" / "opportunities" / "OpportunityDetail.tsx",
+    )
+    missing = [
+        str(path.relative_to(ROOT))
+        for path in required_users
+        if "buildAllowedQueryHref" not in _read(path)
+    ]
+    if missing:
+        _fail(f"query helper is not used by required frontend components: {', '.join(missing)}")
+
+    _pass("query token helper only preserves approved query values")
+
+
+def validate_signal_platform_filter() -> None:
+    if not SIGNAL_FILTERS.is_file():
+        _fail("SignalFilters.tsx is missing")
+
+    text = _read(SIGNAL_FILTERS)
+    platform_section = re.search(r"<span[^>]*>\s*平台\s*</span>(.*?)</label>", text, re.DOTALL)
+    if not platform_section or "<select" not in platform_section.group(1):
+        _fail("SignalFilters platform control must be a select")
+
+    for value in ("reddit", "product_hunt", "x", "discord"):
+        if f'value="{value}"' not in platform_section.group(1):
+            _fail(f"SignalFilters platform select is missing {value!r}")
+    if "Product Hunt" not in platform_section.group(1):
+        _fail("SignalFilters Product Hunt label is missing")
+
+    _pass("SignalFilters platform select exposes approved values")
 
 
 def validate_forbidden_values(files: list[Path]) -> None:
@@ -265,6 +327,8 @@ def main() -> int:
         validate_required_pages()
         validate_ui_markers(files)
         validate_api_client_boundary(files)
+        validate_query_helper_usage()
+        validate_signal_platform_filter()
         validate_forbidden_values(files)
         validate_optional_http_smoke(args.base_url, args.require_http)
     except ValidationFailure as exc:

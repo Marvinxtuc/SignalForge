@@ -48,13 +48,18 @@ export function SignalFilters({ filters, isDisabled, onChange }: SignalFiltersPr
 
       <label className={styles.field}>
         <span className={styles.fieldLabel}>平台</span>
-        <input
+        <select
           className={styles.input}
           disabled={isDisabled}
           onChange={(event) => updateFilter("platform", event.target.value)}
-          placeholder="全部平台"
           value={filters.platform}
-        />
+        >
+          <option value="">全部平台</option>
+          <option value="reddit">Reddit</option>
+          <option value="product_hunt">Product Hunt</option>
+          <option value="x">X</option>
+          <option value="discord">Discord</option>
+        </select>
       </label>
 
       <label className={styles.field}>
