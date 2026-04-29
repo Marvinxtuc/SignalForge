@@ -10,11 +10,11 @@ permissions:
   contents: read
 
 jobs:
-  phase-3-connector-abstraction:
+  phase-4-p0-connectors:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Phase 3 file structure check
+      - name: Phase 4 file structure check
         run: |
           test -f README.md
           test -f .env.example
@@ -27,11 +27,17 @@ jobs:
           test -f scripts/wait_for_services.py
           test -f scripts/validate_backend_api.py
           test -f scripts/validate_connector_abstraction.py
+          test -f scripts/validate_p0_connectors.py
           test -f apps/api/tests/test_connector_base.py
           test -f apps/api/tests/test_connector_registry.py
           test -f apps/api/tests/test_disabled_connector.py
           test -f apps/api/tests/test_mock_connector.py
-          echo "Phase 3 code gate validates Connector Abstraction only. Real P0 connectors, processing, and frontend acceptance are later phases."
+          test -f apps/api/tests/test_reddit_connector.py
+          test -f apps/api/tests/test_product_hunt_connector.py
+          test -f apps/api/tests/test_p0_connector_degradation.py
+          test -f apps/api/tests/test_p0_connector_rate_limits.py
+          test -f apps/api/tests/test_p0_connector_no_token_leak.py
+          echo "Phase 4 code gate validates P0 connectors with mocked responses only. Real tokens, processing, frontend acceptance, X, and Discord are not required."
       - name: Python syntax check
         run: |
           python3 -m compileall apps/api/app scripts
@@ -63,7 +69,14 @@ jobs:
       - name: Connector abstraction tests
         run: |
           docker compose -f infra/docker-compose.yml run --rm api pytest /app/tests/test_connector_base.py /app/tests/test_connector_registry.py /app/tests/test_disabled_connector.py /app/tests/test_mock_connector.py
+      - name: Mocked P0 connector tests
+        env:
+          SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE: "false"
+        run: |
+          docker compose -f infra/docker-compose.yml run --rm api pytest /app/tests/test_reddit_connector.py /app/tests/test_product_hunt_connector.py /app/tests/test_p0_connector_degradation.py /app/tests/test_p0_connector_rate_limits.py /app/tests/test_p0_connector_no_token_leak.py
       - name: Full pytest regression
+        env:
+          SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE: "false"
         run: |
           docker compose -f infra/docker-compose.yml run --rm api pytest
       - name: Connector abstraction validation
@@ -72,6 +85,12 @@ jobs:
       - name: Backend API validation
         run: |
           docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_backend_api.py
+      - name: P0 connector validation
+        env:
+          SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE: "false"
+        run: |
+          docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_p0_connectors.py
+          docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_p0_connectors.py --no-token-leak
       - name: Docker Compose down
         if: always()
         run: |

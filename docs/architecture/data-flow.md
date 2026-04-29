@@ -1,9 +1,9 @@
 # Data Flow
 
-Status: PHASE_3_CONNECTOR_ABSTRACTION_PASS
-Phase: Phase 3 Connector Abstraction
+Status: PHASE_4_P0_CONNECTORS_IN_IMPLEMENTATION
+Phase: Phase 4 P0 Connectors
 
-This document records the data access flow through Phase 3 Connector Abstraction. It does not represent final MVP acceptance.
+This document records the data access flow through Phase 4 P0 Connectors. It does not represent final MVP acceptance.
 
 ## MVP Flow
 
@@ -82,3 +82,41 @@ Allowed Phase 3 collection modes:
 - `safe_disabled`: safe degraded response without external platform calls.
 
 Phase 3 does not create real Reddit or Product Hunt integrations. Real platform connectors are unavailable until Phase 4. Phase 5 owns the Processing Pipeline, and Phase 6 owns the Frontend MVP.
+
+## Phase 4 P0 Connector Flow
+
+Phase 4 adds Reddit and Product Hunt P0 connector execution while keeping CI mocked:
+
+```text
+projects / keywords
+  -> POST /api/projects/{project_id}/collect
+  -> execution mode: reddit | product_hunt | p0_real
+  -> RedditConnector / ProductHuntConnector
+  -> normalized raw items with source_url
+  -> raw_items
+  -> collection_logs
+  -> collection_jobs status
+```
+
+Phase 4 still does not execute the Processing Pipeline:
+
+```text
+raw_items -x-> signals -x-> clusters -x-> opportunities
+```
+
+The connectors must not create `signals`, `clusters`, or `opportunities`. Phase 5 owns the Processing Pipeline, and Phase 6 owns Frontend MVP.
+
+CI and local validation use mocked Reddit and Product Hunt responses only. Real platform smoke is local/manual only and requires `SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE=true`. Manual smoke does not write `raw_items` unless `SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE=true` is also set.
+
+Phase 4 connector safety rules:
+
+- `source_url` remains mandatory for every normalized item.
+- Missing tokens degrade to disabled collection logs.
+- Permission limits degrade to `permission_limited` logs.
+- Rate limits degrade to `rate_limited` logs.
+- Reddit deleted or removed body text must not be retained.
+- Product Hunt default API usage is non-commercial unless Product Hunt grants permission.
+- Tokens must not appear in logs, API responses, reports, docs, or connector `raw_payload`.
+- X and Discord remain unimplemented.
+
+Phase 4 is P0 Connectors only and is not final MVP acceptance.

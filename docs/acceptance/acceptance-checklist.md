@@ -102,9 +102,35 @@ Status: PASS.
 
 Phase 3 is not Reddit/Product Hunt real access. Phase 4 owns P0 Connectors, Phase 5 owns Processing Pipeline, and Phase 6 owns Frontend MVP.
 
+## Phase 4 P0 Connectors Checklist
+
+Status: PASS.
+
+- RedditConnector exists: PASS
+- ProductHuntConnector exists: PASS
+- Missing Reddit credentials degrade to disabled: PASS
+- Missing Product Hunt token degrades to disabled: PASS
+- Reddit 401/403 maps to `permission_limited`: PASS
+- Product Hunt 401/403 maps to `permission_limited`: PASS
+- Reddit 429 maps to `rate_limited`: PASS
+- Product Hunt 429 or explicit quota/rate error maps to `rate_limited`: PASS
+- Mocked Reddit keyword/subreddit/comment normalization preserves `source_url`: PASS
+- Mocked Product Hunt product/comment normalization preserves `source_url`: PASS
+- Reddit deleted/removed body text is not retained: PASS
+- Token values are absent from logs, API responses, reports, docs, and `raw_payload`: PASS
+- `reddit`, `product_hunt`, and `p0_real` collect modes are supported: PASS
+- CI uses mocked responses only and requires no real token: REQUIRED
+- Manual smoke is local/manual only: REQUIRED
+- Manual smoke default does not write `raw_items`: REQUIRED
+- Product Hunt default API use is non-commercial unless Product Hunt grants permission: REQUIRED
+- X / Discord remain unimplemented: REQUIRED
+- Phase 4 does not create `signals`, `clusters`, or `opportunities`: REQUIRED
+- Phase 5 owns Processing Pipeline: REQUIRED
+- Phase 6 owns Frontend MVP: REQUIRED
+- Phase 4 is not final MVP acceptance: REQUIRED
+
 ## Later Phase Items
 
-- Real Reddit and Product Hunt connector acceptance checks start in Phase 4.
 - Processing Pipeline acceptance checks start in Phase 5.
 - Signal Inbox and Opportunity Board start in Phase 6 Frontend MVP.
 

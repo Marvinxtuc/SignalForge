@@ -2,7 +2,7 @@
 
 Status: NOT_STARTED
 Phase: Phase -1 Governance Bootstrap
-Current workstream: Phase 2 Backend API
+Current workstream: Phase 4 P0 Connectors
 Phase 3 workstream: Connector Abstraction validated
 This document is a skeleton and does not represent final MVP acceptance.
 
@@ -18,6 +18,7 @@ Final MVP acceptance has not started.
 - Phase 1 Data Model: PASS
 - Phase 2 Backend API: PASS
 - Phase 3 Connector Abstraction: PASS
+- Phase 4 P0 Connectors: PASS
 
 Phase 0 evidence:
 
@@ -74,6 +75,21 @@ Later phase ownership:
 - Phase 4: P0 Connectors for Reddit and Product Hunt.
 - Phase 5: Processing Pipeline.
 - Phase 6: Frontend MVP.
+
+Phase 4 evidence:
+
+- Status: PASS.
+- Scope: P0 Connectors for Reddit and Product Hunt only.
+- CI mode: mocked responses only; no real Reddit or Product Hunt token required.
+- Manual smoke: local/manual only; disabled unless `SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE=true`.
+- Manual smoke writes: disabled unless `SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE=true`.
+- Reddit deletion handling and rate limit handling: required.
+- Product Hunt default API use: non-commercial unless Product Hunt grants permission.
+- X connector: not implemented.
+- Discord connector: not implemented.
+- Processing Pipeline: unavailable until Phase 5.
+- Frontend MVP: unavailable until Phase 6.
+- Final MVP acceptance: not started.
 
 ## Scope
 

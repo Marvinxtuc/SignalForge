@@ -10,8 +10,15 @@ from app.schemas.common import ApiSchema
 
 COLLECTOR_NOT_AVAILABLE = "not_available_until_phase_3_or_later"
 DEFAULT_EXECUTION_MODE = "safe_disabled"
-PHASE_3_EXECUTION_MODES = {"mock", "disabled_only", DEFAULT_EXECUTION_MODE}
-PHASE_4_CONNECTOR_MESSAGE = "Real platform connectors are not available until Phase 4."
+PHASE_4_EXECUTION_MODES = {
+    "mock",
+    "disabled_only",
+    DEFAULT_EXECUTION_MODE,
+    "reddit",
+    "product_hunt",
+    "p0_real",
+}
+PHASE_4_FORBIDDEN_MODE_MESSAGE = "Requested connector execution mode is not available in Phase 4."
 
 
 class CollectionJobCreateRequest(ApiSchema):

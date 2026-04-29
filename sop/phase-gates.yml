@@ -105,13 +105,32 @@ phases:
 
   phase_4_p0_connectors:
     required_outputs:
-      - mock_connector
       - reddit_connector
       - product_hunt_connector
+      - env_only_credential_resolver
+      - http_client_timeout_and_redaction
+      - mocked_p0_connector_tests
+      - p0_connector_validation
+      - manual_smoke_scripts
       - collection_logs
+      - raw_items_standardized_write
     gates:
       - connector_gate
+      - mocked_ci_gate
       - no_token_leak_gate
+      - no_real_token_ci_gate
+    notes:
+      - Phase 4 implements P0 Connectors only.
+      - Reddit and Product Hunt are P0.
+      - X and Discord remain unimplemented.
+      - CI uses mocked responses only and must not require real tokens.
+      - Manual smoke is local/manual only.
+      - Manual smoke default does not write raw_items.
+      - Product Hunt default API use is non-commercial unless Product Hunt grants permission.
+      - Reddit deletion handling and rate limits are mandatory.
+      - Phase 5 owns processing pipeline.
+      - Phase 6 owns frontend MVP.
+      - Phase 4 is not final MVP acceptance.
 
   phase_5_processing_pipeline:
     required_outputs:

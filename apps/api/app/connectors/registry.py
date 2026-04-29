@@ -5,6 +5,8 @@ from importlib import import_module
 from typing import cast
 
 from app.connectors.base import BaseConnector
+from app.connectors.product_hunt import ProductHuntConnector
+from app.connectors.reddit import RedditConnector
 
 
 ConnectorFactory = Callable[[], BaseConnector]
@@ -38,10 +40,14 @@ class ConnectorRegistry:
 
     @staticmethod
     def _normalize_platform(platform: str) -> str:
-        normalized = platform.strip()
+        normalized = platform.strip().lower()
         if not normalized:
             raise ValueError("platform must be a non-empty string")
         return normalized
 
 
 registry = ConnectorRegistry()
+registry.register("reddit", RedditConnector)
+registry.register("product_hunt", ProductHuntConnector)
+registry.register("x", lambda: ConnectorRegistry._disabled_connector("x"))
+registry.register("discord", lambda: ConnectorRegistry._disabled_connector("discord"))

@@ -7,13 +7,12 @@ from sqlalchemy import select
 
 from app.api.errors import phase_not_available
 from app.api.deps import DbSession
-from app.connectors.disabled import DisabledConnector
 from app.db.models import CollectionLog
 from app.schemas.collection_logs import CollectionLogRead
 from app.schemas.collection_jobs import (
     DEFAULT_EXECUTION_MODE,
-    PHASE_3_EXECUTION_MODES,
-    PHASE_4_CONNECTOR_MESSAGE,
+    PHASE_4_EXECUTION_MODES,
+    PHASE_4_FORBIDDEN_MODE_MESSAGE,
     CollectionJobCreateRequest,
     CollectionJobCreateResponse,
     CollectionJobRead,
@@ -32,13 +31,10 @@ def create_collection_job(
     payload: CollectionJobCreateRequest | None = Body(default=None),
 ) -> CollectionJobCreateResponse:
     execution_mode = _execution_mode(payload)
-    if execution_mode not in PHASE_3_EXECUTION_MODES:
-        raise phase_not_available(PHASE_4_CONNECTOR_MESSAGE)
+    if execution_mode not in PHASE_4_EXECUTION_MODES:
+        raise phase_not_available(PHASE_4_FORBIDDEN_MODE_MESSAGE)
 
-    if execution_mode == "mock":
-        job = execute_collection(db, project_id=project_id, execution_mode="mock")
-    else:
-        job = execute_collection(db, project_id=project_id, connectors=[DisabledConnector()])
+    job = execute_collection(db, project_id=project_id, execution_mode=execution_mode)
 
     log = db.scalar(
         select(CollectionLog)
@@ -65,6 +61,6 @@ def _execution_mode(payload: CollectionJobCreateRequest | None) -> str:
         return DEFAULT_EXECUTION_MODE
     mode = payload.execution_mode
     if not isinstance(mode, str):
-        raise phase_not_available(PHASE_4_CONNECTOR_MESSAGE)
+        raise phase_not_available(PHASE_4_FORBIDDEN_MODE_MESSAGE)
     normalized = mode.strip()
     return normalized or DEFAULT_EXECUTION_MODE

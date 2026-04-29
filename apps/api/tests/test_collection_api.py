@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
-from app.db.models import Project, RawItem
+from app.db.models import CollectionJob, CollectionLog, Project, RawItem
 from app.db.session import SessionLocal
 from app.main import app
 
@@ -40,6 +40,33 @@ def raw_item_count(project_id: str) -> int:
         count = db.scalar(select(func.count()).select_from(RawItem).where(RawItem.project_id == UUID(project_id)))
         assert count is not None
         return count
+
+
+def collection_logs(project_id: str) -> list[CollectionLog]:
+    assert SessionLocal is not None
+    with SessionLocal() as db:
+        logs = list(
+            db.scalars(
+                select(CollectionLog)
+                .join(CollectionJob, CollectionLog.job_id == CollectionJob.id)
+                .where(CollectionJob.project_id == UUID(project_id))
+                .order_by(CollectionLog.platform.asc())
+            )
+        )
+        for log in logs:
+            db.expunge(log)
+        return logs
+
+
+def clear_p0_env(monkeypatch) -> None:
+    for name in (
+        "REDDIT_CLIENT_ID",
+        "REDDIT_CLIENT_SECRET",
+        "REDDIT_USER_AGENT",
+        "PRODUCT_HUNT_TOKEN",
+        "SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE",
+    ):
+        monkeypatch.delenv(name, raising=False)
 
 
 def test_collect_mock_executes_and_inserts_raw_items() -> None:
@@ -100,17 +127,44 @@ def test_collect_default_safe_disabled_logs_disabled_without_raw_items() -> None
         delete_project(project_id)
 
 
-def test_collect_real_platform_modes_return_phase_not_available() -> None:
+def test_collect_p0_modes_degrade_without_credentials(monkeypatch) -> None:
+    clear_p0_env(monkeypatch)
     project_id = create_project()
     try:
         client = TestClient(app)
-        for execution_mode in ["reddit_real", "product_hunt_real", "x_real", "discord_real", "unexpected"]:
+        for execution_mode, expected_platforms in {
+            "reddit": {"reddit"},
+            "product_hunt": {"product_hunt"},
+            "p0_real": {"reddit", "product_hunt"},
+        }.items():
+            before_count = raw_item_count(project_id)
+            response = client.post(f"/api/projects/{project_id}/collect", json={"execution_mode": execution_mode})
+            payload = response.json()
+
+            assert response.status_code == 200
+            assert payload["status"] == "success"
+            assert payload["collector_execution"] == execution_mode
+            assert payload["log"]["status"] == "disabled"
+            assert raw_item_count(project_id) == before_count
+
+            logs = collection_logs(project_id)
+            platforms = {log.platform for log in logs if log.status == "disabled"}
+            assert expected_platforms <= platforms
+    finally:
+        delete_project(project_id)
+
+
+def test_collect_future_and_forbidden_modes_return_phase_not_available() -> None:
+    project_id = create_project()
+    try:
+        client = TestClient(app)
+        for execution_mode in ["reddit_real", "product_hunt_real", "x_real", "discord_real", "llm", "pipeline", "unexpected"]:
             response = client.post(f"/api/projects/{project_id}/collect", json={"execution_mode": execution_mode})
             payload = response.json()
 
             assert response.status_code == 409
             assert payload["error"]["code"] == "phase_not_available"
-            assert payload["error"]["message"] == "Real platform connectors are not available until Phase 4."
+            assert payload["error"]["message"] == "Requested connector execution mode is not available in Phase 4."
             assert payload["error"]["details"] == {}
     finally:
         delete_project(project_id)

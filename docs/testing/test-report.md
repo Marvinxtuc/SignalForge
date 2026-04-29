@@ -2,7 +2,7 @@
 
 Status: NOT_STARTED
 Phase: Phase -1 Governance Bootstrap
-Current workstream: Phase 2 Backend API
+Current workstream: Phase 4 P0 Connectors
 Phase 3 workstream: Connector Abstraction validated
 This document does not represent final MVP acceptance.
 
@@ -14,6 +14,7 @@ This document does not represent final MVP acceptance.
 - Phase 1 Data Model: PASS
 - Phase 2 Backend API: PASS
 - Phase 3 Connector Abstraction: PASS
+- Phase 4 P0 Connectors: PASS
 
 ## Phase 0 Local Results
 
@@ -147,6 +148,51 @@ Phase 3 evidence:
 - Real platform connectors are unavailable until Phase 4: PASS
 
 Phase 4 owns P0 Connectors for Reddit and Product Hunt. Phase 5 owns Processing Pipeline. Phase 6 owns Frontend MVP.
+
+## Phase 4 P0 Connectors Results
+
+Status: PASS.
+
+Phase 4 is P0 Connectors only. It covers Reddit and Product Hunt connector implementation, mocked connector tests, optional local/manual smoke scripts, collection executor integration, and no-token-leak validation. It is not final MVP acceptance.
+
+Planned Phase 4 validation command set:
+
+```bash
+python3 scripts/validate_docs.py
+python3 scripts/validate_acceptance.py
+python3 scripts/validate_no_secrets.py
+docker compose -f infra/docker-compose.yml config
+docker compose -f infra/docker-compose.yml build
+docker compose -f infra/docker-compose.yml up -d
+python3 scripts/wait_for_services.py
+docker compose -f infra/docker-compose.yml run --rm api alembic upgrade head
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/seed_demo_data.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_data_model.py
+docker compose -f infra/docker-compose.yml run --rm api pytest
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_backend_api.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_connector_abstraction.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_p0_connectors.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_p0_connectors.py --no-token-leak
+docker compose -f infra/docker-compose.yml down
+```
+
+Phase 4 evidence to record after main-agent validation:
+
+- Mocked Reddit connector tests: PASS
+- Mocked Product Hunt connector tests: PASS
+- P0 connector degradation tests: PASS
+- P0 rate limit tests: PASS
+- P0 no-token-leak tests: PASS
+- `scripts/validate_p0_connectors.py`: PASS
+- `scripts/validate_p0_connectors.py --no-token-leak`: PASS
+- CI uses mocked responses only: REQUIRED
+- Real platform tokens are not required for CI: REQUIRED
+- Manual smoke default does not write `raw_items`: REQUIRED
+- Reddit deletion handling and rate limit handling: REQUIRED
+- Product Hunt non-commercial default usage note: REQUIRED
+- X / Discord remain unimplemented: REQUIRED
+
+Phase 4 must not create `signals`, `clusters`, or `opportunities`. Phase 5 owns Processing Pipeline. Phase 6 owns Frontend MVP.
 
 ## Canonical v2.1 Phase Markers
 

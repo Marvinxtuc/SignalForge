@@ -16,6 +16,11 @@ acceptance:
     - csv_export_ok
     - markdown_export_ok
     - no_token_leak
+    - ci_uses_mocked_p0_connector_responses
+    - manual_smoke_default_no_raw_items_write
+    - reddit_deletion_handling_ok
+    - reddit_rate_limit_handling_ok
+    - product_hunt_non_commercial_scope_documented
     - docs_complete
     - final_acceptance_report_present
 
@@ -26,6 +31,11 @@ acceptance:
     - signal_inbox_missing
     - llm_json_failure_crashes_job
     - connector_failure_crashes_system
+    - real_token_required_in_ci
+    - token_in_raw_payload
+    - real_platform_smoke_writes_without_explicit_flag
+    - deleted_reddit_body_retained
+    - product_hunt_commercial_use_claim_without_permission
     - no_rollback_doc
     - no_test_report
     - missing_signal_quality_gate

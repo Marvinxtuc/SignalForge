@@ -1,7 +1,7 @@
 # Local Startup Runbook
 
-Status: PHASE_3_CONNECTOR_ABSTRACTION_PASS
-Phase: Phase 3 Connector Abstraction
+Status: PHASE_4_P0_CONNECTORS_IN_IMPLEMENTATION
+Phase: Phase 4 P0 Connectors
 
 Phase 0 provides local runtime services for infrastructure smoke testing only.
 
@@ -143,3 +143,56 @@ Expected Phase 3 boundary:
 - Real Reddit and Product Hunt connectors remain unavailable until Phase 4.
 - Processing Pipeline remains unavailable until Phase 5.
 - Frontend MVP remains unavailable until Phase 6.
+
+## Phase 4 P0 Connectors Local Execution
+
+Status: PASS.
+
+Phase 4 validates Reddit and Product Hunt connectors. CI and default local validation use mocked responses only and do not require real platform tokens.
+
+Start infrastructure:
+
+```bash
+docker compose -f infra/docker-compose.yml up -d
+python3 scripts/wait_for_services.py
+```
+
+Prepare data and run mocked P0 connector checks:
+
+```bash
+docker compose -f infra/docker-compose.yml run --rm api alembic upgrade head
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/seed_demo_data.py
+docker compose -f infra/docker-compose.yml run --rm api pytest /app/tests/test_reddit_connector.py /app/tests/test_product_hunt_connector.py /app/tests/test_p0_connector_degradation.py /app/tests/test_p0_connector_rate_limits.py /app/tests/test_p0_connector_no_token_leak.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_p0_connectors.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_p0_connectors.py --no-token-leak
+```
+
+Optional manual smoke is local/manual only:
+
+```bash
+SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE=true docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/manual_reddit_smoke.py
+SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE=true docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/manual_product_hunt_smoke.py
+```
+
+Manual smoke defaults to preview/status only and must not write `raw_items`. To allow writes, explicitly set:
+
+```bash
+SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE=true
+```
+
+Stop services:
+
+```bash
+docker compose -f infra/docker-compose.yml down
+```
+
+Expected Phase 4 boundary:
+
+- Reddit and Product Hunt are P0 connectors.
+- X and Discord remain unimplemented.
+- CI uses mocked responses only and requires no real token.
+- Product Hunt default API use is non-commercial unless Product Hunt grants permission.
+- Reddit deleted/removed content handling and rate limit parsing are mandatory.
+- Phase 5 owns Processing Pipeline.
+- Phase 6 owns Frontend MVP.
+- Phase 4 is not final MVP acceptance.

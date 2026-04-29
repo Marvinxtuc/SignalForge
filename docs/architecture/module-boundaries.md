@@ -1,9 +1,9 @@
 # Module Boundaries
 
-Status: PHASE_3_CONNECTOR_ABSTRACTION_PASS
-Phase: Phase 3 Connector Abstraction
+Status: PHASE_4_P0_CONNECTORS_IN_IMPLEMENTATION
+Phase: Phase 4 P0 Connectors
 
-This document records module boundaries through Phase 3 Connector Abstraction and later phases. It does not represent final MVP acceptance.
+This document records module boundaries through Phase 4 P0 Connectors and later phases. It does not represent final MVP acceptance.
 
 ## Planned Boundaries
 
@@ -98,8 +98,35 @@ Phase 3 must not implement:
 
 Real platform connectors are unavailable until Phase 4.
 
+## Phase 4 Boundary
+
+Phase 4 may implement:
+
+- RedditConnector through official API/OAuth only.
+- ProductHuntConnector through official GraphQL API only.
+- Env-only credential resolution for Reddit and Product Hunt.
+- HTTP client behavior with timeouts, token redaction, safe response snapshots, and mocked CI responses.
+- Rate limit, permission-limited, disabled, and failed connector states.
+- Collection executor integration for `reddit`, `product_hunt`, and `p0_real` execution modes.
+- Collection logs and `raw_items` writes from normalized P0 connector items.
+- Optional local/manual smoke scripts guarded by `SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE=true`.
+
+Phase 4 must keep CI mocked. CI must not require real Reddit or Product Hunt tokens. Manual smoke defaults to read-only preview and must not write `raw_items` unless `SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE=true` is also set.
+
+Phase 4 must not implement:
+
+- X or Discord connectors.
+- Processing Pipeline jobs, LLM calls, embedding provider calls, or clustering algorithms.
+- Frontend MVP pages such as Signal Inbox, Dashboard, or Opportunity Board.
+- Browser automation, scraping, simulated login, automated posting, commenting, or messaging.
+- New database tables or Alembic migrations.
+- Token persistence in `platform_credentials.encrypted_payload`, logs, API responses, exports, docs, or connector `raw_payload`.
+
+Reddit deletion handling and rate limit handling are mandatory. Deleted or removed content must not retain deleted body text. Product Hunt default API usage is non-commercial unless Product Hunt grants permission.
+
+Phase 4 is P0 Connectors only and is not final MVP acceptance.
+
 ## Later Boundaries
 
-- Phase 4 implements P0 Connectors for Reddit and Product Hunt.
 - Phase 5 implements Processing Pipeline.
 - Phase 6 implements Frontend MVP.

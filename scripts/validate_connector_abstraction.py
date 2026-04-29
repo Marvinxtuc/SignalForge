@@ -28,18 +28,20 @@ for candidate in API_ROOT_CANDIDATES:
 
 
 EXTERNAL_API_MARKERS = (
-    "requests",
-    "httpx",
+    "import requests",
+    "from requests",
     "aiohttp",
     "urllib.request",
     "socket.create_connection",
-    "reddit.com",
-    "api.producthunt.com",
     "discord.com/api",
     "api.x.com",
     "api.twitter.com",
     "openai",
     "anthropic",
+    "selenium",
+    "playwright",
+    "puppeteer",
+    "webdriver",
 )
 
 TOKEN_ENV_KEYS = (
@@ -224,8 +226,8 @@ def validate_connector_contracts_without_tokens() -> None:
             connector = registry.get(platform)
             result = connector.collect(ProjectCollectionConfig(project_id=uuid4(), platform=platform))
             if connector.platform != platform or result.status != ConnectorStatus.DISABLED:
-                _fail(f"ConnectorRegistry fallback failed for {platform}")
-        _pass("ConnectorRegistry returns disabled connector for reddit / product_hunt")
+                _fail(f"ConnectorRegistry safe degradation failed for {platform}")
+        _pass("ConnectorRegistry returns safely disabled P0 connectors without credentials")
 
     _pass("No external API call or real token is required for connector contracts")
 
@@ -248,9 +250,9 @@ def validate_external_api_marker_scan() -> None:
                 hits.append(f"{path.relative_to(api_root)}: {marker}")
 
     if hits:
-        _fail(f"External API markers found in connector abstraction runtime code: {hits}")
+        _fail(f"Forbidden external integration markers found in runtime code: {hits}")
 
-    _pass(f"External API marker scan covers {len(EXTERNAL_API_MARKERS)} markers and found no hits")
+    _pass(f"External API marker scan covers {len(EXTERNAL_API_MARKERS)} forbidden markers and found no hits")
 
 
 def _create_project() -> UUID:

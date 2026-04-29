@@ -178,3 +178,58 @@ Expected Phase 3 collect behavior:
 - Frontend MVP is unavailable until Phase 6.
 
 If validation requires real platform tokens or external API access, treat it as scope drift.
+
+## Phase 4 P0 connector tests fail
+
+Run:
+
+```bash
+docker compose -f infra/docker-compose.yml run --rm api pytest /app/tests/test_reddit_connector.py /app/tests/test_product_hunt_connector.py /app/tests/test_p0_connector_degradation.py /app/tests/test_p0_connector_rate_limits.py /app/tests/test_p0_connector_no_token_leak.py
+```
+
+Expected Phase 4 test behavior:
+
+- Tests use mocked Reddit and Product Hunt responses only.
+- Real Reddit or Product Hunt tokens are not required.
+- X and Discord remain unimplemented.
+- No Processing Pipeline, LLM, embedding provider, or frontend MVP behavior is tested.
+
+Do not fix Phase 4 test failures by adding X/Discord connectors, browser automation, scraping, LLM calls, embedding calls, frontend code, new migrations, or token persistence.
+
+## Phase 4 connector validation fails
+
+Run:
+
+```bash
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_p0_connectors.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_p0_connectors.py --no-token-leak
+python3 scripts/validate_no_secrets.py
+```
+
+Expected Phase 4 validation behavior:
+
+- `reddit`, `product_hunt`, and `p0_real` modes are validated with mocked responses.
+- Missing tokens degrade safely.
+- Permission and rate limit conditions produce readable collection logs.
+- `signals`, `clusters`, and `opportunities` are not created by connector execution.
+- Tokens do not appear in logs, API responses, reports, docs, or connector `raw_payload`.
+
+## Phase 4 manual smoke is disabled
+
+Manual smoke must not run unless the operator sets:
+
+```bash
+SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE=true
+```
+
+If the flag is missing, the manual smoke scripts should exit with a disabled explanation. This is expected and is not a CI failure.
+
+Manual smoke does not write `raw_items` unless this flag is also set:
+
+```bash
+SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE=true
+```
+
+If manual smoke reports Product Hunt permission limits, record the result as `permission_limited` unless the connector itself crashes or leaks a token. Product Hunt default API use is non-commercial unless Product Hunt grants permission.
+
+If manual smoke reports Reddit rate limits, record `rate_limited` and do not retry aggressively. Reddit rate limit headers and deleted/removed content handling are mandatory Phase 4 safety checks.

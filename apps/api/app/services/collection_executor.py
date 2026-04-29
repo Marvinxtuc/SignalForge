@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.connectors.base import BaseConnector
+from app.connectors.disabled import DisabledConnector
 from app.connectors.mock import MockConnector
 from app.connectors.registry import registry
 from app.connectors.types import ConnectorStatus, ProjectCollectionConfig
@@ -20,6 +21,7 @@ from app.services.common import get_or_404
 
 
 ConnectorSpec = str | BaseConnector
+P0_REAL_CONNECTORS = ("reddit", "product_hunt")
 
 
 def execute_collection(
@@ -102,9 +104,18 @@ def execute_collection(
 
 
 def _connector_specs_for_mode(execution_mode: str | None) -> list[ConnectorSpec]:
-    if execution_mode is None or execution_mode.strip() == "":
+    normalized_mode = (execution_mode or "safe_disabled").strip() or "safe_disabled"
+    if normalized_mode == "mock":
         return ["mock"]
-    return [execution_mode.strip()]
+    if normalized_mode in {"disabled_only", "safe_disabled"}:
+        return [DisabledConnector(normalized_mode)]
+    if normalized_mode == "reddit":
+        return ["reddit"]
+    if normalized_mode == "product_hunt":
+        return ["product_hunt"]
+    if normalized_mode == "p0_real":
+        return list(P0_REAL_CONNECTORS)
+    return [normalized_mode]
 
 
 def _resolve_connector(connector_spec: ConnectorSpec) -> BaseConnector:
