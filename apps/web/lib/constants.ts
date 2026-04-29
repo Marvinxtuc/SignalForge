@@ -1,6 +1,13 @@
-export const DEFAULT_API_BASE_URL = "http://localhost:8000";
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "") || DEFAULT_API_BASE_URL;
+export const DEFAULT_SERVER_API_BASE_URL = "http://api:8000";
+export const SERVER_API_BASE_URL =
+  process.env.SERVER_API_BASE_URL?.replace(/\/+$/, "") || DEFAULT_SERVER_API_BASE_URL;
+
+export const DEFAULT_PUBLIC_API_BASE_URL = "/api";
+export const HAS_PUBLIC_API_BASE_URL_OVERRIDE = Boolean(
+  process.env.NEXT_PUBLIC_API_BASE_URL?.trim()
+);
+export const PUBLIC_API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "") || DEFAULT_PUBLIC_API_BASE_URL;
 
 export const API_REQUEST_TIMEOUT_MS = 10_000;
 

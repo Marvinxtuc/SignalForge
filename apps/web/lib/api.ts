@@ -1,4 +1,9 @@
-import { API_BASE_URL, API_REQUEST_TIMEOUT_MS } from "./constants";
+import {
+  API_REQUEST_TIMEOUT_MS,
+  HAS_PUBLIC_API_BASE_URL_OVERRIDE,
+  PUBLIC_API_BASE_URL,
+  SERVER_API_BASE_URL
+} from "./constants";
 import type {
   ApiErrorEnvelope,
   CollectionCreateRequest,
@@ -32,6 +37,8 @@ type ApiRequestOptions = Omit<RequestInit, "body"> & {
   query?: QueryParams;
   timeoutMs?: number;
 };
+
+export type HealthResponse = Record<string, unknown>;
 
 export class ApiClientError extends Error {
   readonly status: number | null;
@@ -103,7 +110,8 @@ function buildBackendUrl(path: string, query?: QueryParams): string {
   }
 
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const url = new URL(normalizedPath, `${API_BASE_URL}/`);
+  const resolvedUrl = resolveApiUrl(normalizedPath);
+  const url = new URL(resolvedUrl, "http://signalforge.local");
 
   if (query) {
     Object.entries(query).forEach(([key, value]) => {
@@ -113,7 +121,79 @@ function buildBackendUrl(path: string, query?: QueryParams): string {
     });
   }
 
-  return url.toString();
+  return isAbsoluteUrl(resolvedUrl) ? url.toString() : `${url.pathname}${url.search}`;
+}
+
+function resolveApiUrl(path: string): string {
+  if (typeof window === "undefined") {
+    return new URL(path, `${SERVER_API_BASE_URL}/`).toString();
+  }
+
+  assertAllowedPublicApiBase();
+
+  if (!HAS_PUBLIC_API_BASE_URL_OVERRIDE || PUBLIC_API_BASE_URL === "/api") {
+    return toBrowserProxyPath(path);
+  }
+
+  if (isAbsoluteUrl(PUBLIC_API_BASE_URL)) {
+    return new URL(path, `${PUBLIC_API_BASE_URL}/`).toString();
+  }
+
+  return joinRelativePath(PUBLIC_API_BASE_URL, path);
+}
+
+function toBrowserProxyPath(path: string): string {
+  if (path === "/health") {
+    return "/api/health";
+  }
+
+  if (path === "/api" || path.startsWith("/api/")) {
+    return path;
+  }
+
+  return `/api${path}`;
+}
+
+function joinRelativePath(base: string, path: string): string {
+  const normalizedBase = base.startsWith("/") ? base : `/${base}`;
+  const normalizedPath =
+    normalizedBase.endsWith("/api") && path.startsWith("/api/")
+      ? path.slice("/api".length)
+      : path;
+
+  return `${normalizedBase.replace(/\/+$/, "")}/${normalizedPath.replace(/^\/+/, "")}`;
+}
+
+function assertAllowedPublicApiBase(): void {
+  if (
+    process.env.NODE_ENV !== "production" ||
+    !isLocalhostBase(PUBLIC_API_BASE_URL) ||
+    isLocalhost(window.location.hostname)
+  ) {
+    return;
+  }
+
+  throw new ApiClientError({
+    code: "invalid_public_api_base",
+    message: "Production browser API base cannot point to localhost from an external host.",
+    url: PUBLIC_API_BASE_URL
+  });
+}
+
+function isLocalhostBase(baseUrl: string): boolean {
+  if (!isAbsoluteUrl(baseUrl)) {
+    return false;
+  }
+
+  return isLocalhost(new URL(baseUrl).hostname);
+}
+
+function isAbsoluteUrl(url: string): boolean {
+  return /^https?:\/\//i.test(url);
+}
+
+function isLocalhost(hostname: string): boolean {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
 }
 
 async function parseApiResponse<T>(response: Response, url: string): Promise<T> {
@@ -192,6 +272,7 @@ function statusCodeToMessage(status: number): string {
 }
 
 export const api = {
+  health: () => apiRequest<HealthResponse>("/health"),
   projects: {
     list: (params: PaginationParams = {}) =>
       apiRequest<PaginatedResponse<Project>>("/api/projects", { query: params }),
