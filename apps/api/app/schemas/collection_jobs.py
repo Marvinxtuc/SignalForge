@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from app.schemas.collection_logs import CollectionLogRead
@@ -8,6 +9,13 @@ from app.schemas.common import ApiSchema
 
 
 COLLECTOR_NOT_AVAILABLE = "not_available_until_phase_3_or_later"
+DEFAULT_EXECUTION_MODE = "safe_disabled"
+PHASE_3_EXECUTION_MODES = {"mock", "disabled_only", DEFAULT_EXECUTION_MODE}
+PHASE_4_CONNECTOR_MESSAGE = "Real platform connectors are not available until Phase 4."
+
+
+class CollectionJobCreateRequest(ApiSchema):
+    execution_mode: Any = DEFAULT_EXECUTION_MODE
 
 
 class CollectionJobRead(ApiSchema):

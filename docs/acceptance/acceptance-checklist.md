@@ -86,9 +86,26 @@ Status: PASS.
 
 Phase 2 is backend API only. Connector abstraction starts in Phase 3, P0 connectors start in Phase 4, processing starts in Phase 5, and frontend MVP starts in Phase 6.
 
+## Phase 3 Connector Abstraction Checklist
+
+Status: PASS.
+
+- Connector base contract tests: PASS
+- Connector registry tests: PASS
+- Disabled connector tests: PASS
+- Mock connector tests: PASS
+- `scripts/validate_connector_abstraction.py`: PASS
+- `scripts/validate_backend_api.py`: PASS
+- No-secrets validation: PASS
+- `POST /api/projects/{project_id}/collect` supports only `mock`, `disabled_only`, and `safe_disabled`: PASS
+- Real platform connectors unavailable until Phase 4: PASS
+
+Phase 3 is not Reddit/Product Hunt real access. Phase 4 owns P0 Connectors, Phase 5 owns Processing Pipeline, and Phase 6 owns Frontend MVP.
+
 ## Later Phase Items
 
-- Connector and product acceptance checks start in later phases.
+- Real Reddit and Product Hunt connector acceptance checks start in Phase 4.
+- Processing Pipeline acceptance checks start in Phase 5.
 - Signal Inbox and Opportunity Board start in Phase 6 Frontend MVP.
 
 ## Canonical v2.1 Phase Markers

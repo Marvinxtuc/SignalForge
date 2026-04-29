@@ -1,9 +1,9 @@
 # Data Flow
 
-Status: PHASE_2_BACKEND_API_VALIDATED
-Phase: Phase 2 Backend API
+Status: PHASE_3_CONNECTOR_ABSTRACTION_PASS
+Phase: Phase 3 Connector Abstraction
 
-This document records the Phase 2 Backend API data access flow. It does not represent final MVP acceptance.
+This document records the data access flow through Phase 3 Connector Abstraction. It does not represent final MVP acceptance.
 
 ## MVP Flow
 
@@ -35,7 +35,7 @@ raw_items -> signals -> clusters -> opportunities
 
 `source_url` is the evidence traceability baseline. Each signal must preserve a source URL so reviewers can open the original evidence when evaluating clusters and opportunities.
 
-Product Hunt permission limits can degrade safely in later connector phases if logs are readable and mock Product Hunt data still completes the flow.
+Product Hunt permission limits can degrade safely in Phase 4 or later connector phases if logs are readable and mock Product Hunt data still completes the flow.
 
 ## Phase Ownership
 
@@ -60,6 +60,25 @@ Collection is not active in Phase 2:
 POST /api/projects/{project_id}/collect -> collection_jobs(status=pending) -> collection_logs(explanatory status)
 ```
 
-No connector runs in Phase 2, and no `raw_items` are created by the collect endpoint. Real connector execution begins only after Phase 3 Connector Abstraction and Phase 4 P0 Connectors are explicitly approved.
+No connector runs in Phase 2, and no `raw_items` are created by the collect endpoint. Real connector execution begins only after Phase 4 P0 Connectors are explicitly approved.
 
 Reports in Phase 2 are database-only exports. They must preserve `source_url` and must not include token, secret, or `encrypted_payload` fields.
+
+## Phase 3 Connector Abstraction Flow
+
+Phase 3 introduces connector abstraction only:
+
+```text
+POST /api/projects/{project_id}/collect
+  -> connector mode validation: mock | disabled_only | safe_disabled
+  -> normalized connector result
+  -> collection_jobs / collection_logs status update
+```
+
+Allowed Phase 3 collection modes:
+
+- `mock`: deterministic local connector abstraction behavior.
+- `disabled_only`: explicit disabled connector response for unavailable real platforms.
+- `safe_disabled`: safe degraded response without external platform calls.
+
+Phase 3 does not create real Reddit or Product Hunt integrations. Real platform connectors are unavailable until Phase 4. Phase 5 owns the Processing Pipeline, and Phase 6 owns the Frontend MVP.

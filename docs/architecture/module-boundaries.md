@@ -1,9 +1,9 @@
 # Module Boundaries
 
-Status: PHASE_2_BACKEND_API_VALIDATED
-Phase: Phase 2 Backend API
+Status: PHASE_3_CONNECTOR_ABSTRACTION_PASS
+Phase: Phase 3 Connector Abstraction
 
-This document records module boundaries for Phase 2 Backend API and later phases. It does not represent final MVP acceptance.
+This document records module boundaries through Phase 3 Connector Abstraction and later phases. It does not represent final MVP acceptance.
 
 ## Planned Boundaries
 
@@ -75,9 +75,31 @@ Phase 2 must not implement:
 - Frontend MVP pages such as Signal Inbox, Dashboard, or Opportunity Board.
 - X or Discord implementation.
 
+## Phase 3 Boundary
+
+Phase 3 may implement:
+
+- Connector interface contracts and normalized result types.
+- Mock connector behavior for local deterministic checks.
+- Disabled connector behavior for unavailable real platforms.
+- Connector registry behavior for approved abstraction modes.
+- Connector abstraction tests and validation.
+
+Phase 3 `POST /api/projects/{project_id}/collect` behavior is limited to `mock`, `disabled_only`, and `safe_disabled`. It must not perform real Reddit or Product Hunt API calls.
+
+Phase 3 must not implement:
+
+- Reddit real connector implementation.
+- Product Hunt real connector implementation.
+- Production credential use or external platform API calls.
+- Processing Pipeline jobs, LLM calls, embedding provider calls, or clustering algorithms.
+- Frontend MVP pages such as Signal Inbox, Dashboard, or Opportunity Board.
+- X or Discord implementation.
+
+Real platform connectors are unavailable until Phase 4.
+
 ## Later Boundaries
 
-- Phase 3 implements Connector Abstraction.
 - Phase 4 implements P0 Connectors for Reddit and Product Hunt.
 - Phase 5 implements Processing Pipeline.
 - Phase 6 implements Frontend MVP.

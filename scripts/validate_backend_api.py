@@ -11,7 +11,7 @@ from urllib.request import Request, urlopen
 
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://api:8000").rstrip("/")
-COLLECTOR_NOT_AVAILABLE = "not_available_until_phase_3_or_later"
+SAFE_DISABLED_EXECUTION = "safe_disabled"
 
 
 class ValidationFailure(Exception):
@@ -209,13 +209,15 @@ def validate_settings() -> None:
 def validate_collect(project_id: str) -> None:
     status, body = _request("POST", f"/api/projects/{project_id}/collect")
     _assert_status(status, 200, "POST collect", body)
-    if body.get("status") != "pending":
-        _fail(f"Collect did not create pending job: {body}")
-    if body.get("collector_execution") != COLLECTOR_NOT_AVAILABLE:
+    if body.get("status") != "success":
+        _fail(f"Collect did not complete safe disabled job: {body}")
+    if body.get("collector_execution") != SAFE_DISABLED_EXECUTION:
         _fail(f"Collect degradation marker missing: {body}")
+    if body.get("log", {}).get("status") != "disabled":
+        _fail(f"Collect did not write disabled log: {body}")
     if body.get("log", {}).get("items_collected") != 0:
         _fail(f"Collect appears to have collected items: {body}")
-    _pass("POST collect creates pending job without connector execution")
+    _pass("POST collect creates safe disabled job without connector execution")
 
 
 def main() -> int:

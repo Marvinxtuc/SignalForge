@@ -3,6 +3,7 @@
 Status: NOT_STARTED
 Phase: Phase -1 Governance Bootstrap
 Current workstream: Phase 2 Backend API
+Phase 3 workstream: Connector Abstraction validated
 This document is a skeleton and does not represent final MVP acceptance.
 
 ## Summary
@@ -16,6 +17,7 @@ Final MVP acceptance has not started.
 - Phase 0 Infrastructure: PASS
 - Phase 1 Data Model: PASS
 - Phase 2 Backend API: PASS
+- Phase 3 Connector Abstraction: PASS
 
 Phase 0 evidence:
 
@@ -56,9 +58,19 @@ Phase 2 evidence:
 
 Phase 2 status is PASS after main-agent local validation. This is not final MVP acceptance.
 
+Phase 3 evidence:
+
+- Status: PASS.
+- Scope: Connector Abstraction only.
+- `POST /api/projects/{project_id}/collect` supports only `mock`, `disabled_only`, and `safe_disabled`.
+- Real Reddit connector: unavailable until Phase 4.
+- Real Product Hunt connector: unavailable until Phase 4.
+- Processing Pipeline: unavailable until Phase 5.
+- Frontend MVP: unavailable until Phase 6.
+- Final MVP acceptance: not started.
+
 Later phase ownership:
 
-- Phase 3: Connector Abstraction.
 - Phase 4: P0 Connectors for Reddit and Product Hunt.
 - Phase 5: Processing Pipeline.
 - Phase 6: Frontend MVP.

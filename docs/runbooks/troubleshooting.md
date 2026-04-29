@@ -141,3 +141,40 @@ Expected Phase 2 behavior:
 - Reports and signals preserve `source_url`.
 
 If the failure is related to connector execution, external API access, LLM calls, or frontend behavior, treat it as scope drift rather than a Phase 2 requirement.
+
+## Phase 3 connector abstraction tests fail
+
+Run:
+
+```bash
+docker compose -f infra/docker-compose.yml run --rm api pytest /app/tests/test_connector_base.py /app/tests/test_connector_registry.py /app/tests/test_disabled_connector.py /app/tests/test_mock_connector.py
+```
+
+Expected Phase 3 behavior:
+
+- Connector contracts return normalized results.
+- Registry behavior is deterministic.
+- Disabled connectors fail safely.
+- Mock connectors use local deterministic behavior only.
+- No Reddit or Product Hunt real platform API calls are attempted.
+
+Do not fix Phase 3 test failures by adding real Reddit/Product Hunt connector logic, processing jobs, LLM calls, embedding provider calls, or frontend code.
+
+## Phase 3 connector abstraction validation fails
+
+Run:
+
+```bash
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_connector_abstraction.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_backend_api.py
+python3 scripts/validate_no_secrets.py
+```
+
+Expected Phase 3 collect behavior:
+
+- `POST /api/projects/{project_id}/collect` supports only `mock`, `disabled_only`, and `safe_disabled`.
+- Real platform connectors are unavailable until Phase 4.
+- Processing Pipeline is unavailable until Phase 5.
+- Frontend MVP is unavailable until Phase 6.
+
+If validation requires real platform tokens or external API access, treat it as scope drift.

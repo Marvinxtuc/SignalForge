@@ -85,9 +85,23 @@ phases:
       - connector_result
       - rate_limit_state
       - collection_job_lifecycle
+      - mock_connector
+      - disabled_connector
+      - connector_registry
+      - connector_tests
+      - connector_abstraction_validation
     gates:
       - connector_gate
       - logs_gate
+      - code_gate
+      - no_secrets_gate
+    notes:
+      - Phase 3 implements Connector Abstraction only.
+      - Phase 3 does not implement Reddit or Product Hunt real connectors.
+      - POST collect supports only mock, disabled_only, and safe_disabled.
+      - Real platform connectors are unavailable until Phase 4.
+      - Phase 5 owns processing pipeline.
+      - Phase 6 owns frontend MVP.
 
   phase_4_p0_connectors:
     required_outputs:

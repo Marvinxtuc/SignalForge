@@ -1,7 +1,7 @@
 # Local Startup Runbook
 
-Status: PHASE_2_BACKEND_API_VALIDATED
-Phase: Phase 2 Backend API
+Status: PHASE_3_CONNECTOR_ABSTRACTION_PASS
+Phase: Phase 3 Connector Abstraction
 
 Phase 0 provides local runtime services for infrastructure smoke testing only.
 
@@ -106,3 +106,40 @@ Expected Phase 2 API boundary:
 - Reports are generated from local database records only.
 - Settings status responses never expose `encrypted_payload` or token values.
 - `source_url` remains visible for signal and report evidence.
+
+## Phase 3 Connector Abstraction Local Execution
+
+Status: PASS.
+
+Phase 3 validates connector abstraction only. It does not run Reddit or Product Hunt real platform connectors. Real platform connectors are unavailable until Phase 4.
+
+Start infrastructure:
+
+```bash
+docker compose -f infra/docker-compose.yml up -d
+python3 scripts/wait_for_services.py
+```
+
+Prepare data and run connector abstraction checks:
+
+```bash
+docker compose -f infra/docker-compose.yml run --rm api alembic upgrade head
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/seed_demo_data.py
+docker compose -f infra/docker-compose.yml run --rm api pytest /app/tests/test_connector_base.py /app/tests/test_connector_registry.py /app/tests/test_disabled_connector.py /app/tests/test_mock_connector.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_connector_abstraction.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_backend_api.py
+python3 scripts/validate_no_secrets.py
+```
+
+Stop services:
+
+```bash
+docker compose -f infra/docker-compose.yml down
+```
+
+Expected Phase 3 boundary:
+
+- `POST /api/projects/{project_id}/collect` supports only `mock`, `disabled_only`, and `safe_disabled`.
+- Real Reddit and Product Hunt connectors remain unavailable until Phase 4.
+- Processing Pipeline remains unavailable until Phase 5.
+- Frontend MVP remains unavailable until Phase 6.

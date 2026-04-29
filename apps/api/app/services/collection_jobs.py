@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -46,6 +47,39 @@ def create_pending_collection_job(db: Session, project_id: UUID) -> tuple[Collec
     db.refresh(job)
     db.refresh(log)
     return job, log
+
+
+def create_collection_job(db: Session, project_id: UUID, trigger_type: str = "manual") -> CollectionJob:
+    get_or_404(db, Project, project_id, "Project")
+    job = CollectionJob(project_id=project_id, status="pending", trigger_type=trigger_type)
+    db.add(job)
+    db.flush()
+    return job
+
+
+def start_collection_job(db: Session, job: CollectionJob) -> CollectionJob:
+    job.status = "running"
+    job.started_at = datetime.now(UTC)
+    job.finished_at = None
+    job.error_summary = None
+    db.add(job)
+    db.flush()
+    return job
+
+
+def finish_collection_job(
+    db: Session,
+    job: CollectionJob,
+    *,
+    status: str,
+    error_summary: str | None = None,
+) -> CollectionJob:
+    job.status = status
+    job.finished_at = datetime.now(UTC)
+    job.error_summary = error_summary
+    db.add(job)
+    db.flush()
+    return job
 
 
 def get_collection_job(db: Session, job_id: UUID) -> CollectionJob:

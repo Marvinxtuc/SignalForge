@@ -3,6 +3,7 @@
 Status: NOT_STARTED
 Phase: Phase -1 Governance Bootstrap
 Current workstream: Phase 2 Backend API
+Phase 3 workstream: Connector Abstraction validated
 This document does not represent final MVP acceptance.
 
 ## Phase Results
@@ -12,6 +13,7 @@ This document does not represent final MVP acceptance.
 - Phase 0 Infrastructure: PASS
 - Phase 1 Data Model: PASS
 - Phase 2 Backend API: PASS
+- Phase 3 Connector Abstraction: PASS
 
 ## Phase 0 Local Results
 
@@ -102,6 +104,49 @@ Phase 2 test evidence:
 - Credential/token non-disclosure: PASS
 
 Phase 2 does not run connectors, processing pipeline, LLM calls, embedding provider calls, or frontend MVP tests.
+
+## Phase 3 Connector Abstraction Results
+
+Status: PASS.
+
+Phase 3 is connector abstraction only. It is not Reddit or Product Hunt real platform integration, and it does not represent final MVP acceptance.
+
+Phase 3 validation completed through API container mode:
+
+```bash
+python3 scripts/validate_docs.py
+python3 scripts/validate_acceptance.py
+python3 scripts/validate_no_secrets.py
+docker compose -f infra/docker-compose.yml config
+docker compose -f infra/docker-compose.yml build
+docker compose -f infra/docker-compose.yml up -d
+python3 scripts/wait_for_services.py
+docker compose -f infra/docker-compose.yml run --rm api alembic upgrade head
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/seed_demo_data.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_data_model.py
+docker compose -f infra/docker-compose.yml run --rm api pytest
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_connector_abstraction.py
+docker compose -f infra/docker-compose.yml run --rm api python /app/scripts/validate_backend_api.py
+docker compose -f infra/docker-compose.yml down
+```
+
+Phase 3 evidence:
+
+- Governance validation: PASS
+- Docker Compose config/build/up/down: PASS
+- wait_for_services.py: PASS
+- Migration up: PASS
+- Demo seed: PASS
+- validate_data_model.py: PASS
+- pytest: PASS, 43 tests passed
+- `scripts/validate_connector_abstraction.py`: PASS
+- `scripts/validate_backend_api.py`: PASS
+- Boundary and external API marker checks: PASS
+- No-secrets validation: PASS
+- `POST /api/projects/{project_id}/collect` supports only `mock`, `disabled_only`, and `safe_disabled`: PASS
+- Real platform connectors are unavailable until Phase 4: PASS
+
+Phase 4 owns P0 Connectors for Reddit and Product Hunt. Phase 5 owns Processing Pipeline. Phase 6 owns Frontend MVP.
 
 ## Canonical v2.1 Phase Markers
 
