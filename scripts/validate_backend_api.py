@@ -181,7 +181,7 @@ def validate_reports(demo_project_id: str) -> None:
     status, body = _request("POST", f"/api/projects/{demo_project_id}/reports/csv", {})
     _assert_status(status, 200, "POST csv report", body)
     content = body.get("content", "")
-    required_header = "signal_id,platform,signal_type,pain_level,summary_zh,source_url,created_at"
+    required_header = "signal_id,platform,signal_type,pain_level,summary_zh,recommended_action,source_url,mode,created_at"
     if body.get("format") != "csv" or required_header not in content or "https://example.com/" not in content:
         _fail(f"CSV report did not preserve required fields/source_url: {body}")
     _assert_no_secrets(body, "CSV report")

@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Validate docs
         run: python3 scripts/validate_docs.py
       - name: Validate acceptance assets
