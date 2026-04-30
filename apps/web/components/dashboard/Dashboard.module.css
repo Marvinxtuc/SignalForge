@@ -59,6 +59,69 @@
   box-shadow: var(--shadow);
 }
 
+.controlsPanel {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.controlsGrid {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) auto minmax(160px, 220px) auto auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.controlField {
+  display: grid;
+  gap: 6px;
+  color: var(--muted-strong);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.controlField select {
+  min-height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 7px 10px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.inlineCheck {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.inlineError,
+.inlineSuccess {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.inlineError {
+  color: var(--danger);
+}
+
+.inlineSuccess {
+  color: var(--positive);
+}
+
 .span3 {
   grid-column: span 3;
 }
@@ -277,7 +340,8 @@
 
   .metricRow,
   .platformGrid,
-  .statusLayout {
+  .statusLayout,
+  .controlsGrid {
     grid-template-columns: 1fr;
   }
 }

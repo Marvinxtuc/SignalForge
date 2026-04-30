@@ -23,6 +23,7 @@ def test_markdown_report_preserves_source_url_and_omits_secrets() -> None:
     assert response.status_code == 200
     assert payload["format"] == "markdown"
     assert "source_url: https://example.com/" in payload["content"]
+    assert "recommended_action:" in payload["content"]
     assert "encrypted_payload" not in payload["content"]
     assert "token" not in payload["content"].lower()
 
@@ -34,6 +35,7 @@ def test_csv_report_contains_required_signal_fields_and_source_url() -> None:
     assert response.status_code == 200
     assert payload["format"] == "csv"
     assert payload["content_type"] == "text/csv"
-    assert "signal_id,platform,signal_type,pain_level,summary_zh,source_url,created_at" in payload["content"]
+    assert "signal_id,platform,signal_type,pain_level,summary_zh,recommended_action,source_url,mode,created_at" in payload["content"]
     assert "https://example.com/" in payload["content"]
+    assert "mock/fallback_only" in payload["content"]
     assert "encrypted_payload" not in payload["content"]

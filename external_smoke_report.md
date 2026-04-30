@@ -1,103 +1,102 @@
-# External Smoke Report
+# SignalForge Personal Production v1 External Smoke Report
 
-Status: PASS
+## Status
+
+`BLOCKED/FAIL`
+
+External smoke did not run because `SIGNALFORGE_EXTERNAL_SMOKE_URL` is not set. This is an external smoke blocker only; this report does not change or judge the local workflow gate.
 
 ## Task Judgment
 
-- Local `localhost:3000` was available and provided a valid smoke target.
-- A user-approved temporary Cloudflare quick tunnel was created for real external validation.
-- The first generated tunnel returned TLS EOF and was discarded; the second generated tunnel passed page and same-origin API smoke.
-- No `blocking_issue.md` was created.
+- Agent name: External Smoke Agent.
+- Scope: inspect external smoke prerequisites and update `external_smoke_report.md` only.
+- Decision: external smoke is `BLOCKED/FAIL` until an approved external URL is provided.
+- Network rule: no network smoke was run without `SIGNALFORGE_EXTERNAL_SMOKE_URL`.
+- Merge rule: this report does not approve production SaaS launch, auto-merge, or `READY_TO_MERGE`.
 
-## Modified Files
+## Current Goal
 
-- `scripts/validate_external_smoke.py`
-- `external_smoke_report.md`
+- Confirm whether the required external smoke URL is available.
+- Confirm the expected external smoke command and validation targets.
+- Record the blocked result with reproducible command evidence.
 
-## Change Purpose
+## Confirmed Facts
 
-- Keep the external smoke script runnable with Python standard library only.
-- Ensure the script supports `--url` and `--check-api`.
-- Validate the page response is reachable, does not return HTTP 500, and does not contain `Internal Error`.
-- Validate same-origin API smoke endpoints when `--check-api` is set:
+- Repository: `/Users/marvin.x/Desktop/SignalForge`.
+- Branch: `feature/personal-production-v1`.
+- Commit inspected: `a7e29c1`.
+- Verification timestamp: `2026-04-30 08:40:41 CST`.
+- Required environment variable `SIGNALFORGE_EXTERNAL_SMOKE_URL` was not set in this shell.
+- `scripts/validate_external_smoke.py` exists and requires `--url`.
+- With `--check-api`, the script validates same-origin API endpoints:
   - `/api/health`
   - `/api/projects?page_size=1`
   - `/api/settings/platforms`
-- Redact `sf_token` values from all script output, including PASS and FAIL paths.
+- The script redacts `sf_token` in emitted URLs.
+- `deploy_plan.md` records the expected external smoke flow: start an external tunnel, then run `python3 scripts/validate_external_smoke.py --url '<external-url-redacted>' --check-api`.
 
-## Executed Commands
+## Files Inspected
+
+- `external_smoke_report.md`
+- `scripts/validate_external_smoke.py`
+- `deploy_plan.md`
+- Repository status via `git status --short`
+
+## Files Changed
+
+- `external_smoke_report.md`
+
+No app source, tests, workflows, package files, scripts, deployment files, secrets, or configuration files were modified.
+
+## Commands Executed
+
+| Command | Exit code | Stdout summary | Stderr summary |
+| --- | ---: | --- | --- |
+| `pwd && git status --short` | 0 | Printed repo path and showed existing dirty worktree, including many modified/untracked files. | None. |
+| `rg -n "SIGNALFORGE_EXTERNAL_SMOKE_URL\|external smoke\|external_smoke\|smoke" -S .` | 0 | Found external smoke references, including `scripts/validate_external_smoke.py`, `deploy_plan.md`, and this report. | None. |
+| `ls -la` | 0 | Listed repository root files. | None. |
+| `sed -n '1,240p' external_smoke_report.md` | 0 | Read prior report template. | None. |
+| `sed -n '1,220p' scripts/validate_external_smoke.py` | 0 | Confirmed external smoke script arguments, validation targets, and token redaction behavior. | None. |
+| `sed -n '70,120p' deploy_plan.md` | 0 | Confirmed documented external tunnel and smoke command prerequisites. | None. |
+| `if [ -n "$SIGNALFORGE_EXTERNAL_SMOKE_URL" ]; then echo 'SET'; else echo 'SKIP: SIGNALFORGE_EXTERNAL_SMOKE_URL is not set'; exit 2; fi` | 2 | `SKIP: SIGNALFORGE_EXTERNAL_SMOKE_URL is not set` | None. |
+| `date '+%Y-%m-%d %H:%M:%S %Z'` | 0 | `2026-04-30 08:40:41 CST` | None. |
+| `git rev-parse --abbrev-ref HEAD && git rev-parse --short HEAD` | 0 | `feature/personal-production-v1`, `a7e29c1` | None. |
+| `rg -n "SIGNALFORGE_EXTERNAL_SMOKE_URL\|validate_external_smoke.py\|/api/health\|/api/projects\|/api/settings/platforms" scripts/validate_external_smoke.py deploy_plan.md external_smoke_report.md` | 0 | Confirmed prerequisite references and same-origin API targets. | None. |
+| `sed -n '1,260p' external_smoke_report.md` | 0 | Confirmed updated report content. | None. |
+| `awk 'index($0,"sf_token=") && index($0,"sf_token=<redacted>")==0 {print; bad=1} END {exit bad}' external_smoke_report.md` | 0 | No token leakage pattern found. | None. |
+| `git diff --name-only -- external_smoke_report.md && git diff -- external_smoke_report.md` | 0 | Confirmed the diff is limited to `external_smoke_report.md`. | None. |
+
+## PASS/FAIL
+
+FAIL: external smoke is blocked because the required URL is missing.
+
+Not executed:
+
+- External page reachability check.
+- External no-HTTP-500 check.
+- External same-origin `/api/health` check.
+- External same-origin `/api/projects?page_size=1` check.
+- External same-origin `/api/settings/platforms` check.
+
+## Risk Points
+
+- A missing external URL prevents any evidence-based statement about external reachability.
+- Prior external smoke PASS references in other reports may be stale and were not treated as current evidence.
+- Temporary tunnel URLs are not stable release infrastructure.
+- External smoke validates reachability only; it does not prove SaaS-grade availability, auth, monitoring, incident response, or long-term production readiness.
+
+## Next Action
+
+Provide an approved current value for `SIGNALFORGE_EXTERNAL_SMOKE_URL`, then rerun:
 
 ```bash
-python3 scripts/validate_external_smoke.py --help
-python3 -m py_compile scripts/validate_external_smoke.py
-python3 scripts/validate_external_smoke.py --url 'http://localhost:3000/signals?projectId=local-smoke&sf_token=<redacted>' --check-api
-python3 scripts/validate_external_smoke.py --url 'http://localhost:9/signals?sf_token=<redacted>'
-cloudflared tunnel --url http://localhost:3000
-python3 scripts/validate_external_smoke.py --url 'https://subdivision-observer-females-karma.trycloudflare.com/signals?projectId=f7e9e589-64bb-4dbd-bace-6aec9b09d42f&sf_token=<redacted>' --check-api
-rg -n '<synthetic-redaction-token>' scripts/validate_external_smoke.py external_smoke_report.md || true
+if [ -n "$SIGNALFORGE_EXTERNAL_SMOKE_URL" ]; then python3 scripts/validate_external_smoke.py --url "$SIGNALFORGE_EXTERNAL_SMOKE_URL" --check-api; else echo 'SKIP: SIGNALFORGE_EXTERNAL_SMOKE_URL is not set'; exit 2; fi
 ```
 
-## Validation Result
-
-Local smoke target:
-
-```text
-http://localhost:3000/signals?projectId=local-smoke&sf_token=<redacted>
-```
-
-Script output:
-
-```text
-PASS: api /api/health returned HTTP 200
-PASS: api /api/projects returned HTTP 200
-PASS: api /api/settings/platforms returned HTTP 200
-PASS: external smoke validation passed for http://localhost:3000/signals?projectId=local-smoke&sf_token=<redacted>
-```
-
-Confirmed:
-
-- `--url` is present and required.
-- `--check-api` is present and enables same-origin API checks.
-- `/signals` returned a reachable page and included a required UI marker.
-- `/api/health` returned HTTP 200.
-- `/api/projects?page_size=1` returned HTTP 200.
-- `/api/settings/platforms` returned HTTP 200.
-- No HTTP 500 was observed in the validated page or API endpoints.
-- No `Internal Error` marker was observed by the validation script.
-- Failure-path output redacts `sf_token`.
-- Search found no stored synthetic redaction token value in the script or report.
-
-Real external smoke target:
-
-```text
-https://subdivision-observer-females-karma.trycloudflare.com/signals?projectId=f7e9e589-64bb-4dbd-bace-6aec9b09d42f&sf_token=<redacted>
-```
-
-Real external script output:
-
-```text
-PASS: api /api/health returned HTTP 200
-PASS: api /api/projects returned HTTP 200
-PASS: api /api/settings/platforms returned HTTP 200
-PASS: external smoke validation passed for https://subdivision-observer-females-karma.trycloudflare.com/signals?projectId=f7e9e589-64bb-4dbd-bace-6aec9b09d42f&sf_token=<redacted>
-```
-
-Log scan:
-
-- Web/API logs contained no `500`, `Internal Error`, full smoke token, `sf_token=`, `localhost:8000`, or `127.0.0.1:8000` matches.
-- Temporary Cloudflare tunnel was stopped after validation.
-
-## Residual Issues
-
-- External tunnel validation passed with a temporary user-approved Cloudflare quick tunnel.
-- The script does not create or manage tunnels by design.
-- `python3 -m py_compile` generated `scripts/__pycache__/validate_external_smoke.cpython-314.pyc` during validation. Cleanup requires user approval because deleting files is approval-gated.
+Record only redacted URL/token evidence. Do not mark external smoke PASS until the command exits `0`.
 
 ## Rollback
 
 ```bash
-git restore --staged scripts/validate_external_smoke.py external_smoke_report.md
-rm -f scripts/validate_external_smoke.py external_smoke_report.md
+git restore -- external_smoke_report.md
 ```
-
-Rollback note: both files are currently untracked in this workspace. Use the commands only if discarding this round's external smoke artifacts is approved.

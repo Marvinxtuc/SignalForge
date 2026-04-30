@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { api } from "../../lib/api";
+import { api, ApiClientError } from "../../lib/api";
 import {
   formatDateTime,
   formatNumber,
@@ -10,8 +10,9 @@ import {
   platformLabel,
   truncateText
 } from "../../lib/format";
-import type { CollectionLog, PaginatedResponse } from "../../lib/types";
+import type { CollectionJobCreateResponse, CollectionLog, PaginatedResponse } from "../../lib/types";
 import { Badge } from "../ui/Badge";
+import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
 import { ErrorState } from "../ui/ErrorState";
 import { LoadingState } from "../ui/LoadingState";
@@ -21,10 +22,48 @@ type LogsState =
   | { status: "ready"; response: PaginatedResponse<CollectionLog> }
   | { status: "error"; error: unknown };
 
+type CollectionActionState =
+  | { status: "idle" }
+  | { status: "running" }
+  | { status: "success"; message: string }
+  | { status: "error"; message: string };
+
+const COLLECTION_MODES = ["mock", "reddit", "product_hunt", "p0_real"] as const;
+
 export function LogsPage() {
   const searchParams = useSearchParams();
   const projectId = searchParams.get("projectId");
   const [state, setState] = useState<LogsState>({ status: "idle" });
+  const [collectionMode, setCollectionMode] =
+    useState<(typeof COLLECTION_MODES)[number]>("mock");
+  const [actionState, setActionState] = useState<CollectionActionState>({ status: "idle" });
+
+  async function loadLogs(currentProjectId: string) {
+    setState({ status: "loading" });
+
+    try {
+      const response = await api.collection.listLogs(currentProjectId, { page_size: 50 });
+      setState({ status: "ready", response });
+    } catch (error) {
+      setState({ status: "error", error });
+    }
+  }
+
+  async function runCollection() {
+    if (!projectId) {
+      return;
+    }
+
+    setActionState({ status: "running" });
+
+    try {
+      const response = await api.collection.collect(projectId, { execution_mode: collectionMode });
+      setActionState({ status: "success", message: formatCollectionMessage(response) });
+      await loadLogs(projectId);
+    } catch (error) {
+      setActionState({ status: "error", message: formatActionError(error) });
+    }
+  }
 
   useEffect(() => {
     if (!projectId) {
@@ -68,9 +107,54 @@ export function LogsPage() {
         <div>
           <p className="pageEyebrow">运行日志</p>
           <h1 className="pageTitle">采集日志</h1>
-          <p className="pageSubtitle">所选项目的只读采集历史。</p>
+          <p className="pageSubtitle">所选项目的采集历史和安全采集控制。</p>
         </div>
       </header>
+
+      <section className="surfacePanel">
+        <div className="detailActions">
+          <label className="compactField">
+            <span>采集模式</span>
+            <select
+              className="selectControl"
+              disabled={actionState.status === "running"}
+              onChange={(event) =>
+                setCollectionMode(event.target.value as (typeof COLLECTION_MODES)[number])
+              }
+              value={collectionMode}
+            >
+              {COLLECTION_MODES.map((mode) => (
+                <option key={mode} value={mode}>
+                  {mode}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button
+            disabled={actionState.status === "running"}
+            onClick={() => void runCollection()}
+            type="button"
+            variant="primary"
+          >
+            {actionState.status === "running" ? "采集中" : "运行采集"}
+          </Button>
+          <Button
+            disabled={state.status === "loading"}
+            onClick={() => void loadLogs(projectId)}
+            type="button"
+          >
+            刷新日志
+          </Button>
+        </div>
+        {actionState.status === "success" ? (
+          <p className="inlineSuccess">{actionState.message}</p>
+        ) : null}
+        {actionState.status === "error" ? (
+          <p className="inlineError" role="alert">
+            {actionState.message}
+          </p>
+        ) : null}
+      </section>
 
       {state.status === "loading" || state.status === "idle" ? (
         <LoadingState label="正在加载采集日志" />
@@ -165,6 +249,23 @@ function statusTone(status: string): "neutral" | "success" | "warning" | "danger
   }
 
   return "neutral";
+}
+
+function formatCollectionMessage(response: CollectionJobCreateResponse): string {
+  const log = response.log;
+  const detail = log
+    ? `采集 ${formatNumber(log.items_collected)} / 入库 ${formatNumber(log.items_inserted)} / 跳过 ${formatNumber(log.items_skipped)}`
+    : "暂无日志明细";
+
+  return `采集任务 ${formatStatusLabel(response.status)}（${response.collector_execution}）：${detail}`;
+}
+
+function formatActionError(error: unknown): string {
+  if (error instanceof ApiClientError) {
+    return `${error.code}${error.status ? ` (${error.status})` : ""}: ${error.message}`;
+  }
+
+  return "未知前端错误。";
 }
 
 function Th({ children }: { children: string }) {

@@ -12,15 +12,20 @@ import type {
   CollectionLog,
   CredentialStatusResponse,
   CsvReportResponse,
+  Keyword,
+  KeywordCreateRequest,
   MarkdownReportResponse,
   Opportunity,
+  OpportunityStatus,
   PaginatedResponse,
   PaginationParams,
   PlatformsResponse,
+  PlatformEnvTestResponse,
   ProcessingRequest,
   ProcessingResponse,
   ProcessingSummary,
   Project,
+  ProjectCreateRequest,
   ReportRequest,
   Signal,
   SignalFeedback,
@@ -276,7 +281,20 @@ export const api = {
   projects: {
     list: (params: PaginationParams = {}) =>
       apiRequest<PaginatedResponse<Project>>("/api/projects", { query: params }),
-    get: (projectId: UUID) => apiRequest<Project>(`/api/projects/${projectId}`)
+    get: (projectId: UUID) => apiRequest<Project>(`/api/projects/${projectId}`),
+    create: (body: ProjectCreateRequest) =>
+      apiRequest<Project>("/api/projects", {
+        method: "POST",
+        body
+      })
+  },
+  keywords: {
+    list: (projectId: UUID) => apiRequest<Keyword[]>(`/api/projects/${projectId}/keywords`),
+    create: (projectId: UUID, body: KeywordCreateRequest) =>
+      apiRequest<Keyword>(`/api/projects/${projectId}/keywords`, {
+        method: "POST",
+        body
+      })
   },
   signals: {
     list: (projectId: UUID, params: SignalListParams = {}) =>
@@ -301,6 +319,15 @@ export const api = {
         query: params
       }),
     get: (opportunityId: UUID) => apiRequest<Opportunity>(`/api/opportunities/${opportunityId}`),
+    createFromSignal: (signalId: UUID) =>
+      apiRequest<Opportunity>(`/api/signals/${signalId}/create-opportunity`, {
+        method: "POST"
+      }),
+    updateStatus: (opportunityId: UUID, status: OpportunityStatus) =>
+      apiRequest<Opportunity>(`/api/opportunities/${opportunityId}`, {
+        method: "PUT",
+        body: { status }
+      }),
     archive: (opportunityId: UUID) =>
       apiRequest<Opportunity>(`/api/opportunities/${opportunityId}/archive`, {
         method: "POST"
@@ -322,7 +349,11 @@ export const api = {
   settings: {
     platforms: () => apiRequest<PlatformsResponse>("/api/settings/platforms"),
     credentialStatus: () =>
-      apiRequest<CredentialStatusResponse>("/api/settings/credentials/status")
+      apiRequest<CredentialStatusResponse>("/api/settings/credentials/status"),
+    testPlatform: (platform: string) =>
+      apiRequest<PlatformEnvTestResponse>(`/api/settings/platforms/${platform}/test`, {
+        method: "POST"
+      })
   },
   reports: {
     markdown: (projectId: UUID, body: ReportRequest = {}) =>

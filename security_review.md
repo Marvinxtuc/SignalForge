@@ -1,124 +1,131 @@
-# SignalForge Round 1 Security Review
+# SignalForge Personal Production v1 Security Review
 
-## 结论
+## Release Gate Status
 
-PASS
+`SECURITY_RECHECK_PASS_EXTERNAL_SMOKE_BLOCKED`
 
-未发现 P0 泄露或 NO-GO 阻断项。本轮仅写入 `security_review.md`，未写入 `blocking_issue.md`。
+Security recheck passes for the local personal production scope based on the evidence below. This report does not approve production SaaS launch, does not authorize auto-merge, and does not replace the unresolved external smoke gate.
 
-## 检查范围
+## Task Judgment
 
-- Token/query/no-secrets/smoke 脱敏检查。
-- `sf_token` 是否被 Next.js proxy 转发到 FastAPI。
-- `authorization`、`cookie`、`sf_token` 相关 header 是否被前端 proxy 转发。
-- `scripts/validate_external_smoke.py` 是否脱敏输出 URL。
-- 前端 Settings/credential 展示是否暴露 `encrypted_payload` 或 credential 值。
-- 是否存在正式认证系统伪装，例如登录、session、JWT、多用户认证声明。
+- Agent name: Security Recheck Agent.
+- Scope: `/Users/marvin.x/Desktop/SignalForge/security_review.md` only.
+- Decision: PASS for local security recheck.
+- External gate: still blocked because `SIGNALFORGE_EXTERNAL_SMOKE_URL` is not set.
+- Ownership rule followed: no source, test, workflow, package, script, deployment, credential, or configuration files were edited.
 
-重点文件：
+## Current Goal
 
-- `apps/web/app/api/[...path]/route.ts`
-- `apps/web/lib/api.ts`
-- `apps/web/lib/query.ts`
-- `apps/web/components/settings/SettingsPage.tsx`
-- `apps/api/app/main.py`
-- `apps/api/app/config.py`
-- `apps/api/app/services/settings.py`
-- `apps/api/app/schemas/settings.py`
-- `scripts/validate_external_smoke.py`
+- Recheck the earlier Settings UI secret-name exposure mitigation.
+- Validate no obvious committed secret material or frontend token exposure.
+- Confirm no new credential encryption/key-management or credential CRUD/storage expansion was introduced for this release boundary.
+- Record concrete command evidence and residual risks for audit.
+
+## Confirmed Facts
+
+- Repository: `/Users/marvin.x/Desktop/SignalForge`.
+- Branch: `feature/personal-production-v1`.
+- Commit inspected: `a7e29c1611f2ac002329d2a344a05e4d1774fef6`.
+- Verification timestamp: `2026-04-30 08:43:23 CST`.
+- Worktree was already dirty with many modified/untracked files owned by other agents; this security recheck did not revert or normalize them.
+- `python3 scripts/validate_no_secrets.py` exited `0` with `PASS: no secrets validation`.
+- `python3 scripts/validate_frontend_mvp.py --require-http` exited `0` with all frontend gate checks passing, including Settings redaction and token-like frontend source checks.
+- Docker-targeted security/API tests exited `0`: `16 passed` for settings, connector no-token-leak, and reports tests.
+- Read-only Settings API checks returned HTTP `200` and found no `encrypted_payload`, bearer, token, API key, secret key, `PRODUCT_HUNT_TOKEN`, or `REDDIT_CLIENT_SECRET` markers.
+- Frontend scan of `apps/web/app`, `apps/web/components`, and `apps/web/lib` found no `PRODUCT_HUNT_TOKEN`, `REDDIT_CLIENT_SECRET`, or `encrypted_payload` matches.
+- Static scan of `apps` and `scripts` found no `SIGNALFORGE_CREDENTIAL_KEY`, `from cryptography`, `import cryptography`, `Fernet`, or `AESGCM` matches.
+- External smoke was not run because `SIGNALFORGE_EXTERNAL_SMOKE_URL` is missing; the guarded check exited `2`.
+
+## Files Inspected
+
+- `security_review.md`
 - `scripts/validate_no_secrets.py`
+- `scripts/validate_frontend_mvp.py`
+- `scripts/validate_backend_api.py`
+- `apps/web/components/settings/SettingsPage.tsx`
+- `apps/web/app/api/[...path]/route.ts`
+- `apps/api/app/connectors/types.py`
+- `apps/api/app/connectors/http_client.py`
+- `apps/api/tests/test_settings_api.py`
+- `apps/api/tests/test_p0_connector_no_token_leak.py`
+- `apps/api/tests/test_reports_api.py`
 - `external_smoke_report.md`
-- `frontend_change_report.md`
-- `infra/docker-compose.yml`
+- `qa_test_report.md`
+- `blocking_issue.md`
 
-## 发现项
-
-### 已确认事实
-
-- PASS: `sf_token` 不转发 FastAPI。`apps/web/app/api/[...path]/route.ts` 在 upstream URL 构造时跳过 `sf_token` query；同文件 header denylist 包含 `authorization`、`cookie`、`sf-token`、`sf_token`、`x-sf-token`。
-- PASS: FastAPI 不通过该 proxy 下发 cookie。proxy response header denylist 包含 `set-cookie`。
-- PASS: 前端 query helper allowlist 仅包含 `projectId` 与 `sf_token`，未发现任意 query 扩散。
-- PASS: `scripts/validate_external_smoke.py` 的 `sanitize_url()` 会把 `sf_token` 输出为 `<redacted>`；通过/失败路径均使用脱敏 URL。
-- PASS: `python3 scripts/validate_no_secrets.py` 通过，未发现常见真实 secret、bearer token、private key 或长 secret-like assignment。
-- PASS: Settings credential API schema 只返回 `platform`、`status`、`credential_name`、`last_checked_at`，不包含 `encrypted_payload`；前端 Settings 页面不渲染 `encrypted_payload`。
-- PASS: 未发现新增正式认证系统实现或伪装。README/acceptance 文档明确 `Auth / multi-user` 不在本轮范围；代码中未发现 login/session/JWT/CSRF 认证实现。
-
-### 判断
-
-- `sf_token` 是临时 demo query 访问控制信号，不是正式认证系统。它被前端页面 URL 保留以维持 demo 访问，但被 proxy 从 FastAPI upstream query 中剔除。
-- `infra/docker-compose.yml` 中的 `signalforge_dev_password` 是本地开发数据库密码，当前 no-secrets validator 未判定为真实泄露；仍不应复用于生产。
-
-### 未发现
-
-- 未发现应用代码主动将 `authorization`、`cookie`、`sf_token`、`sf-token`、`x-sf-token` 转发到 FastAPI。
-- 未发现 `sf_token` 完整值写入现有报告。
-- 未发现前端 `console.*` 或后端 logging 输出 token/credential 的路径。
-- 未发现 P0 credential 暴露或必须阻塞事项。
-
-## 执行命令
-
-```bash
-pwd && rg --files -g '!*node_modules*' -g '!*.png' -g '!*.jpg' -g '!*.jpeg' -g '!*.gif' -g '!*.ico'
-git status --short
-rg -n "sf_token|validate_external_smoke|smoke|token|credential|secret|password|authorization|api[_-]?key|FastAPI|fastapi|logger|logging|print\(" -S . -g '!*node_modules*' -g '!*.png' -g '!*.jpg' -g '!*.jpeg' -g '!*.gif'
-sed -n '1,260p' 'apps/web/app/api/[...path]/route.ts'
-sed -n '1,260p' apps/web/lib/query.ts
-sed -n '1,220p' scripts/validate_external_smoke.py
-sed -n '1,180p' scripts/validate_no_secrets.py
-python3 scripts/validate_no_secrets.py
-rg -n "console\.|logger|logging|print\(|sf_token|sf-token|x-sf-token|authorization|cookie|set-cookie|credential|encrypted_payload|raw_payload|secret|token|auth|login|session" apps/web apps/api scripts infra README.md docs sop -S -g '!*node_modules*' -g '!.next*'
-rg -n "NEXT_PUBLIC|SERVER_API_BASE_URL|API_BASE|AUTH|TOKEN|SECRET|PASSWORD|COOKIE|sf_token|credential" apps/web apps/api/app/config.py infra/docker-compose.yml .env.example -S
-sed -n '1,230p' apps/web/lib/api.ts
-sed -n '230,380p' apps/web/lib/api.ts
-sed -n '1,220p' apps/web/components/settings/SettingsPage.tsx
-sed -n '1,180p' apps/api/app/main.py
-sed -n '1,140p' apps/api/app/config.py
-sed -n '1,220p' apps/api/tests/test_cors_config.py
-sed -n '1,220p' apps/api/tests/test_settings_api.py
-sed -n '1,260p' apps/api/app/schemas/settings.py
-sed -n '1,120p' apps/api/app/services/settings.py
-rg -n "console\.|logger\.|logging\.|print\(.*(token|secret|credential|authorization|cookie|sf_token)|raise .*token|message.*token|details.*token" apps/web apps/api scripts -S -g '!*node_modules*'
-python3 -m pytest apps/api/tests/test_cors_config.py apps/api/tests/test_settings_api.py apps/api/tests/test_p0_connector_no_token_leak.py
-python3 scripts/validate_frontend_mvp.py
-rg -n "sf_token\s*=\s*['\"][^'\"]{8,}|sf_token=[A-Za-z0-9._~+/=-]{8,}|Bearer\s+[A-Za-z0-9._-]{20,}|authorization\s*[:=]\s*['\"]Bearer|APP_SECRET_KEY\s*=\s*[^\s#]+|PRODUCT_HUNT_TOKEN\s*=\s*[^\s#]+|REDDIT_CLIENT_SECRET\s*=\s*[^\s#]+" . -S -g '!*node_modules*' -g '!.git*' -g '!*.png' -g '!*.jpg' -g '!*.jpeg' -g '!*.gif'
-rg -n "login|logout|sign in|signin|session|auth|authentication|authenticated|user|password|jwt|csrf" apps/web apps/api README.md docs/acceptance docs/runbooks sop -S -g '!*node_modules*'
-python3 - <<'PY'
-from scripts.validate_external_smoke import sanitize_url
-url = 'https://example.test/signals?projectId=p1&sf_token=super-secret-demo-token&other=value'
-print(sanitize_url(url))
-PY
-sed -n '1,120p' external_smoke_report.md
-sed -n '1,180p' frontend_change_report.md
-git diff -- 'apps/web/app/api/[...path]/route.ts' apps/web/lib/query.ts scripts/validate_external_smoke.py scripts/validate_no_secrets.py apps/api/app/main.py apps/api/app/config.py infra/docker-compose.yml
-npx tsc --noEmit --incremental false
-```
-
-## 验证结果
-
-- `python3 scripts/validate_no_secrets.py`: PASS, 输出 `PASS: no secrets validation`。
-- `python3 scripts/validate_frontend_mvp.py`: PASS, 包含 `query token helper only preserves approved query values`、`settings page does not render encrypted_payload`、`no forbidden execution options or token-like values found in frontend source`。
-- `npx tsc --noEmit --incremental false` in `apps/web`: PASS，无输出。
-- `sanitize_url()` 实测输出：`https://example.test/signals?projectId=p1&sf_token=<redacted>&other=value`。
-- `external_smoke_report.md`: PASS，报告中的 external URL 与命令均使用 `sf_token=<redacted>`。
-- `frontend_change_report.md`: 记录临时 Next dev server smoke 中 `GET /api/health?sf_token=should-not-forward` 返回 HTTP 200。
-- `python3 -m pytest ...`: 未执行成功，原因是当前全局 Python 3.14 环境无 `pytest` 模块。未安装依赖，未改变环境。
-
-## 残留风险
-
-- `sf_token` 仍在浏览器 URL 中传播，可能进入浏览器历史、Referer、截图或外部边缘日志；仅适合临时 demo，不可视为长期认证。
-- `validate_external_smoke.py` 当前只脱敏 `sf_token`，如果后续引入其他 query token，需要同步扩展脱敏规则。
-- 本轮以只读审查和现有 validator 为主，未启动新的外部 tunnel 复测；external smoke 结果来自 `external_smoke_report.md` 和脚本脱敏实测。
-- 后端 pytest 因本机全局环境缺少 `pytest` 未能复跑；静态测试文件存在对应断言，但本轮未取得 pytest 运行通过证据。
-
-## 修改文件清单
+## Files Changed
 
 - `security_review.md`
 
-## 改动目的
+No app source, tests, workflows, package files, scripts, deployment files, secrets, permissions, migrations, or runtime configuration were modified.
 
-- 输出 Round 1 Security Agent 审查报告，给外部总控与审计系统复核。
+## Command Evidence
 
-## 回滚方式
+| Check | Command | Exit | stdout summary | stderr summary |
+| --- | --- | ---: | --- | --- |
+| Repo state | `pwd && git status --short` | `0` | Printed repo path and existing dirty worktree. | None. |
+| Branch/commit | `git rev-parse --abbrev-ref HEAD && git rev-parse HEAD` | `0` | `feature/personal-production-v1`; `a7e29c1611f2ac002329d2a344a05e4d1774fef6`. | None. |
+| No committed secrets scan | `python3 scripts/validate_no_secrets.py` | `0` | `PASS: no secrets validation`. | None. |
+| Frontend MVP/security gate | `python3 scripts/validate_frontend_mvp.py --require-http` | `0` | Required pages, Settings redaction, API boundary, query helper, token-like frontend source scan, and HTTP smoke all passed. | None. |
+| Settings UI sensitive marker scan | `rg -n "PRODUCT_HUNT_TOKEN|REDDIT_CLIENT_SECRET|encrypted_payload" apps/web/app apps/web/components apps/web/lib ...; true` | `0` | No matches. | None. |
+| Credential crypto/key scan | `rg -n "SIGNALFORGE_CREDENTIAL_KEY|from cryptography|import cryptography|Fernet|AESGCM" apps scripts ...; true` | `0` | No matches. | None. |
+| Credential endpoint/storage marker scan | `rg -n "(/api/platform-credentials|/api/credentials|/api/admin/secrets|platform-credentials|credential.*(create|update|delete|store)|encrypted_payload)" apps scripts ...; true` | `0` | Matches limited to validators/tests and existing DB model/migration references for `encrypted_payload`; no app credential CRUD endpoint markers found. | None. |
+| Header/token forwarding inspection | `sed -n '1,180p' apps/web/app/api/'[...path]'/route.ts` | `0` | Proxy blocks `authorization`, `cookie`, `sf-token`, `sf_token`, `x-sf-token`, strips `sf_token` query, and blocks `set-cookie` response forwarding. | None. |
+| Connector redaction inspection | `sed -n '1,260p' apps/api/app/connectors/types.py` and `sed -n '1,300p' apps/api/app/connectors/http_client.py` | `0` | Confirmed `SecretStr` exclusion, `safe_metadata()` count-only output, sensitive-key removal, bearer/token redaction, safe response header allowlist, and authorization secret redaction. | None. |
+| Read-only Settings API secret marker check | Python `urlopen` check against `/api/settings/platforms` and `/api/settings/credentials/status` | `0` | `PASS: /api/settings/platforms status=200 no secret markers`; `PASS: /api/settings/credentials/status status=200 no secret markers`. | None. |
+| Security-focused API tests, system Python attempt | `python3 -m pytest apps/api/tests/test_settings_api.py apps/api/tests/test_p0_connector_no_token_leak.py apps/api/tests/test_reports_api.py` | `1` | None. | `/opt/homebrew/opt/python@3.14/bin/python3.14: No module named pytest`. |
+| Security-focused API tests, Docker environment | `docker compose -f infra/docker-compose.yml run --rm api pytest /app/tests/test_settings_api.py /app/tests/test_p0_connector_no_token_leak.py /app/tests/test_reports_api.py` | `0` | `16 passed in 0.48s`. | Docker compose progress lines only; no blocking error. |
+| External smoke prerequisite | `if [ -n "$SIGNALFORGE_EXTERNAL_SMOKE_URL" ]; then echo 'SET'; else echo 'SKIP: SIGNALFORGE_EXTERNAL_SMOKE_URL is not set'; exit 2; fi` | `2` | `SKIP: SIGNALFORGE_EXTERNAL_SMOKE_URL is not set`. | None. |
+| Timestamp | `date '+%Y-%m-%d %H:%M:%S %Z'` | `0` | `2026-04-30 08:43:23 CST`. | None. |
 
-- 回滚本轮唯一写入：删除或还原 `security_review.md`。
-- 未修改应用代码、配置、数据库或依赖；无需服务回滚。
+## Security Checklist
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| No real secrets committed in configured scan scope | PASS | `python3 scripts/validate_no_secrets.py` exit `0`. |
+| Settings UI no longer renders concrete secret env names | PASS | Frontend marker scan returned no matches; `validate_frontend_mvp.py --require-http` passed Settings redaction check. |
+| Settings API does not expose credential payloads/token markers | PASS | Read-only API check passed for `/api/settings/platforms` and `/api/settings/credentials/status`; targeted API tests passed. |
+| Frontend API proxy does not forward sensitive request headers or `sf_token` query | PASS | Route inspection confirmed blocked header set and query stripping; frontend validator passed API boundary check. |
+| Connector logs/snapshots redact token and authorization material | PASS | Docker pytest security subset: `16 passed`; connector type/http client inspection confirmed redaction paths. |
+| Reports omit credential payload/token material | PASS | `test_reports_api.py` included in Docker pytest subset; `validate_backend_api.py` logic inspected for report no-secret assertions. |
+| No new credential encryption/key-management additions | PASS | Static scan found no `SIGNALFORGE_CREDENTIAL_KEY`, cryptography import, `Fernet`, or `AESGCM` additions. |
+| No credential CRUD/storage expansion in app endpoints | PASS | Static marker scan found no app endpoint markers for `/api/platform-credentials`, `/api/credentials`, or `/api/admin/secrets`; existing `encrypted_payload` references remain limited to DB model/migration plus tests/scripts. |
+| External smoke | BLOCKED | `SIGNALFORGE_EXTERNAL_SMOKE_URL` missing; prerequisite command exited `2`. |
+
+## Risk Points
+
+- External reachability and same-origin external API behavior remain unverified until the external smoke URL is provided and validated.
+- This review is a local personal production security recheck, not a SaaS-grade security assessment, authentication audit, compliance review, monitoring review, or incident-response signoff.
+- URL query token preservation still exists for local navigation compatibility; the proxy strips `sf_token` before backend forwarding, but browser history/screenshots/referrers remain residual exposure vectors.
+- Static scans reduce risk but do not prove absence of all secrets in ignored binary/build/cache paths or outside configured scan scopes.
+- The worktree is dirty and contains concurrent changes by other agents; this review did not certify unrelated modified files beyond the stated security checks.
+
+## Recommended Plan
+
+1. Keep local security recheck as PASS for the personal production scope.
+2. Keep external smoke as blocked until an approved `SIGNALFORGE_EXTERNAL_SMOKE_URL` is supplied.
+3. Rerun external smoke with redacted evidence before any external reachability claim.
+4. Do not claim production SaaS readiness or auto-merge approval from this report.
+
+## Change Boundary
+
+- Modified file: `security_review.md`.
+- No source, test, workflow, package, script, deployment, secret, permission, migration, or runtime configuration changes.
+
+## Validation Standard
+
+Security PASS for this report requires passing no-secrets validation, clean frontend sensitive marker scan, Settings API/UI non-exposure evidence, header/token proxy boundary evidence, security-focused API tests, and no new credential crypto/key-management or credential CRUD endpoint markers.
+
+External readiness additionally requires external smoke exit `0` with redacted URL/token evidence. That condition is not met.
+
+## Residual Issues
+
+- `PPV1-BLOCKER-001` remains open in `blocking_issue.md`: external smoke URL missing.
+- System Python cannot run pytest because `pytest` is not installed; Docker API pytest is the passing test environment used for this recheck.
+- Full API pytest `128 passed` and Playwright `1 passed` are recorded in `qa_test_report.md` as available QA evidence, but this security agent reran only the focused 16-test security subset.
+
+## Rollback
+
+```bash
+git restore -- security_review.md
+```

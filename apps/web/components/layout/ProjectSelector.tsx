@@ -30,7 +30,7 @@ export function ProjectSelector({
     queryProjectId && projectIds.has(queryProjectId) ? queryProjectId : selectedProjectId ?? "";
 
   useEffect(() => {
-    if (queryProjectId || !selectedProjectId) {
+    if (pathname === ROUTES.onboarding || queryProjectId || !selectedProjectId) {
       return;
     }
 

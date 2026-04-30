@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { Suspense, useEffect, useState } from "react";
 import { api, ApiClientError } from "../../lib/api";
@@ -81,9 +82,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             <p className="brandSubtitle">研究工作台</p>
           </div>
         </div>
-        <button className="sidebarAction" disabled type="button">
+        <Link className="sidebarAction" href="/onboarding">
           新建分析
-        </button>
+        </Link>
         <Suspense fallback={null}>
           <ProjectSelector
             errorMessage={projectState.errorMessage}

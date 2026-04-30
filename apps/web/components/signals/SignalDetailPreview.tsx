@@ -88,6 +88,17 @@ export function SignalDetailPreview({ signal }: SignalDetailPreviewProps) {
         <p>{signal.recommended_action || "暂无建议。"}</p>
       </section>
 
+      <section className={styles.previewSection}>
+        <h3>来源</h3>
+        {signal.source_url ? (
+          <a href={signal.source_url} rel="noopener noreferrer" target="_blank">
+            {signal.source_url}
+          </a>
+        ) : (
+          <p>暂无来源。</p>
+        )}
+      </section>
+
       {signal.keyword_hits?.length ? (
         <section className={styles.previewSection}>
           <h3>命中关键词</h3>

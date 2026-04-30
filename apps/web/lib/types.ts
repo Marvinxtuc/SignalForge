@@ -31,6 +31,33 @@ export type Project = {
   updated_at: ISODateTime | null;
 };
 
+export type ProjectCreateRequest = {
+  name: string;
+  description?: string | null;
+  platforms_enabled?: Record<string, boolean> | null;
+  collection_frequency?: string;
+};
+
+export type KeywordType = "main" | "related" | "exclude";
+
+export type Keyword = {
+  id: UUID;
+  project_id: UUID;
+  keyword: string;
+  keyword_type: KeywordType;
+  language: string;
+  enabled: boolean;
+  created_at: ISODateTime | null;
+  updated_at: ISODateTime | null;
+};
+
+export type KeywordCreateRequest = {
+  keyword: string;
+  keyword_type: KeywordType;
+  language?: string;
+  enabled?: boolean;
+};
+
 export type SignalStatus = "new" | "saved" | "ignored" | "reviewed";
 export type SignalFeedback = "valuable" | "not_valuable" | "wrong_type" | "ignored";
 
@@ -130,11 +157,17 @@ export type CollectionCreateRequest = {
 export type PlatformName = "reddit" | "product_hunt" | "x" | "discord";
 export type PlatformPhase = "P0" | "P1" | "P2";
 export type CredentialStatus =
+  | "available"
   | "missing"
+  | "missing_env"
   | "configured"
+  | "configured_unverified"
+  | "valid"
   | "invalid"
   | "permission_limited"
-  | "disabled";
+  | "rate_limited"
+  | "disabled"
+  | "coming_soon";
 
 export type PlatformStatus = {
   platform: PlatformName;
@@ -156,6 +189,14 @@ export type CredentialStatusItem = {
 
 export type CredentialStatusResponse = {
   credentials: CredentialStatusItem[];
+};
+
+export type PlatformEnvTestResponse = {
+  platform: string;
+  status: CredentialStatus;
+  message: string;
+  checked_at: ISODateTime;
+  required_env_missing: string[];
 };
 
 export type ReportRequest = {

@@ -18,7 +18,7 @@ QUERY_HELPER = WEB_ROOT / "lib" / "query.ts"
 API_ROUTE_PROXY = APP_ROOT / "api" / "[...path]" / "route.ts"
 SIGNAL_FILTERS = WEB_ROOT / "components" / "signals" / "SignalFilters.tsx"
 
-REQUIRED_ROUTES = ("/", "/signals", "/dashboard", "/opportunities", "/logs", "/settings", "/reports")
+REQUIRED_ROUTES = ("/", "/onboarding", "/signals", "/dashboard", "/opportunities", "/logs", "/settings", "/reports")
 HTTP_SMOKE_ROUTES = REQUIRED_ROUTES
 SOURCE_SUFFIXES = {".ts", ".tsx", ".js", ".jsx", ".mjs", ".json"}
 IGNORED_DIRS = {"node_modules", ".next", "out", "dist", "coverage"}
@@ -26,7 +26,6 @@ IGNORED_DIRS = {"node_modules", ".next", "out", "dist", "coverage"}
 FORBIDDEN_REAL_EXECUTION_OPTIONS = (
     "reddit_real",
     "product_hunt_real",
-    "p0_real",
     "real_llm",
     "real_embedding",
     "x_real",

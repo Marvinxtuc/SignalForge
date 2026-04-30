@@ -18,6 +18,7 @@ import type {
 import { Badge } from "../ui/Badge";
 import { EmptyState } from "../ui/EmptyState";
 import { Metric } from "../ui/Metric";
+import { DashboardControls } from "./DashboardControls";
 import styles from "./Dashboard.module.css";
 
 type DashboardProps = {
@@ -55,6 +56,7 @@ export async function Dashboard({ projectId }: DashboardProps) {
   return (
     <div className={styles.page}>
       <PageHeader errors={data.errors} />
+      <DashboardControls projectId={projectId} />
       <div className={styles.grid}>
         <TodaySignalsPanel count={data.todaySignalCount} />
         <HighValuePanel summary={data.processingSummary} />

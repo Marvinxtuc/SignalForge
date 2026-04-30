@@ -19,6 +19,9 @@ from app.db.session import SessionLocal
 from app.services.collection_executor import execute_collection
 
 
+EXPECTED_MOCK_ITEMS = 5
+
+
 class DuplicateConnector(BaseConnector):
     platform = "duplicate_test"
 
@@ -143,12 +146,12 @@ def test_mock_connector_job_inserts_raw_items_and_success_log() -> None:
             log = db.scalar(select(CollectionLog).where(CollectionLog.job_id == job.id))
 
             assert job.status == "success"
-            assert raw_count == 3
+            assert raw_count == EXPECTED_MOCK_ITEMS
             assert log is not None
             assert log.platform == "mock"
             assert log.status == "success"
-            assert log.items_collected == 3
-            assert log.items_inserted == 3
+            assert log.items_collected == EXPECTED_MOCK_ITEMS
+            assert log.items_inserted == EXPECTED_MOCK_ITEMS
             assert log.items_skipped == 0
     finally:
         _delete_project(project.id)

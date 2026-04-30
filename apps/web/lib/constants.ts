@@ -14,6 +14,7 @@ export const API_REQUEST_TIMEOUT_MS = 10_000;
 export const DEFAULT_PROJECT_NAME = "Polymarket Opportunity Radar";
 
 export const ROUTES = {
+  onboarding: "/onboarding",
   signals: "/signals",
   dashboard: "/dashboard",
   opportunities: "/opportunities",
@@ -23,6 +24,7 @@ export const ROUTES = {
 } as const;
 
 export const NAV_ITEMS = [
+  { href: ROUTES.onboarding, label: "引导", hint: "开始" },
   { href: ROUTES.signals, label: "信号收件箱", hint: "核心" },
   { href: ROUTES.dashboard, label: "仪表盘", hint: "摘要" },
   { href: ROUTES.opportunities, label: "机会看板", hint: "处理" },

@@ -10,6 +10,9 @@ from app.db.session import SessionLocal
 from app.main import app
 
 
+EXPECTED_MOCK_ITEMS = 5
+
+
 def create_project() -> str:
     assert SessionLocal is not None
     with SessionLocal() as db:
@@ -83,8 +86,8 @@ def test_collect_mock_executes_and_inserts_raw_items() -> None:
         assert payload["collector_execution"] == "mock"
         assert payload["log"]["platform"] == "mock"
         assert payload["log"]["status"] == "success"
-        assert payload["log"]["items_collected"] == 3
-        assert raw_item_count(project_id) > before_count
+        assert payload["log"]["items_collected"] == EXPECTED_MOCK_ITEMS
+        assert raw_item_count(project_id) == before_count + EXPECTED_MOCK_ITEMS
     finally:
         delete_project(project_id)
 

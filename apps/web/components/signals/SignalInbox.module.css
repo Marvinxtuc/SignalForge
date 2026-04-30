@@ -155,6 +155,11 @@
   gap: 12px;
 }
 
+.cardStack {
+  display: grid;
+  gap: 6px;
+}
+
 .signalCard {
   display: grid;
   gap: 10px;
@@ -325,6 +330,25 @@
 .processPanel {
   display: grid;
   gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  padding: 10px;
+}
+
+.processHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.processHint {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .inlineError,

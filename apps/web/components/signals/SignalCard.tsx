@@ -21,6 +21,7 @@ type SignalCardProps = {
   pendingAction: string | null;
   signal: Signal;
   onFeedback: (feedback: SignalFeedback) => void;
+  onCreateOpportunity: () => void;
   onIgnore: () => void;
   onSave: () => void;
   onSelect: () => void;
@@ -37,6 +38,7 @@ export function SignalCard({
   actionError,
   isPending,
   isSelected,
+  onCreateOpportunity,
   onFeedback,
   onIgnore,
   onSave,
@@ -104,6 +106,9 @@ export function SignalCard({
         )}
         <Button disabled={isPending} onClick={onSave} size="small" variant="secondary">
           {pendingAction === "status:saved" ? "保存中" : "保存"}
+        </Button>
+        <Button disabled={isPending} onClick={onCreateOpportunity} size="small" variant="secondary">
+          {pendingAction === "opportunity:create" ? "创建中" : "生成机会"}
         </Button>
         <Button disabled={isPending} onClick={onIgnore} size="small" variant="ghost">
           {pendingAction === "status:ignored" ? "忽略中" : "忽略"}

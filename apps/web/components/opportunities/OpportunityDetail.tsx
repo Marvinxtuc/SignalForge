@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { api, apiRequest } from "../../lib/api";
+import { api } from "../../lib/api";
 import { formatDateTime, formatNumber, formatScore } from "../../lib/format";
 import { buildAllowedQueryHref } from "../../lib/query";
 import type { Opportunity, OpportunityStatus } from "../../lib/types";
@@ -35,13 +35,7 @@ export function OpportunityDetail({ initialOpportunity, projectId }: Opportunity
     setPendingAction("status");
 
     try {
-      const updated = await apiRequest<Opportunity>(
-        `/api/opportunities/${encodeURIComponent(opportunity.id)}`,
-        {
-          method: "PUT",
-          body: { status: nextStatus }
-        }
-      );
+      const updated = await api.opportunities.updateStatus(opportunity.id, nextStatus);
       setOpportunity(updated);
       router.refresh();
     } catch (updateError) {

@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, ApiClientError } from "../../lib/api";
-import type { ProcessingRequest, Signal, SignalFeedback, SignalListParams, SignalStatus } from "../../lib/types";
+import type {
+  Opportunity,
+  ProcessingRequest,
+  Signal,
+  SignalFeedback,
+  SignalListParams,
+  SignalStatus
+} from "../../lib/types";
 import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
 import { ErrorState } from "../ui/ErrorState";
@@ -42,6 +49,7 @@ export function SignalInbox({ projectId }: SignalInboxProps) {
   const [loadError, setLoadError] = useState<unknown>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [actionErrors, setActionErrors] = useState<Record<string, string>>({});
+  const [actionMessages, setActionMessages] = useState<Record<string, string>>({});
   const [processMode, setProcessMode] =
     useState<NonNullable<ProcessingRequest["mode"]>>("mock");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -100,9 +108,31 @@ export function SignalInbox({ projectId }: SignalInboxProps) {
     );
   }
 
+  async function createOpportunity(signalId: string) {
+    setPendingAction({ signalId, action: "opportunity:create" });
+    setActionErrors((current) => ({ ...current, [signalId]: "" }));
+    setActionMessages((current) => ({ ...current, [signalId]: "" }));
+
+    try {
+      const opportunity = await api.opportunities.createFromSignal(signalId);
+      setActionMessages((current) => ({
+        ...current,
+        [signalId]: formatOpportunityMessage(opportunity)
+      }));
+    } catch (error) {
+      setActionErrors((current) => ({
+        ...current,
+        [signalId]: formatActionError(error)
+      }));
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
   async function runSignalAction(signalId: string, action: string, request: () => Promise<Signal>) {
     setPendingAction({ signalId, action });
     setActionErrors((current) => ({ ...current, [signalId]: "" }));
+    setActionMessages((current) => ({ ...current, [signalId]: "" }));
 
     try {
       const updatedSignal = await request();
@@ -166,6 +196,38 @@ export function SignalInbox({ projectId }: SignalInboxProps) {
           </Button>
         </div>
 
+        <div className={styles.processPanel}>
+          <div className={styles.processHeader}>
+            <div>
+              <p className={styles.fieldLabel}>处理动作</p>
+              <p className={styles.processHint}>运行本地 MVP 处理并回填信号 / 机会。</p>
+            </div>
+            <div className={styles.processControls}>
+              <select
+                className={styles.input}
+                disabled={isProcessing}
+                onChange={(event) =>
+                  setProcessMode(event.target.value as NonNullable<ProcessingRequest["mode"]>)
+                }
+                value={processMode}
+              >
+                <option value="mock">mock</option>
+                <option value="fallback_only">fallback_only</option>
+              </select>
+              <Button
+                disabled={isProcessing || !PROCESS_MODES.includes(processMode)}
+                onClick={() => void runProcess()}
+                size="small"
+                variant="primary"
+              >
+                {isProcessing ? "处理中" : "运行处理"}
+              </Button>
+            </div>
+          </div>
+          {processError ? <p className={styles.inlineError}>{processError}</p> : null}
+          {processMessage ? <p className={styles.inlineSuccess}>{processMessage}</p> : null}
+        </div>
+
         {isLoading ? <LoadingState label="正在加载信号" /> : null}
 
         {loadError ? (
@@ -182,36 +244,6 @@ export function SignalInbox({ projectId }: SignalInboxProps) {
 
         {!isLoading && !loadError && signals.length === 0 ? (
           <EmptyState
-            action={
-              <div className={styles.processPanel}>
-                <label className={styles.fieldLabel} htmlFor="process-mode">
-                  处理模式
-                </label>
-                <div className={styles.processControls}>
-                  <select
-                    className={styles.input}
-                    disabled={isProcessing}
-                    id="process-mode"
-                    onChange={(event) =>
-                      setProcessMode(event.target.value as NonNullable<ProcessingRequest["mode"]>)
-                    }
-                    value={processMode}
-                  >
-                    <option value="mock">mock</option>
-                    <option value="fallback_only">fallback_only</option>
-                  </select>
-                  <Button
-                    disabled={isProcessing || !PROCESS_MODES.includes(processMode)}
-                    onClick={() => void runProcess()}
-                    variant="primary"
-                  >
-                    {isProcessing ? "处理中" : "运行处理"}
-                  </Button>
-                </div>
-                {processError ? <p className={styles.inlineError}>{processError}</p> : null}
-                {processMessage ? <p className={styles.inlineSuccess}>{processMessage}</p> : null}
-              </div>
-            }
             description="当前项目和筛选条件下没有返回信号。请使用已批准的本地 MVP 模式运行处理，然后刷新信号收件箱。"
             title="暂无信号"
           />
@@ -219,18 +251,23 @@ export function SignalInbox({ projectId }: SignalInboxProps) {
 
         <div className={styles.cards}>
           {signals.map((signal) => (
-            <SignalCard
-              actionError={actionErrors[signal.id] ?? null}
-              isPending={pendingAction?.signalId === signal.id}
-              isSelected={selectedSignalId === signal.id}
-              key={signal.id}
-              onFeedback={(feedback) => void updateSignalFeedback(signal.id, feedback)}
-              onIgnore={() => void updateSignalStatus(signal.id, "ignored")}
-              onSave={() => void updateSignalStatus(signal.id, "saved")}
-              onSelect={() => setSelectedSignalId(signal.id)}
-              pendingAction={pendingAction?.signalId === signal.id ? pendingAction.action : null}
-              signal={signal}
-            />
+            <div className={styles.cardStack} key={signal.id}>
+              <SignalCard
+                actionError={actionErrors[signal.id] ?? null}
+                isPending={pendingAction?.signalId === signal.id}
+                isSelected={selectedSignalId === signal.id}
+                onCreateOpportunity={() => void createOpportunity(signal.id)}
+                onFeedback={(feedback) => void updateSignalFeedback(signal.id, feedback)}
+                onIgnore={() => void updateSignalStatus(signal.id, "ignored")}
+                onSave={() => void updateSignalStatus(signal.id, "saved")}
+                onSelect={() => setSelectedSignalId(signal.id)}
+                pendingAction={pendingAction?.signalId === signal.id ? pendingAction.action : null}
+                signal={signal}
+              />
+              {actionMessages[signal.id] ? (
+                <p className={styles.inlineSuccess}>{actionMessages[signal.id]}</p>
+              ) : null}
+            </div>
           ))}
         </div>
       </section>
@@ -238,6 +275,10 @@ export function SignalInbox({ projectId }: SignalInboxProps) {
       <SignalDetailPreview signal={selectedSignal} />
     </section>
   );
+}
+
+function formatOpportunityMessage(opportunity: Opportunity): string {
+  return `已生成机会：${opportunity.title}`;
 }
 
 function buildSignalListParams(filters: SignalFilterValues): SignalListParams {
