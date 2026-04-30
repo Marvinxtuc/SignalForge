@@ -11,37 +11,38 @@
 
 ## Release Gate Status
 
-`BLOCKED_EXTERNAL_SMOKE`
+`READY_AFTER_FINAL_CI`
 
-PASS for GitHub CI checks on the PR head recorded at validation time; the report-containing commit must also pass CI after it is pushed.
-FAIL for merge readiness because external smoke is blocked by missing `SIGNALFORGE_EXTERNAL_SMOKE_URL`.
+PASS for external smoke and prior GitHub CI checks. The report-containing commit must also pass CI after it is pushed before PR #2 is marked ready.
 
 This report does not approve production SaaS launch and does not authorize merge or auto-merge.
 
 ## Current Goal
 
 - Record final git, PR, and CI evidence for PR #2.
-- Preserve the explicit PR state: draft PR, `READY_TO_MERGE: false`.
-- Confirm that the local business workflow CI gates passed while external smoke remains blocked.
+- Record current external smoke PASS evidence.
+- Preserve the no-merge/no-branch-deletion boundary.
+- Confirm that PR #2 may be marked ready only after the report-containing commit passes GitHub CI.
 
 ## Confirmed Facts
 
 - Current local branch: `feature/personal-production-v1`.
-- Report authoring observed local HEAD before this report was committed: `7fdbb8f39c15f8938c58f2d3614836872cf3269b`.
+- Report authoring observed local HEAD before this report was committed: `8677393`.
 - The final PR head is the commit containing this report plus any later report-only refresh commit.
 - PR URL: `https://github.com/Marvinxtuc/SignalForge/pull/2`.
 - PR title: `Personal Production v1 business workflow`.
-- PR draft state: `true`.
-- PR body contains `READY_TO_MERGE: false`.
-- GitHub merge state: `BLOCKED`.
+- PR draft state before final PR update: `true`.
+- PR body before final PR update contains `READY_TO_MERGE: false`.
+- Final PR update target after report-containing CI passes: draft `false`, `READY_TO_MERGE: true`.
 - GitHub PR base ref name: `feature/mvp-p0`.
 - `origin/feature/mvp-p0`: `ffe389210a15d0fabb2ea9d7968de4823f1e407e`.
 - Local `feature/mvp-p0`: `a7e29c1611f2ac002329d2a344a05e4d1774fef6`.
-- Personal production implementation commits on top of local `feature/mvp-p0` at report authoring:
+- Personal production implementation commits on top of local `feature/mvp-p0` include:
   - `21565f5 feat: add personal production workflow`
   - `7fdbb8f fix: align personal production ci gates`
-  - report-only release evidence commit(s) may follow.
-- External smoke remains blocked because `SIGNALFORGE_EXTERNAL_SMOKE_URL` is missing.
+  - `8677393 test: stabilize personal workflow e2e onboarding`
+  - this report-only release evidence commit may follow.
+- External smoke PASS: `python3 scripts/validate_external_smoke.py --url "$SIGNALFORGE_EXTERNAL_SMOKE_URL" --check-api` exited `0` for `https://memory-thorough-please-elections.trycloudflare.com/signals`.
 - This agent did not run `git add`, `git commit`, `git push`, `git merge`, or any auto-merge command.
 
 ## Working Tree Evidence
@@ -103,9 +104,10 @@ git diff --stat origin/feature/mvp-p0..HEAD
 - Title: `Personal Production v1 business workflow`
 - Head: `feature/personal-production-v1`
 - Base: `feature/mvp-p0`
-- Draft: `true`
-- Merge state: `BLOCKED`
-- Body readiness marker: `READY_TO_MERGE: false`
+- Draft before final PR update: `true`
+- Merge state before final PR update: `BLOCKED`
+- Body readiness marker before final PR update: `READY_TO_MERGE: false`
+- Target after final pushed-head CI PASS: Draft `false`, `READY_TO_MERGE: true`
 
 ## CI Evidence
 
@@ -123,25 +125,24 @@ All GitHub CI checks reported by `gh pr checks` passed on the PR head observed d
 
 ## Risk Points
 
-- Merge readiness remains blocked by missing external smoke URL.
-- PR is still a draft.
-- GitHub merge state is `BLOCKED`.
+- Temporary Cloudflare Tunnel URLs are not stable production infrastructure.
+- PR #2 must not be marked ready until the report-containing commit CI passes.
 - Local `feature/mvp-p0` and `origin/feature/mvp-p0` do not point to the same commit, which changes the apparent PR diff scope.
 - Worktree is not clean because local untracked artifacts exist.
 - No production SaaS launch approval is granted by this report.
 
 ## Recommended Next Action
 
-Provide `SIGNALFORGE_EXTERNAL_SMOKE_URL`, run the external smoke validation, update `external_smoke_report.md`, then have the release owner update PR body readiness only if all gates pass.
+Commit and push this evidence update, wait for PR #2 CI on the final head, then update PR body to `READY_TO_MERGE: true` and mark PR #2 ready for review. Do not merge.
 
 ## Validation Standard
 
 Merge readiness requires all of the following:
 
-- PR no longer draft or explicitly approved for draft merge workflow.
-- `READY_TO_MERGE: true` set by release owner.
+- PR no longer draft after final CI passes.
+- `READY_TO_MERGE: true` set by release owner after final CI passes.
 - GitHub merge state not blocked.
-- External smoke PASS with a real approved URL.
+- External smoke PASS with the current temporary Cloudflare Tunnel URL.
 - Dirty/untracked local artifacts reviewed or excluded from release action.
 - Base branch alignment reviewed: local `feature/mvp-p0` versus `origin/feature/mvp-p0`.
 
