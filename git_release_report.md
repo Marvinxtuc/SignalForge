@@ -13,7 +13,7 @@
 
 `BLOCKED_EXTERNAL_SMOKE`
 
-PASS for GitHub CI checks on latest pushed branch head.
+PASS for GitHub CI checks on the PR head recorded at validation time; the report-containing commit must also pass CI after it is pushed.
 FAIL for merge readiness because external smoke is blocked by missing `SIGNALFORGE_EXTERNAL_SMOKE_URL`.
 
 This report does not approve production SaaS launch and does not authorize merge or auto-merge.
@@ -27,8 +27,8 @@ This report does not approve production SaaS launch and does not authorize merge
 ## Confirmed Facts
 
 - Current local branch: `feature/personal-production-v1`.
-- Local HEAD: `7fdbb8f39c15f8938c58f2d3614836872cf3269b`.
-- `origin/feature/personal-production-v1`: `7fdbb8f39c15f8938c58f2d3614836872cf3269b`.
+- Report authoring observed local HEAD before this report was committed: `7fdbb8f39c15f8938c58f2d3614836872cf3269b`.
+- The final PR head is the commit containing this report plus any later report-only refresh commit.
 - PR URL: `https://github.com/Marvinxtuc/SignalForge/pull/2`.
 - PR title: `Personal Production v1 business workflow`.
 - PR draft state: `true`.
@@ -37,9 +37,10 @@ This report does not approve production SaaS launch and does not authorize merge
 - GitHub PR base ref name: `feature/mvp-p0`.
 - `origin/feature/mvp-p0`: `ffe389210a15d0fabb2ea9d7968de4823f1e407e`.
 - Local `feature/mvp-p0`: `a7e29c1611f2ac002329d2a344a05e4d1774fef6`.
-- Latest personal production commits on top of local `feature/mvp-p0`:
+- Personal production implementation commits on top of local `feature/mvp-p0` at report authoring:
   - `21565f5 feat: add personal production workflow`
   - `7fdbb8f fix: align personal production ci gates`
+  - report-only release evidence commit(s) may follow.
 - External smoke remains blocked because `SIGNALFORGE_EXTERNAL_SMOKE_URL` is missing.
 - This agent did not run `git add`, `git commit`, `git push`, `git merge`, or any auto-merge command.
 
@@ -118,7 +119,7 @@ git diff --stat origin/feature/mvp-p0..HEAD
 | `phase-6-frontend-mvp` | pass | 1m52s | `https://github.com/Marvinxtuc/SignalForge/actions/runs/25141608126/job/73692416605` |
 | `phase-7-release-readiness` | pass | 4s | `https://github.com/Marvinxtuc/SignalForge/actions/runs/25141608128/job/73692416641` |
 
-All GitHub CI checks reported by `gh pr checks` passed on the latest PR head.
+All GitHub CI checks reported by `gh pr checks` passed on the PR head observed during this report. After this report is committed, the final PR head must be rechecked and reflected in the PR body.
 
 ## Risk Points
 

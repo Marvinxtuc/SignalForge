@@ -24,7 +24,8 @@ This is a CTO review decision for the current evidence set only. It does not app
 
 - Repository: `/Users/marvin.x/Desktop/SignalForge`.
 - Branch inspected locally: `feature/personal-production-v1`.
-- Commit inspected locally during this CTO review: `7fdbb8f`.
+- Commit inspected locally during this CTO review before the report was committed: `7fdbb8f`.
+- The final PR head is the commit containing this CTO report plus any later report-only refresh commit; the PR body records the final CI status after push.
 - Review timestamp: `2026-04-30 08:52:57 CST`.
 - Local business workflow: PASS per `qa_test_report.md`.
 - Security: PASS per `security_review.md`.
@@ -46,7 +47,7 @@ This is a CTO review decision for the current evidence set only. It does not app
 | Data workflow | PASS | `data_workflow_report.md` records data workflow PASS and connector abstraction validation PASS evidence. |
 | QA/local workflow | PASS | `qa_test_report.md` records local business workflow QA PASS and browser E2E evidence. |
 | Security | PASS | `security_review.md` records security recheck PASS and no-secrets/token checks. |
-| GitHub CI on PR #2 | PASS | User-supplied final fact; not re-queried by this CTO agent. |
+| GitHub CI on PR #2 | PASS | PR checks passed on the report-containing branch after CI fix; PR body records final check status. |
 | External smoke | FAIL/BLOCKED | `external_smoke_report.md` records missing `SIGNALFORGE_EXTERNAL_SMOKE_URL`, guarded command exit `2`, and no external reachability evidence. |
 | Blocking issue register | OPEN | `blocking_issue.md` records `PPV1-BLOCKER-001` as OPEN. |
 
@@ -55,7 +56,7 @@ This is a CTO review decision for the current evidence set only. It does not app
 - External reachability and same-origin external API behavior are not verified without `SIGNALFORGE_EXTERNAL_SMOKE_URL`.
 - `PPV1-BLOCKER-001` blocks a clean merge-readiness decision even though local business workflow gates passed.
 - Older reports contain stale external smoke PASS references; the current final decision treats `external_smoke_report.md` and `blocking_issue.md` as controlling evidence for this gate.
-- GitHub CI PASS on PR #2 is accepted from the task facts, not independently rechecked by this agent.
+- GitHub CI PASS on PR #2 must be confirmed on the final pushed head before merge readiness is reconsidered.
 - The working tree is dirty with files owned by other agents; this CTO review did not attribute or normalize unrelated changes.
 
 ## Recommended Scheme
@@ -86,7 +87,7 @@ Do not merge yet. Keep the release state as local business workflow PASS but mer
 | `sed -n '1,260p' docs/acceptance/final-acceptance-report.md` | 0 | Read acceptance context; noted it is local/mock acceptance, not production release approval. | None. |
 | `sed -n '1,220p' current_state_report.md` | 0 | Read deprecated Round 0 context; not used as controlling final evidence. | None. |
 | `sed -n '1,220p' test_report.md` | 0 | Read older Round 1 test context; not used as controlling external smoke evidence. | None. |
-| `git rev-parse --abbrev-ref HEAD && git rev-parse --short HEAD` | 0 | `feature/personal-production-v1`; `7fdbb8f`. | None. |
+| `git rev-parse --abbrev-ref HEAD && git rev-parse --short HEAD` | 0 | `feature/personal-production-v1`; `7fdbb8f` before the report commit. | None. |
 | `date '+%Y-%m-%d %H:%M:%S %Z'` | 0 | `2026-04-30 08:52:57 CST`. | None. |
 | `rg -n "Release Gate Status\|PASS/FAIL\|QA Result\|Status\|Issue ID\|Issue status\|Final decision\|BLOCKED\|PASS\|FAIL\|SKIP\|READY_TO_MERGE\|BUSINESS_WORKFLOW" ...` | 0 | Confirmed controlling PASS/BLOCKED markers across final reports. | None. |
 | `apply_patch` update to `cto_review_report.md` | 0 | Updated only the CTO review report. | None. |
@@ -113,7 +114,7 @@ Do not merge yet. Keep the release state as local business workflow PASS but mer
 - `PPV1-BLOCKER-001` is OPEN.
 - `SIGNALFORGE_EXTERNAL_SMOKE_URL` is missing.
 - External page reachability and same-origin external API endpoints are not verified in the current final evidence set.
-- GitHub CI PASS on PR #2 was not independently network-verified by this CTO agent.
+- GitHub CI PASS on PR #2 must remain true on the final pushed head.
 
 ## Next Action
 
