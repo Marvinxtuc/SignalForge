@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Suspense, useEffect, useState } from "react";
 import { api, ApiClientError } from "../../lib/api";
-import { DEFAULT_PROJECT_NAME } from "../../lib/constants";
+import { DEFAULT_PROJECT_NAME, ROUTES } from "../../lib/constants";
 import type { Project } from "../../lib/types";
 import { Navigation } from "./Navigation";
 import { ProjectSelector } from "./ProjectSelector";
@@ -82,7 +82,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <p className="brandSubtitle">研究工作台</p>
           </div>
         </div>
-        <Link className="sidebarAction" href="/onboarding">
+        <Link className="sidebarAction" href={`${ROUTES.onboarding}?new=1`}>
           新建分析
         </Link>
         <Suspense fallback={null}>

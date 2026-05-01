@@ -8,6 +8,13 @@ test.beforeEach(async ({ page }) => {
   await installApiMocks(page);
 });
 
+test("starts a new analysis without preserving the active project id", async ({ page }) => {
+  await page.goto(`/onboarding?projectId=${projectId}`);
+  await expect(page.getByRole("heading", { name: "创建个人信号项目" })).toBeVisible();
+  await page.getByRole("link", { name: "新建分析" }).click();
+  await expect(page).toHaveURL(/\/onboarding\?new=1$/);
+});
+
 test("runs the personal production UI workflow", async ({ page }) => {
   await page.goto("/onboarding");
   await expect(page.getByRole("heading", { name: "创建个人信号项目" })).toBeVisible();
