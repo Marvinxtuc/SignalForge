@@ -19,11 +19,11 @@ test("runs the personal production UI workflow", async ({ page }) => {
   await page.goto("/onboarding");
   await expect(page.getByRole("heading", { name: "创建个人信号项目" })).toBeVisible();
   await expect(page.getByRole("combobox", { name: "项目选择器" })).toHaveValue(projectId);
-  await page.getByLabel("项目名称").fill("Personal Production E2E");
-  await page.getByLabel("Include keywords").fill("wallet onboarding, pricing clarity");
-  await page.getByLabel("Exclude keywords").fill("giveaway");
-  await expect(page.getByLabel("Include keywords")).toHaveValue("wallet onboarding, pricing clarity");
-  await page.getByRole("button", { name: "创建项目并进入 Dashboard" }).click();
+  await page.getByLabel("项目名称").fill("个人生产 E2E");
+  await page.getByLabel("包含关键词").fill("钱包引导, 价格清晰度");
+  await page.getByLabel("排除关键词").fill("抽奖");
+  await expect(page.getByLabel("包含关键词")).toHaveValue("钱包引导, 价格清晰度");
+  await page.getByRole("button", { name: "创建项目并进入控制台" }).click();
   await expect(page).toHaveURL(/\/dashboard\?projectId=project-1/, { timeout: 15_000 });
 
   await page.goto(`/settings?projectId=${projectId}`);

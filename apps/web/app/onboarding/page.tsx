@@ -14,9 +14,9 @@ type SubmitState =
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [projectName, setProjectName] = useState("Personal Production E2E");
-  const [includeKeywords, setIncludeKeywords] = useState("wallet onboarding, pricing clarity");
-  const [excludeKeywords, setExcludeKeywords] = useState("giveaway");
+  const [projectName, setProjectName] = useState("个人生产 E2E");
+  const [includeKeywords, setIncludeKeywords] = useState("钱包引导, 价格清晰度");
+  const [excludeKeywords, setExcludeKeywords] = useState("抽奖");
   const [mockEnabled, setMockEnabled] = useState(true);
   const [state, setState] = useState<SubmitState>({ status: "idle" });
 
@@ -53,10 +53,10 @@ export default function OnboardingPage() {
     <section className="detailPage">
       <header className="pageHeader">
         <div>
-          <p className="pageEyebrow">Onboarding</p>
+          <p className="pageEyebrow">引导</p>
           <h1 className="pageTitle">创建个人信号项目</h1>
           <p className="pageSubtitle">
-            创建项目、关键词和 mock 平台配置，然后进入业务闭环控制台。
+            创建项目、关键词和模拟平台配置，然后进入业务闭环控制台。
           </p>
         </div>
       </header>
@@ -76,7 +76,7 @@ export default function OnboardingPage() {
             />
           </label>
           <label className="compactField">
-            <span>Include keywords</span>
+            <span>包含关键词</span>
             <input
               className="selectControl"
               disabled={isSubmitting}
@@ -87,7 +87,7 @@ export default function OnboardingPage() {
             />
           </label>
           <label className="compactField">
-            <span>Exclude keywords</span>
+            <span>排除关键词</span>
             <input
               className="selectControl"
               disabled={isSubmitting}
@@ -104,7 +104,7 @@ export default function OnboardingPage() {
               onChange={(event) => setMockEnabled(event.target.value === "mock")}
               value={mockEnabled ? "mock" : ""}
             >
-              <option value="mock">mock</option>
+              <option value="mock">模拟平台</option>
             </select>
           </label>
         </div>
@@ -118,11 +118,11 @@ export default function OnboardingPage() {
                 onChange={(event) => setMockEnabled(event.target.checked)}
                 type="checkbox"
               />{" "}
-              mock 平台
+              模拟平台
             </span>
           </label>
           <Button disabled={isSubmitting || !projectName.trim()} type="submit" variant="primary">
-            {isSubmitting ? "创建中" : "创建项目并进入 Dashboard"}
+            {isSubmitting ? "创建中" : "创建项目并进入控制台"}
           </Button>
         </div>
 
