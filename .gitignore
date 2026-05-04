@@ -10,6 +10,7 @@ __pycache__/
 .mypy_cache/
 
 .next/
+apps/web/test-results/
 dist/
 build/
 

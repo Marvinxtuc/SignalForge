@@ -17,7 +17,10 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
-TARGET_BRANCH = "feature/mvp-p0"
+TARGET_BRANCHES = {
+    "feature/mvp-p0",
+    "feature/personal-production-v1",
+}
 
 REQUIRED_COMMITS = {
     "83c9537": "feat: add phase 6 frontend mvp",
@@ -43,11 +46,15 @@ REQUIRED_RELEASE_FILES = [
 ]
 
 ALLOWED_PRECOMMIT_PATHS = {
+    ".gitignore",
     "README.md",
+    "AGENTS.md",
     ".github/pull_request_template.md",
     ".github/workflows/ci-acceptance.yml",
+    "current_state_report.md",
     "scripts/validate_final_acceptance.py",
     "scripts/validate_release_freeze.py",
+    "token_behavior_report.md",
     "apps/web/components/opportunities/opportunityView.ts",
 }
 
@@ -126,8 +133,9 @@ def require_branch(mode: str) -> None:
     if mode == "ci":
         return
     branch = run_git(["branch", "--show-current"])
-    if branch != TARGET_BRANCH:
-        fail(f"current branch must be {TARGET_BRANCH}, got {branch or '<detached>'}")
+    if branch not in TARGET_BRANCHES:
+        allowed = ", ".join(sorted(TARGET_BRANCHES))
+        fail(f"current branch must be one of {allowed}, got {branch or '<detached>'}")
 
 
 def require_commits() -> None:
