@@ -1,0 +1,73 @@
+services:
+  api:
+    build:
+      context: ../apps/api
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      REDIS_URL: redis://redis:6379/0
+      CORS_ALLOW_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      SIGNALFORGE_REQUIRE_OWNER_AUTH: "true"
+      SIGNALFORGE_OWNER_API_TOKEN: ${SIGNALFORGE_OWNER_API_TOKEN:?SIGNALFORGE_OWNER_API_TOKEN is required}
+      REDDIT_CLIENT_ID: ${REDDIT_CLIENT_ID:-}
+      REDDIT_CLIENT_SECRET: ${REDDIT_CLIENT_SECRET:-}
+      REDDIT_USER_AGENT: ${REDDIT_USER_AGENT:-}
+      PRODUCT_HUNT_TOKEN: ${PRODUCT_HUNT_TOKEN:-}
+      SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE: ${SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE:-}
+      SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE: ${SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-}
+      SIGNALFORGE_ALLOW_REAL_LLM_SMOKE: ${SIGNALFORGE_ALLOW_REAL_LLM_SMOKE:-}
+      SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE: ${SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE:-}
+    volumes:
+      - ../scripts:/app/scripts:ro
+      - ../backups:/app/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ../apps/web
+    environment:
+      SERVER_API_BASE_URL: http://api:8000
+      SIGNALFORGE_REQUIRE_OWNER_AUTH: "true"
+      NEXT_PUBLIC_API_BASE_URL: /api
+      SIGNALFORGE_OWNER_USERNAME: ${SIGNALFORGE_OWNER_USERNAME:?SIGNALFORGE_OWNER_USERNAME is required}
+      SIGNALFORGE_OWNER_PASSWORD: ${SIGNALFORGE_OWNER_PASSWORD:?SIGNALFORGE_OWNER_PASSWORD is required}
+      SIGNALFORGE_OWNER_SESSION_TOKEN: ${SIGNALFORGE_OWNER_SESSION_TOKEN:?SIGNALFORGE_OWNER_SESSION_TOKEN is required}
+      SIGNALFORGE_OWNER_API_TOKEN: ${SIGNALFORGE_OWNER_API_TOKEN:?SIGNALFORGE_OWNER_API_TOKEN is required}
+      SIGNALFORGE_SESSION_SECRET: ${SIGNALFORGE_SESSION_SECRET:?SIGNALFORGE_SESSION_SECRET is required}
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - api
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - signalforge_production_postgres_data:/var/lib/postgresql/data
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/001-pgvector.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  signalforge_production_postgres_data:

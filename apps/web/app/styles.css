@@ -893,6 +893,88 @@ textarea {
   color: var(--muted);
 }
 
+.loginPage {
+  min-height: 100vh;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  padding: 24px;
+  background: var(--background);
+}
+
+.loginPanel {
+  display: grid;
+  gap: 18px;
+  width: min(100%, 440px);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  padding: 24px;
+  box-shadow: var(--shadow-raised);
+}
+
+.productionGrid {
+  display: grid;
+  grid-template-columns: minmax(360px, 1.35fr) minmax(300px, 0.85fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.productionControlGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(132px, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.checkboxRow input {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  flex: 0 0 auto;
+}
+
+.productionCheckbox {
+  min-height: 36px;
+  align-items: center;
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.approvalList {
+  display: grid;
+  gap: 8px;
+}
+
+.approvalItem {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #f8fafc;
+  padding: 10px;
+}
+
+.approvalItem span {
+  display: grid;
+  gap: 2px;
+}
+
+.approvalItem strong {
+  font-size: 13px;
+}
+
+.approvalItem small {
+  color: var(--muted-strong);
+}
+
 .inlineError {
   margin: 0;
   color: var(--danger);
@@ -944,5 +1026,10 @@ textarea {
 
   .navList {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .productionGrid,
+  .productionControlGrid {
+    grid-template-columns: 1fr;
   }
 }

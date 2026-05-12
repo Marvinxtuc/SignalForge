@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { Suspense, useEffect, useState } from "react";
 import { api, ApiClientError } from "../../lib/api";
@@ -30,9 +31,14 @@ const INITIAL_PROJECT_STATE: ProjectSelectorState = {
 };
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const [projectState, setProjectState] = useState<ProjectSelectorState>(INITIAL_PROJECT_STATE);
 
   useEffect(() => {
+    if (pathname === "/login") {
+      return;
+    }
+
     let active = true;
     getProjectSelectorState()
       .then((nextState) => {
@@ -54,7 +60,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [pathname]);
+
+  if (pathname === "/login") {
+    return <>{children}</>;
+  }
 
   return (
     <div className="appShell">

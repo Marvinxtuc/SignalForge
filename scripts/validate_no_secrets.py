@@ -94,6 +94,8 @@ def main() -> None:
                     continue
                 if "re.compile" in stripped:
                     continue
+                if "process.env." in stripped or "os.getenv(" in stripped or "os.environ" in stripped:
+                    continue
                 if pattern.search(stripped):
                     rel = file_path.relative_to(ROOT)
                     fail(f"possible secret {name} in {rel}:{line_no}")

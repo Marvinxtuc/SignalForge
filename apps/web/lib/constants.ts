@@ -18,6 +18,7 @@ export const ROUTES = {
   signals: "/signals",
   dashboard: "/dashboard",
   opportunities: "/opportunities",
+  production: "/production",
   logs: "/logs",
   reports: "/reports",
   settings: "/settings"
@@ -28,6 +29,7 @@ export const NAV_ITEMS = [
   { href: ROUTES.signals, label: "信号收件箱", hint: "核心" },
   { href: ROUTES.dashboard, label: "仪表盘", hint: "摘要" },
   { href: ROUTES.opportunities, label: "机会看板", hint: "处理" },
+  { href: ROUTES.production, label: "生产运行", hint: "审批" },
   { href: ROUTES.logs, label: "运行日志", hint: "采集" },
   { href: ROUTES.reports, label: "报告导出", hint: "导出" },
   { href: ROUTES.settings, label: "设置", hint: "管理" }

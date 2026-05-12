@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.auth import OwnerAuthMiddleware
 from app.api.errors import ApiError, api_error_handler, http_exception_handler, validation_error_handler
 from app.api.routes import (
     clusters,
@@ -10,6 +11,7 @@ from app.api.routes import (
     keywords,
     opportunities,
     processing,
+    production_runs,
     projects,
     reports,
     settings,
@@ -18,6 +20,7 @@ from app.api.routes import (
 from app.config import settings as app_settings
 
 app = FastAPI(title="SignalForge API", version="0.1.0-phase-2")
+app.add_middleware(OwnerAuthMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=app_settings.cors_allow_origins,
@@ -39,6 +42,7 @@ app.include_router(opportunities.router)
 app.include_router(reports.router)
 app.include_router(settings.router)
 app.include_router(processing.router)
+app.include_router(production_runs.router)
 
 
 @app.get("/health")

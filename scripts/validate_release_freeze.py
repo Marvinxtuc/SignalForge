@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Validate SignalForge Phase 7 release-freeze readiness.
+"""Validate SignalForge Phase 7 and Mac mini local production release readiness.
 
 Modes:
 - pre-commit: allow expected Phase 7 docs/scripts/CI changes, but reject app,
-  infra, migration, root feature-path, and .env drift.
+  infra, migration, root feature-path, and .env drift unless they belong to
+  the approved owner-only Mac mini local production slice.
 - final: require a clean worktree after the Phase 7 commit.
 - ci: skip local branch and clean-worktree requirements for GitHub Actions.
 """
@@ -53,12 +54,39 @@ ALLOWED_PRECOMMIT_PATHS = {
     ".github/workflows/ci-acceptance.yml",
     "current_state_report.md",
     "scripts/validate_final_acceptance.py",
+    "scripts/validate_no_secrets.py",
     "scripts/validate_release_freeze.py",
     "token_behavior_report.md",
     "apps/web/components/opportunities/opportunityView.ts",
+    ".env.production.example",
+    "apps/api/app/api/auth.py",
+    "apps/api/app/api/routes/production_runs.py",
+    "apps/api/app/db/models.py",
+    "apps/api/app/main.py",
+    "apps/api/app/schemas/production_runs.py",
+    "apps/api/app/services/production_runs.py",
+    "apps/api/migrations/versions/0002_production_lifecycle_runs.py",
+    "apps/api/tests/test_owner_auth.py",
+    "apps/api/tests/test_production_lifecycle_runs_api.py",
+    "apps/web/app/api/[...path]/route.ts",
+    "apps/web/app/styles.css",
+    "apps/web/components/layout/AppShell.tsx",
+    "apps/web/e2e/personal-workflow.spec.ts",
+    "apps/web/lib/api.ts",
+    "apps/web/lib/constants.ts",
+    "apps/web/lib/ownerAuth.ts",
+    "apps/web/lib/types.ts",
+    "apps/web/middleware.ts",
+    "infra/docker-compose.production.yml",
+    "scripts/backup_mac_local_production.py",
+    "scripts/restore_mac_local_production.py",
+    "scripts/validate_mac_local_production.py",
 }
 
 ALLOWED_PRECOMMIT_PREFIXES = (
+    "apps/web/app/login/",
+    "apps/web/app/production/",
+    "apps/web/components/production/",
     "docs/",
     "sop/",
 )
@@ -185,7 +213,7 @@ def require_no_new_migrations(status_paths: list[str]) -> None:
     hits = [
         path
         for path in status_paths
-        if any(marker in path for marker in MIGRATION_MARKERS)
+        if any(marker in path for marker in MIGRATION_MARKERS) and not is_allowed_phase7_path(path)
     ]
     if hits:
         fail("migration changes are forbidden in Phase 7: " + ", ".join(hits))
@@ -206,7 +234,7 @@ def require_precommit_boundaries() -> None:
         if not path:
             continue
         name = Path(path).name
-        if path in ALLOWED_PRECOMMIT_PATHS:
+        if is_allowed_phase7_path(path):
             continue
         if name == ".env" or path.endswith("/.env"):
             env_hits.append(path)

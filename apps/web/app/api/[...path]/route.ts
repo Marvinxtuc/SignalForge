@@ -1,4 +1,10 @@
 import { SERVER_API_BASE_URL } from "../../../lib/constants";
+import {
+  getOwnerApiToken,
+  isOwnerAuthRequired,
+  isValidOwnerSessionValue,
+  OWNER_SESSION_COOKIE
+} from "../../../lib/ownerAuth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -18,6 +24,7 @@ const BLOCKED_REQUEST_HEADERS = new Set([
   "sf-token",
   "sf_token",
   "x-sf-token",
+  "x-signalforge-owner-token",
   "te",
   "trailer",
   "transfer-encoding",
@@ -25,6 +32,16 @@ const BLOCKED_REQUEST_HEADERS = new Set([
 ]);
 
 const BLOCKED_RESPONSE_HEADERS = new Set(["connection", "content-encoding", "set-cookie"]);
+
+class OwnerAuthProxyError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "OwnerAuthProxyError";
+    this.status = status;
+  }
+}
 
 export async function GET(request: Request, context: RouteContext) {
   return proxyBackendRequest(request, context);
@@ -56,13 +73,14 @@ export async function HEAD(request: Request, context: RouteContext) {
 
 async function proxyBackendRequest(request: Request, context: RouteContext): Promise<Response> {
   try {
+    const ownerToken = getProxyOwnerToken(request.headers);
     const targetUrl = await buildTargetUrl(request, context);
     const body = await getRequestBody(request);
 
     const upstreamResponse = await fetch(targetUrl, {
       body,
       cache: "no-store",
-      headers: getForwardHeaders(request.headers),
+      headers: getForwardHeaders(request.headers, ownerToken),
       method: request.method,
       redirect: "manual"
     });
@@ -72,7 +90,25 @@ async function proxyBackendRequest(request: Request, context: RouteContext): Pro
       status: upstreamResponse.status,
       statusText: upstreamResponse.statusText
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof OwnerAuthProxyError) {
+      return Response.json(
+        {
+          error: {
+            code: "owner_auth_required",
+            message: error.message,
+            details: {}
+          }
+        },
+        {
+          status: error.status,
+          headers: {
+            "Cache-Control": "no-store"
+          }
+        }
+      );
+    }
+
     return Response.json(
       {
         error: {
@@ -89,6 +125,19 @@ async function proxyBackendRequest(request: Request, context: RouteContext): Pro
       }
     );
   }
+}
+
+function getProxyOwnerToken(headers: Headers): string | null {
+  if (!isOwnerAuthRequired()) {
+    return null;
+  }
+
+  const sessionCookie = parseCookieHeader(headers.get("cookie")).get(OWNER_SESSION_COOKIE);
+  if (!isValidOwnerSessionValue(sessionCookie)) {
+    throw new OwnerAuthProxyError("Owner session is required for the SignalForge web proxy.", 401);
+  }
+
+  return getOwnerApiToken();
 }
 
 async function buildTargetUrl(request: Request, context: RouteContext): Promise<URL> {
@@ -116,7 +165,7 @@ async function getRequestBody(request: Request): Promise<ArrayBuffer | undefined
   return body.byteLength > 0 ? body : undefined;
 }
 
-function getForwardHeaders(headers: Headers): Headers {
+function getForwardHeaders(headers: Headers, ownerToken: string | null): Headers {
   const forwardHeaders = new Headers();
 
   headers.forEach((value, key) => {
@@ -124,6 +173,10 @@ function getForwardHeaders(headers: Headers): Headers {
       forwardHeaders.set(key, value);
     }
   });
+
+  if (ownerToken) {
+    forwardHeaders.set("X-SignalForge-Owner-Token", ownerToken);
+  }
 
   return forwardHeaders;
 }
@@ -138,4 +191,29 @@ function getResponseHeaders(headers: Headers): Headers {
   });
 
   return responseHeaders;
+}
+
+function parseCookieHeader(cookieHeader: string | null): Map<string, string> {
+  const cookies = new Map<string, string>();
+
+  if (!cookieHeader) {
+    return cookies;
+  }
+
+  cookieHeader.split(";").forEach((part) => {
+    const [rawName, ...rawValue] = part.trim().split("=");
+    if (rawName) {
+      cookies.set(rawName, safeDecodeCookieValue(rawValue.join("=")));
+    }
+  });
+
+  return cookies;
+}
+
+function safeDecodeCookieValue(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }

@@ -63,6 +63,26 @@ test("runs the personal production UI workflow", async ({ page }) => {
   await expect(page.getByText("REDDIT_CLIENT_SECRET")).toHaveCount(0);
 });
 
+test("creates a production lifecycle run with explicit approval controls", async ({ page }) => {
+  await page.goto(`/production?projectId=${projectId}`);
+  await expect(page.getByRole("heading", { name: "Mac mini owner-only lifecycle" })).toBeVisible();
+  await expect(page.getByText("Run Creation")).toBeVisible();
+  await expect(page.getByRole("button", { name: "创建并运行" })).toBeEnabled();
+
+  await page.getByLabel("Run mode").selectOption("production");
+  await expect(page.getByRole("button", { name: "创建并运行" })).toBeDisabled();
+  await page.getByLabel("允许真实平台读取").check();
+  await page.getByLabel("允许真实平台写入").check();
+  await page.getByLabel("允许真实 LLM 调用").check();
+  await page.getByLabel("Explicit confirmation").fill("APPROVE");
+  await expect(page.getByRole("button", { name: "创建并运行" })).toBeEnabled();
+
+  await page.getByRole("button", { name: "创建并运行" }).click();
+  await expect(page.getByText("run 完成")).toBeVisible();
+  await expect(page.getByText("job-1").first()).toBeVisible();
+  await expect(page.getByText("Gate ready")).toBeVisible();
+});
+
 async function installApiMocks(page: Page) {
   await page.route("**/api/**", async (route) => {
     const url = new URL(route.request().url());
@@ -169,6 +189,14 @@ async function installApiMocks(page: Page) {
       return json(route, processingResponse());
     }
 
+    if (path === "/api/production/runs") {
+      if (method === "POST") {
+        return json(route, productionRun(), 201);
+      }
+
+      return json(route, { items: [productionRun()], page: 1, page_size: 20, total: 1 });
+    }
+
     if (path === `/api/projects/${projectId}/opportunities`) {
       return json(route, { items: [opportunity()], page: 1, page_size: 100, total: 1 });
     }
@@ -228,6 +256,32 @@ function collectionLog() {
     rate_limit_remaining: null,
     rate_limit_reset_at: null,
     created_at: "2026-04-29T00:00:00.000Z"
+  };
+}
+
+function productionRun() {
+  return {
+    id: "production-run-1",
+    project_id: projectId,
+    status: "success",
+    stage: "review",
+    collection_mode: "mock",
+    processing_mode: "fallback_only",
+    allow_real_platform_write: true,
+    allow_real_llm: true,
+    allow_real_embedding: false,
+    env_preflight: { safe_execution: true },
+    result_summary: {
+      collection: { job_id: "job-1", status: "success", items_inserted: 5 },
+      processing: processingResponse()
+    },
+    error_summary: null,
+    rollback_hint: null,
+    redacted_logs: [],
+    started_at: "2026-04-29T00:00:00.000Z",
+    finished_at: "2026-04-29T00:01:00.000Z",
+    created_at: "2026-04-29T00:00:00.000Z",
+    updated_at: "2026-04-29T00:01:00.000Z"
   };
 }
 

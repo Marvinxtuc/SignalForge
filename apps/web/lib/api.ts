@@ -24,6 +24,10 @@ import type {
   ProcessingRequest,
   ProcessingResponse,
   ProcessingSummary,
+  ProductionRunCreateRequest,
+  ProductionRunListItem,
+  ProductionRunRead,
+  ProductionRunStatus,
   Project,
   ProjectCreateRequest,
   ReportRequest,
@@ -375,5 +379,82 @@ export const api = {
       }),
     summary: (projectId: UUID) =>
       apiRequest<ProcessingSummary>(`/api/projects/${projectId}/processing-summary`)
+  },
+  production: {
+    createRun: (projectId: UUID, body: ProductionRunCreateRequest) =>
+      apiRequest<ProductionRunRead>("/api/production/runs", {
+        method: "POST",
+        body: {
+          project_id: projectId,
+          collection_mode: body.collection_execution_mode,
+          processing_mode: body.processing_mode,
+          allow_real_platform_write: body.approvals.real_platform_write,
+          allow_real_llm: body.approvals.real_llm,
+          allow_real_embedding: body.approvals.real_embedding,
+          execute: true,
+          rollback_hint: `Frontend run mode=${body.mode}; reprocess=${body.reprocess}.`
+        }
+      }),
+    getRun: (runId: UUID) => apiRequest<ProductionRunRead>(`/api/production/runs/${runId}`),
+    status: async (projectId: UUID): Promise<ProductionRunStatus> => {
+      const [logs, summary] = await Promise.all([
+        api.collection.listLogs(projectId, { page_size: 10 }),
+        api.processing.summary(projectId)
+      ]);
+
+      return {
+        project_id: projectId,
+        checked_at: new Date().toISOString(),
+        collection_logs: logs.items,
+        processing_summary: summary
+      };
+    },
+    listRuns: async (projectId: UUID): Promise<ProductionRunListItem[]> => {
+      const response = await apiRequest<PaginatedResponse<ProductionRunRead>>(
+        "/api/production/runs",
+        { query: { page_size: 20 } }
+      );
+
+      return response.items
+        .filter((run) => run.project_id === projectId)
+        .map(productionRunToListItem);
+    }
   }
 };
+
+function productionRunToListItem(run: ProductionRunRead): ProductionRunListItem {
+  const collectionSummary = asRecord(run.result_summary.collection);
+  const processingSummary = asRecord(run.result_summary.processing);
+
+  return {
+    id: run.id,
+    project_id: run.project_id ?? "",
+    created_at: run.created_at ?? run.started_at ?? new Date().toISOString(),
+    state: formatProductionRunStage(run.stage),
+    status: run.status,
+    mode: run.collection_mode,
+    collection_job_id: typeof collectionSummary.job_id === "string" ? collectionSummary.job_id : null,
+    processing_mode: run.processing_mode,
+    items_inserted: numberValue(collectionSummary.items_inserted),
+    total_signals: numberValue(processingSummary.total_signals),
+    error_message: run.error_summary
+  };
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function numberValue(value: unknown): number | null {
+  return typeof value === "number" ? value : null;
+}
+
+function formatProductionRunStage(runStage: string): ProductionRunListItem["state"] {
+  if (runStage === "collect" || runStage === "process" || runStage === "review" || runStage === "report") {
+    return runStage;
+  }
+
+  return runStage === "closeout" ? "closeout" : "review";
+}
