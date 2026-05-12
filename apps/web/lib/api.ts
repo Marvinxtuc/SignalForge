@@ -409,6 +409,7 @@ export const api = {
           allow_real_platform_write: body.approvals.real_platform_write,
           allow_real_llm: body.approvals.real_llm,
           allow_real_embedding: body.approvals.real_embedding,
+          reprocess: body.reprocess,
           execute: true,
           rollback_hint: `Frontend run mode=${body.mode}; reprocess=${body.reprocess}.`
         }

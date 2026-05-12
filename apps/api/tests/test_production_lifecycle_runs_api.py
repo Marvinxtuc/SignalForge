@@ -64,7 +64,7 @@ def test_production_lifecycle_run_mock_success(monkeypatch) -> None:
         assert response.status_code == 201
         assert payload["project_id"] == project_id
         assert payload["status"] == "success"
-        assert payload["stage"] == "report"
+        assert payload["stage"] == "closeout"
         assert payload["collection_mode"] == "mock"
         assert payload["processing_mode"] == "fallback_only"
         assert payload["allow_real_platform_write"] is False
@@ -78,6 +78,7 @@ def test_production_lifecycle_run_mock_success(monkeypatch) -> None:
             "process",
             "review",
             "report",
+            "closeout",
         ]
 
         fetched = TestClient(app).get(f"/api/production/runs/{run_id}")
@@ -94,6 +95,45 @@ def test_production_lifecycle_run_mock_success(monkeypatch) -> None:
         assert closed.json()["result_summary"]["lifecycle"][-1]["stage"] == "closeout"
     finally:
         if run_id is not None:
+            delete_run(run_id)
+        delete_project(project_id)
+
+
+def test_production_lifecycle_run_honors_reprocess_flag(monkeypatch) -> None:
+    monkeypatch.delenv("SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE", raising=False)
+    monkeypatch.delenv("SIGNALFORGE_ALLOW_REAL_LLM_SMOKE", raising=False)
+    monkeypatch.delenv("SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE", raising=False)
+    project_id = create_project()
+    run_ids: list[str] = []
+    try:
+        first = TestClient(app).post(
+            "/api/production/runs",
+            json={
+                "project_id": project_id,
+                "collection_mode": "mock",
+                "processing_mode": "fallback_only",
+            },
+        )
+        assert first.status_code == 201
+        run_ids.append(first.json()["id"])
+
+        second = TestClient(app).post(
+            "/api/production/runs",
+            json={
+                "project_id": project_id,
+                "collection_mode": "mock",
+                "processing_mode": "fallback_only",
+                "reprocess": True,
+            },
+        )
+        payload = second.json()
+        run_ids.append(payload["id"])
+
+        assert second.status_code == 201
+        assert payload["stage"] == "closeout"
+        assert payload["result_summary"]["processing"]["processed_in_run"] >= 1
+    finally:
+        for run_id in run_ids:
             delete_run(run_id)
         delete_project(project_id)
 

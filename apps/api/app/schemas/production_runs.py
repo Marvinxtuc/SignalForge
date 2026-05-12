@@ -13,6 +13,7 @@ class ProductionRunCreate(ApiSchema):
     project_id: UUID | None = None
     collection_mode: str = "mock"
     processing_mode: str = "fallback_only"
+    reprocess: bool = False
     allow_real_platform_write: bool = False
     allow_real_llm: bool = False
     allow_real_embedding: bool = False

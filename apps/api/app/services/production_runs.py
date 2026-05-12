@@ -116,7 +116,7 @@ def create_run(db: Session, payload: ProductionRunCreate) -> ProductionLifecycle
             db=db,
             project_id=payload.project_id,
             mode=payload.processing_mode,
-            reprocess=False,
+            reprocess=payload.reprocess,
         )
         lifecycle[-1] = _lifecycle_event("process", "success", processing_summary)
         lifecycle.append(_lifecycle_event("review", "ready"))
@@ -130,6 +130,20 @@ def create_run(db: Session, payload: ProductionRunCreate) -> ProductionLifecycle
                 },
             )
         )
+        lifecycle.append(
+            _lifecycle_event(
+                "closeout",
+                "success",
+                {
+                    "rollback_hint": "Use the stored rollback_hint and local production restore runbook if needed.",
+                    "real_provider_status": (
+                        "NO_GO_REAL_PROVIDER"
+                        if preflight["real_collection_requested"] or preflight["real_processing_requested"]
+                        else "NOT_REQUESTED"
+                    ),
+                },
+            )
+        )
     except Exception as exc:
         db.rollback()
         run = get_run(db, run.id)
@@ -140,7 +154,7 @@ def create_run(db: Session, payload: ProductionRunCreate) -> ProductionLifecycle
         return commit_and_refresh(db, run)
 
     run.status = "success"
-    run.stage = "report"
+    run.stage = "closeout"
     run.result_summary = _redact(
         {
             "lifecycle": lifecycle,

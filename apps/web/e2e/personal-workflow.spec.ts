@@ -79,6 +79,7 @@ test("creates a production lifecycle run with explicit approval controls", async
 
   await page.getByRole("button", { name: "创建并运行" }).click();
   await expect(page.getByText("运行完成")).toBeVisible();
+  await expect(page.getByText("收口").first()).toBeVisible();
   await expect(page.getByText("job-1").first()).toBeVisible();
   await expect(page.getByText("门禁已就绪")).toBeVisible();
 });
@@ -264,7 +265,7 @@ function productionRun() {
     id: "production-run-1",
     project_id: projectId,
     status: "success",
-    stage: "review",
+    stage: "closeout",
     collection_mode: "mock",
     processing_mode: "fallback_only",
     allow_real_platform_write: true,
