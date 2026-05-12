@@ -65,22 +65,22 @@ test("runs the personal production UI workflow", async ({ page }) => {
 
 test("creates a production lifecycle run with explicit approval controls", async ({ page }) => {
   await page.goto(`/production?projectId=${projectId}`);
-  await expect(page.getByRole("heading", { name: "Mac mini owner-only lifecycle" })).toBeVisible();
-  await expect(page.getByText("Run Creation")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mac mini 本地生产生命周期" })).toBeVisible();
+  await expect(page.getByText("创建运行")).toBeVisible();
   await expect(page.getByRole("button", { name: "创建并运行" })).toBeEnabled();
 
-  await page.getByLabel("Run mode").selectOption("production");
+  await page.getByLabel("运行模式").selectOption("production");
   await expect(page.getByRole("button", { name: "创建并运行" })).toBeDisabled();
   await page.getByLabel("允许真实平台读取").check();
   await page.getByLabel("允许真实平台写入").check();
-  await page.getByLabel("允许真实 LLM 调用").check();
-  await page.getByLabel("Explicit confirmation").fill("APPROVE");
+  await page.getByLabel("允许真实大模型调用").check();
+  await page.getByLabel("显式确认").fill("确认");
   await expect(page.getByRole("button", { name: "创建并运行" })).toBeEnabled();
 
   await page.getByRole("button", { name: "创建并运行" }).click();
-  await expect(page.getByText("run 完成")).toBeVisible();
+  await expect(page.getByText("运行完成")).toBeVisible();
   await expect(page.getByText("job-1").first()).toBeVisible();
-  await expect(page.getByText("Gate ready")).toBeVisible();
+  await expect(page.getByText("门禁已就绪")).toBeVisible();
 });
 
 async function installApiMocks(page: Page) {

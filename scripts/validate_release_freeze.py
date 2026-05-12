@@ -74,6 +74,7 @@ ALLOWED_PRECOMMIT_PATHS = {
     "apps/web/e2e/personal-workflow.spec.ts",
     "apps/web/lib/api.ts",
     "apps/web/lib/constants.ts",
+    "apps/web/lib/format.ts",
     "apps/web/lib/ownerAuth.ts",
     "apps/web/lib/types.ts",
     "apps/web/middleware.ts",

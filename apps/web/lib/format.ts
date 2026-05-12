@@ -50,8 +50,8 @@ export function platformLabel(value: string | null | undefined): string {
     product_hunt: "Product Hunt",
     x: "X",
     discord: "Discord",
-    mock: "Mock",
-    demo: "Demo"
+    mock: "模拟平台",
+    demo: "演示"
   };
 
   return labels[value] ?? labelFromSnakeCase(value);
@@ -96,7 +96,19 @@ export function formatStatusLabel(value: string | null | undefined): string {
     running: "运行中",
     pending: "等待中",
     fallback_only: "仅兜底",
-    mock: "mock"
+    mock: "模拟",
+    preview: "预览",
+    production: "生产",
+    preflight: "预检",
+    collect: "采集",
+    process: "处理",
+    review: "复核",
+    report: "报告",
+    closeout: "收口",
+    closed: "已关闭",
+    no_go_real_provider: "真实服务未放行",
+    preflight_only: "仅预检",
+    preflight_passed: "预检通过"
   };
 
   return labels[value] ?? labelFromSnakeCase(value);

@@ -33,13 +33,33 @@ type ApprovalKey = keyof ProductionRunCreateRequest["approvals"];
 const RUN_MODES: ProductionRunMode[] = ["mock", "preview", "production"];
 const COLLECTION_MODES = ["mock", "reddit", "product_hunt", "p0_real"] as const;
 const PROCESSING_MODES = ["mock", "fallback_only", "real_llm", "real_embedding"] as const;
-const CONFIRMATION_TEXT = "APPROVE";
+const CONFIRMATION_TEXT = "确认";
+
+const RUN_MODE_LABELS: Record<ProductionRunMode | string, string> = {
+  mock: "模拟运行",
+  preview: "预览运行",
+  production: "生产运行"
+};
+
+const COLLECTION_MODE_LABELS: Record<string, string> = {
+  mock: "模拟采集",
+  reddit: "Reddit 真实采集",
+  product_hunt: "Product Hunt 真实采集",
+  p0_real: "P0 真实采集"
+};
+
+const PROCESSING_MODE_LABELS: Record<string, string> = {
+  mock: "模拟处理",
+  fallback_only: "仅兜底处理",
+  real_llm: "真实大模型处理",
+  real_embedding: "真实向量化处理"
+};
 
 const APPROVAL_LABELS: Array<{ key: ApprovalKey; label: string; detail: string }> = [
   {
     key: "real_platform_read",
     label: "允许真实平台读取",
-    detail: "允许本次 run 尝试真实平台 read/smoke，仍受后端 env gate 约束。"
+    detail: "允许本次运行尝试真实平台读取或冒烟检查，仍受后端环境门禁约束。"
   },
   {
     key: "real_platform_write",
@@ -48,13 +68,13 @@ const APPROVAL_LABELS: Array<{ key: ApprovalKey; label: string; detail: string }
   },
   {
     key: "real_llm",
-    label: "允许真实 LLM 调用",
-    detail: "选择 real_llm 处理模式时才会尝试；后端当前默认拒绝。"
+    label: "允许真实大模型调用",
+    detail: "选择真实大模型处理模式时才会尝试；后端当前默认拒绝。"
   },
   {
     key: "real_embedding",
-    label: "允许真实 embedding 调用",
-    detail: "选择 real_embedding 处理模式时才会尝试；后端当前默认拒绝。"
+    label: "允许真实向量化调用",
+    detail: "选择真实向量化处理模式时才会尝试；后端当前默认拒绝。"
   }
 ];
 
@@ -156,7 +176,7 @@ export function ProductionPage() {
       error_message: null
     });
 
-    setActionState({ status: "running", message: "正在创建 production lifecycle run。" });
+    setActionState({ status: "running", message: "正在创建本地生产运行。" });
 
     try {
       const createdRun = await api.production.createRun(projectId, runRequest);
@@ -201,7 +221,7 @@ export function ProductionPage() {
   }
 
   if (!projectId) {
-    return <EmptyState description="请选择项目后再创建本地生产 run。" title="请选择项目" />;
+    return <EmptyState description="请选择项目后再创建本地生产运行。" title="请选择项目" />;
   }
 
   return (
@@ -209,9 +229,9 @@ export function ProductionPage() {
       <header className="pageHeader">
         <div>
           <p className="pageEyebrow">生产运行</p>
-          <h1 className="pageTitle">Mac mini owner-only lifecycle</h1>
+          <h1 className="pageTitle">Mac mini 本地生产生命周期</h1>
           <p className="pageSubtitle">
-            本页只使用 same-origin API proxy 和现有后端接口。真实平台写入与真实模型调用必须逐次勾选并确认。
+            本页只使用同源接口代理和现有后端接口。真实平台写入与真实模型调用必须逐次勾选并确认。
           </p>
         </div>
         <Button disabled={pageState.status === "loading"} onClick={() => void loadStatus(projectId)}>
@@ -223,29 +243,31 @@ export function ProductionPage() {
         <section className="surfacePanel" aria-labelledby="run-create-title">
           <div>
             <h2 className="opportunityCardTitle" id="run-create-title">
-              Run Creation
+              创建运行
             </h2>
-            <p className="selectorMeta">先 collect，再 process；失败会停在 closeout 并显示后端返回原因。</p>
+            <p className="selectorMeta">先采集，再处理；失败会停在收口阶段并显示后端返回原因。</p>
           </div>
 
           <div className="productionControlGrid">
             <label className="compactField">
-              <span>Run mode</span>
+              <span>运行模式</span>
               <select
+                aria-label="运行模式"
                 className="selectControl"
                 onChange={(event) => setMode(event.target.value as ProductionRunMode)}
                 value={mode}
               >
                 {RUN_MODES.map((item) => (
                   <option key={item} value={item}>
-                    {item}
+                    {RUN_MODE_LABELS[item]}
                   </option>
                 ))}
               </select>
             </label>
             <label className="compactField">
-              <span>Collect</span>
+              <span>采集模式</span>
               <select
+                aria-label="采集模式"
                 className="selectControl"
                 onChange={(event) =>
                   setCollectionMode(event.target.value as (typeof COLLECTION_MODES)[number])
@@ -254,14 +276,15 @@ export function ProductionPage() {
               >
                 {COLLECTION_MODES.map((item) => (
                   <option key={item} value={item}>
-                    {item}
+                    {COLLECTION_MODE_LABELS[item]}
                   </option>
                 ))}
               </select>
             </label>
             <label className="compactField">
-              <span>Process</span>
+              <span>处理模式</span>
               <select
+                aria-label="处理模式"
                 className="selectControl"
                 onChange={(event) =>
                   setProcessingMode(event.target.value as (typeof PROCESSING_MODES)[number])
@@ -270,7 +293,7 @@ export function ProductionPage() {
               >
                 {PROCESSING_MODES.map((item) => (
                   <option key={item} value={item}>
-                    {item}
+                    {PROCESSING_MODE_LABELS[item]}
                   </option>
                 ))}
               </select>
@@ -281,11 +304,11 @@ export function ProductionPage() {
                 onChange={(event) => setReprocess(event.target.checked)}
                 type="checkbox"
               />
-              <span>Reprocess existing raw items</span>
+              <span>重新处理已有原始数据</span>
             </label>
           </div>
 
-          <div className="approvalList" aria-label="run approvals">
+          <div className="approvalList" aria-label="运行批准项">
             {APPROVAL_LABELS.map((item) => (
               <label className="checkboxRow approvalItem" key={item.key}>
                 <input
@@ -302,13 +325,14 @@ export function ProductionPage() {
           </div>
 
           <label className="formField">
-            <span>Explicit confirmation</span>
+            <span>显式确认</span>
             <input
+              aria-label="显式确认"
               onChange={(event) => updateApproval("confirmation_text", event.target.value)}
-              placeholder={explicitApprovalRequired ? CONFIRMATION_TEXT : "mock 模式无需确认"}
+              placeholder={explicitApprovalRequired ? CONFIRMATION_TEXT : "模拟模式无需确认"}
               value={approvals.confirmation_text}
             />
-            <small>非 mock 或任何真实批准项需要输入 {CONFIRMATION_TEXT}。</small>
+            <small>非模拟运行或任何真实批准项需要输入“{CONFIRMATION_TEXT}”。</small>
           </label>
 
           <div className="detailActions">
@@ -316,7 +340,7 @@ export function ProductionPage() {
               {actionState.status === "running" ? "运行中" : "创建并运行"}
             </Button>
             <Badge tone={canRun ? "success" : "warning"}>
-              {canRun ? "Gate ready" : "等待批准条件"}
+              {canRun ? "门禁已就绪" : "等待批准条件"}
             </Badge>
           </div>
           {actionState.status === "running" ? <p className="selectorMeta">{actionState.message}</p> : null}
@@ -331,9 +355,9 @@ export function ProductionPage() {
         <section className="surfacePanel" aria-labelledby="run-status-title">
           <div>
             <h2 className="opportunityCardTitle" id="run-status-title">
-              Current Status
+              当前状态
             </h2>
-            <p className="selectorMeta">来自 processing summary 与最近 collection logs。</p>
+            <p className="selectorMeta">来自处理摘要与最近采集日志。</p>
           </div>
           {pageState.status === "loading" || pageState.status === "idle" ? (
             <LoadingState label="正在加载生产状态" />
@@ -344,10 +368,10 @@ export function ProductionPage() {
           {pageState.status === "ready" ? (
             <>
               <div className="metricGrid">
-                <Metric label="Raw processed" value={pageState.runStatus.processing_summary.processed_raw_items} />
-                <Metric label="Signals" value={pageState.runStatus.processing_summary.total_signals} />
-                <Metric label="Embeddings" value={pageState.runStatus.processing_summary.embedding_count} />
-                <Metric label="Opportunities" value={pageState.runStatus.processing_summary.opportunity_count} />
+                <Metric label="已处理原始数据" value={pageState.runStatus.processing_summary.processed_raw_items} />
+                <Metric label="信号" value={pageState.runStatus.processing_summary.total_signals} />
+                <Metric label="向量" value={pageState.runStatus.processing_summary.embedding_count} />
+                <Metric label="机会" value={pageState.runStatus.processing_summary.opportunity_count} />
               </div>
               <p className="selectorMeta">最近检查 {formatDateTime(pageState.runStatus.checked_at)}</p>
             </>
@@ -363,7 +387,7 @@ export function ProductionPage() {
                 <Th>状态</Th>
                 <Th>阶段</Th>
                 <Th>模式</Th>
-                <Th>采集 Job</Th>
+                <Th>采集任务</Th>
                 <Th>处理模式</Th>
                 <Th>入库</Th>
                 <Th>信号</Th>
@@ -379,10 +403,10 @@ export function ProductionPage() {
                       {formatStatusLabel(run.status)}
                     </Badge>
                   </td>
-                  <td>{run.state}</td>
-                  <td>{run.mode}</td>
+                  <td>{formatRunStageLabel(run.state)}</td>
+                  <td>{RUN_MODE_LABELS[run.mode] ?? run.mode}</td>
                   <td>{run.collection_job_id ?? "-"}</td>
-                  <td>{run.processing_mode ?? "-"}</td>
+                  <td>{formatProcessingModeLabel(run.processing_mode)}</td>
                   <td>{formatNumber(run.items_inserted)}</td>
                   <td>{formatNumber(run.total_signals)}</td>
                   <td>{run.error_message ?? "-"}</td>
@@ -446,11 +470,11 @@ function productionRunReadToListItem(
 
 function formatRunResult(run: ProductionRunRead): string {
   if (run.status !== "success") {
-    return `${run.status}: ${run.error_summary ?? "后端 preflight 或 lifecycle gate 未通过。"}`;
+    return `${formatStatusLabel(run.status)}：${run.error_summary ?? "后端预检或生命周期门禁未通过。"}`;
   }
 
   const processingSummary = asRecord(run.result_summary.processing);
-  return `run 完成：信号 ${formatNumber(numberValue(processingSummary.total_signals))} 条，状态 ${run.stage}。`;
+  return `运行完成：信号 ${formatNumber(numberValue(processingSummary.total_signals))} 条，阶段 ${formatRunStageLabel(formatProductionRunStage(run.stage))}。`;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -469,6 +493,26 @@ function formatProductionRunStage(runStage: string): ProductionRunListItem["stat
   }
 
   return runStage === "closeout" ? "closeout" : "review";
+}
+
+function formatRunStageLabel(stage: ProductionRunListItem["state"]): string {
+  const labels: Record<ProductionRunListItem["state"], string> = {
+    collect: "采集",
+    process: "处理",
+    review: "复核",
+    report: "报告",
+    closeout: "收口"
+  };
+
+  return labels[stage];
+}
+
+function formatProcessingModeLabel(mode: string | null): string {
+  if (!mode) {
+    return "-";
+  }
+
+  return PROCESSING_MODE_LABELS[mode] ?? mode;
 }
 
 function formatActionError(error: unknown): string {

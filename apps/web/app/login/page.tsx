@@ -25,12 +25,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     <main className="loginPage" aria-labelledby="owner-login-title">
       <section className="loginPanel">
         <div>
-          <p className="pageEyebrow">OWNER ACCESS</p>
+          <p className="pageEyebrow">管理员访问</p>
           <h1 className="pageTitle" id="owner-login-title">
             SignalForge 本地生产登录
           </h1>
           <p className="pageSubtitle">
-            请输入 Mac mini owner-only 环境密码。会话使用 HttpOnly cookie 保存，不在前端代码中保存密钥。
+            请输入 Mac mini 单人生产环境密码。会话使用 HttpOnly cookie 保存，不在前端代码中保存密钥。
           </p>
         </div>
         {configError ? (
@@ -41,13 +41,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         ) : null}
         {resolvedSearchParams.error === "invalid" ? (
           <p className="inlineError" role="alert">
-            密码不正确，未创建 owner session。
+            密码不正确，未创建管理员会话。
           </p>
         ) : null}
         <form action={loginOwner} className="formGrid">
           <input name="next" type="hidden" value={nextPath} />
           <label className="formField">
-            <span>Owner Password</span>
+            <span>管理员密码</span>
             <input
               autoComplete="current-password"
               disabled={Boolean(configError)}
