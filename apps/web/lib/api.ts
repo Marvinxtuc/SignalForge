@@ -85,6 +85,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
       headers: {
         Accept: "application/json",
         ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+        ...getServerOwnerAuthHeader(),
         ...requestInit.headers
       },
       signal: requestInit.signal ?? controller.signal
@@ -203,6 +204,23 @@ function isAbsoluteUrl(url: string): boolean {
 
 function isLocalhost(hostname: string): boolean {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+}
+
+function getServerOwnerAuthHeader(): Record<string, string> {
+  if (typeof window !== "undefined") {
+    return {};
+  }
+
+  const authRequired = ["1", "true", "yes", "on"].includes(
+    (process.env.SIGNALFORGE_REQUIRE_OWNER_AUTH ?? "").trim().toLowerCase()
+  );
+  const ownerToken = process.env.SIGNALFORGE_OWNER_API_TOKEN?.trim();
+
+  if (!authRequired || !ownerToken) {
+    return {};
+  }
+
+  return { "X-SignalForge-Owner-Token": ownerToken };
 }
 
 async function parseApiResponse<T>(response: Response, url: string): Promise<T> {
