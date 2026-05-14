@@ -17,12 +17,15 @@ REQUIRED_ENV_NAMES = (
     "POSTGRES_DB",
     "POSTGRES_USER",
     "POSTGRES_PASSWORD",
+)
+OWNER_AUTH_ENV_NAMES = (
     "SIGNALFORGE_OWNER_USERNAME",
     "SIGNALFORGE_OWNER_PASSWORD",
     "SIGNALFORGE_OWNER_SESSION_TOKEN",
     "SIGNALFORGE_OWNER_API_TOKEN",
     "SIGNALFORGE_SESSION_SECRET",
 )
+TRUE_VALUES = {"1", "true", "yes", "on"}
 FORBIDDEN_TUNNEL_MARKERS = ("cloudflared", "trycloudflare", "ngrok")
 
 
@@ -67,14 +70,26 @@ def validate_env_file(path: Path, *, strict: bool) -> None:
         warn(f"production env file is missing: {path}")
         return
 
-    names = read_env_names(path)
+    values = read_env_values(path)
+    names = set(values)
     missing = [name for name in REQUIRED_ENV_NAMES if name not in names]
     if missing:
         fail("production env file missing required name(s): " + ", ".join(missing))
+
+    owner_auth_enabled = values.get("SIGNALFORGE_REQUIRE_OWNER_AUTH", "").strip().lower() in TRUE_VALUES
+    if owner_auth_enabled:
+        missing_owner = [name for name in OWNER_AUTH_ENV_NAMES if name not in names]
+        if missing_owner:
+            fail("owner auth env file missing required name(s): " + ", ".join(missing_owner))
+
+    checked_names = set(REQUIRED_ENV_NAMES)
+    if owner_auth_enabled:
+        checked_names.update(OWNER_AUTH_ENV_NAMES)
+
     placeholder_names = [
         name
-        for name, value in read_env_values(path).items()
-        if name in REQUIRED_ENV_NAMES
+        for name, value in values.items()
+        if name in checked_names
         and ("change-me" in value.lower() or value.strip().lower() in {"", "password", "secret"})
     ]
     if placeholder_names:
@@ -92,6 +107,12 @@ def validate_compose_static() -> None:
 
     if '"127.0.0.1:3000:3000"' not in text and "'127.0.0.1:3000:3000'" not in text:
         fail("web service must bind to 127.0.0.1:3000")
+
+    if 'SIGNALFORGE_REQUIRE_OWNER_AUTH: "false"' not in text:
+        fail("Mac local production compose must disable owner password login by default")
+
+    if "SIGNALFORGE_OWNER_PASSWORD: ${SIGNALFORGE_OWNER_PASSWORD:?" in text:
+        fail("Mac local production compose must not require an owner password")
 
     forbidden_patterns = [
         r"(?m)^\s*-\s*[\"']?0\.0\.0\.0:",
