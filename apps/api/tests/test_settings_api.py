@@ -19,6 +19,37 @@ def test_settings_platforms_include_all_project_phases() -> None:
     assert by_platform["product_hunt"]["phase"] == "P0"
     assert by_platform["x"]["phase"] == "P1"
     assert by_platform["discord"]["phase"] == "P2"
+    assert by_platform["x"]["status"] == "disabled"
+    assert by_platform["discord"]["status"] == "disabled"
+
+
+def test_settings_platforms_report_env_backed_p0_configuration(monkeypatch) -> None:
+    client = TestClient(app)
+    for name in REDDIT_ENV_VARS:
+        monkeypatch.setenv(name, f"{name.lower()}-value")
+    for name in PRODUCT_HUNT_ENV_VARS:
+        monkeypatch.setenv(name, f"{name.lower()}-value")
+
+    response = client.get("/api/settings/platforms")
+
+    assert response.status_code == 200
+    by_platform = {item["platform"]: item for item in response.json()["platforms"]}
+    assert by_platform["reddit"]["status"] == "configured"
+    assert by_platform["product_hunt"]["status"] == "configured"
+    assert str(response.json()).count("value") == 0
+
+
+def test_credential_status_reports_env_backed_p0_configuration(monkeypatch) -> None:
+    client = TestClient(app)
+    for name in REDDIT_ENV_VARS:
+        monkeypatch.setenv(name, f"{name.lower()}-value")
+
+    response = client.get("/api/settings/credentials/status")
+
+    assert response.status_code == 200
+    by_platform = {item["platform"]: item for item in response.json()["credentials"]}
+    assert by_platform["reddit"]["status"] == "configured"
+    assert by_platform["x"]["status"] == "disabled"
 
 
 def test_credential_status_does_not_return_secret_payload() -> None:

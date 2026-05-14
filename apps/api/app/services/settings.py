@@ -54,12 +54,15 @@ def list_platform_statuses(db: Session) -> list[PlatformStatus]:
     statuses: list[PlatformStatus] = []
     for platform, (phase, enabled_for_mvp) in PLATFORM_PHASES.items():
         credential = credentials.get(platform)
+        status = normalize_credential_status(credential.status if credential else None)
+        if credential is None:
+            status = env_backed_platform_status(platform)
         statuses.append(
             PlatformStatus(
                 platform=platform,  # type: ignore[arg-type]
                 phase=phase,  # type: ignore[arg-type]
                 enabled_for_mvp=enabled_for_mvp,
-                status=normalize_credential_status(credential.status if credential else None),  # type: ignore[arg-type]
+                status=status,  # type: ignore[arg-type]
             )
         )
     return statuses
@@ -70,15 +73,28 @@ def list_credential_statuses(db: Session) -> list[CredentialStatusItem]:
     items: list[CredentialStatusItem] = []
     for platform in PLATFORM_PHASES:
         credential = credentials.get(platform)
+        status = normalize_credential_status(credential.status if credential else None)
+        if credential is None:
+            status = env_backed_platform_status(platform)
         items.append(
             CredentialStatusItem(
                 platform=platform,  # type: ignore[arg-type]
-                status=normalize_credential_status(credential.status if credential else None),  # type: ignore[arg-type]
+                status=status,  # type: ignore[arg-type]
                 credential_name=credential.credential_name if credential else None,
                 last_checked_at=credential.last_checked_at if credential else None,
             )
         )
     return items
+
+
+def env_backed_platform_status(platform: str, env: Mapping[str, str] | None = None) -> str:
+    _phase, enabled_for_mvp = PLATFORM_PHASES[platform]
+    if not enabled_for_mvp:
+        return "disabled"
+
+    required_env = REQUIRED_ENV_BY_PLATFORM.get(platform, ())
+    source_env = os.environ if env is None else env
+    return "configured" if required_env and all(source_env.get(name, "").strip() for name in required_env) else "missing"
 
 
 def test_platform_env_status(platform: str, env: Mapping[str, str] | None = None) -> PlatformEnvTestResponse:
