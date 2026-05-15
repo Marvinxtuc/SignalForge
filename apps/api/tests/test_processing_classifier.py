@@ -6,8 +6,10 @@ from app.processing.classifier import (
     classify_llm_payload_or_fallback,
     classify_text,
     fallback_classify,
+    real_llm_classify,
     validate_classification_payload,
 )
+from app.processing.llm_client import LLMProviderError
 from app.processing.types import ALLOWED_SIGNAL_TYPES, clamp_score
 
 
@@ -111,3 +113,59 @@ def test_out_of_range_llm_json_falls_back_and_counts_failure() -> None:
     assert result.counters.fallback_classification_count == 1
     assert result.signal_type == "workflow_pain"
     assert 0 <= result.pain_level <= 100
+
+
+def test_real_llm_classifier_accepts_provider_json_from_fake_client() -> None:
+    class FakeLLMClient:
+        def classify_signal(self, text: str) -> str:
+            assert "wallet" in text
+            return """{
+                "is_need_signal": true,
+                "signal_type": "security_concern",
+                "pain_level": 86,
+                "clarity_score": 80,
+                "urgency_score": 78,
+                "business_relevance": 82,
+                "model_confidence": 76,
+                "signal_confidence": 84,
+                "summary_zh": "用户担心钱包连接安全。",
+                "recommended_action": "Review wallet permissions and trust copy."
+            }"""
+
+    result = real_llm_classify(
+        "wallet connection feels unsafe",
+        env={
+            "SIGNALFORGE_ALLOW_REAL_LLM_PROCESSING": "true",
+            "LLM_BASE_URL": "https://llm.example.test/v1",
+            "LLM_API_KEY": "secret",
+            "LLM_MODEL": "test-model",
+        },
+        client=FakeLLMClient(),
+    )
+
+    assert result.signal_type == "security_concern"
+    assert result.metadata["classification_source"] == "real_llm"
+    assert result.counters.llm_json_failure_count == 0
+    assert result.counters.fallback_classification_count == 0
+
+
+def test_real_llm_classifier_falls_back_on_provider_error_without_leaking_secret() -> None:
+    class FailingLLMClient:
+        def classify_signal(self, text: str) -> str:
+            raise LLMProviderError("Authorization Bearer secret-token failed")
+
+    result = real_llm_classify(
+        "Looking for an alternative to expensive analytics",
+        env={
+            "SIGNALFORGE_ALLOW_REAL_LLM_PROCESSING": "true",
+            "LLM_BASE_URL": "https://llm.example.test/v1",
+            "LLM_API_KEY": "secret-token",
+            "LLM_MODEL": "test-model",
+        },
+        client=FailingLLMClient(),
+    )
+
+    assert result.signal_type == "alternative_search"
+    assert result.counters.llm_json_failure_count == 1
+    assert result.counters.fallback_classification_count == 1
+    assert "secret-token" not in str(result.model_dump())

@@ -110,6 +110,28 @@ test("requires read and write approval for Product Hunt production collection", 
   expect(payload.allow_real_embedding).toBe(false);
 });
 
+test("requires LLM approval for real LLM classification mode", async ({ page }) => {
+  await page.goto(`/production?projectId=${projectId}`);
+  await page.getByLabel("处理模式", { exact: true }).selectOption("real_llm_classification");
+  await page.getByLabel("显式确认").fill("确认");
+  await expect(page.getByRole("button", { name: "创建并运行" })).toBeDisabled();
+
+  await page.getByLabel("允许真实大模型调用").check();
+  await expect(page.getByRole("button", { name: "创建并运行" })).toBeEnabled();
+
+  const requestPromise = page.waitForRequest(
+    (request) => new URL(request.url()).pathname === "/api/production/runs" && request.method() === "POST"
+  );
+  await page.getByRole("button", { name: "创建并运行" }).click();
+  const request = await requestPromise;
+  const payload = request.postDataJSON();
+
+  expect(payload.collection_mode).toBe("mock");
+  expect(payload.processing_mode).toBe("real_llm_classification");
+  expect(payload.allow_real_llm).toBe(true);
+  expect(payload.allow_real_embedding).toBe(false);
+});
+
 async function installApiMocks(page: Page) {
   await page.route("**/api/**", async (route) => {
     const url = new URL(route.request().url());

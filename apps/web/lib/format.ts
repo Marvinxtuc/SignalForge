@@ -96,6 +96,7 @@ export function formatStatusLabel(value: string | null | undefined): string {
     running: "运行中",
     pending: "等待中",
     fallback_only: "仅兜底",
+    real_llm_classification: "真实大模型分类",
     mock: "模拟",
     preview: "预览",
     production: "生产",

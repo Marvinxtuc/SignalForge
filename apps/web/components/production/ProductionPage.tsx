@@ -32,7 +32,7 @@ type ApprovalKey = keyof ProductionRunCreateRequest["approvals"];
 
 const RUN_MODES: ProductionRunMode[] = ["mock", "preview", "production"];
 const COLLECTION_MODES = ["mock", "reddit", "product_hunt", "p0_real"] as const;
-const PROCESSING_MODES = ["mock", "fallback_only", "real_llm", "real_embedding"] as const;
+const PROCESSING_MODES = ["mock", "fallback_only", "real_llm_classification", "real_embedding"] as const;
 const CONFIRMATION_TEXT = "确认";
 
 const RUN_MODE_LABELS: Record<ProductionRunMode | string, string> = {
@@ -51,7 +51,7 @@ const COLLECTION_MODE_LABELS: Record<string, string> = {
 const PROCESSING_MODE_LABELS: Record<string, string> = {
   mock: "模拟处理",
   fallback_only: "仅兜底处理",
-  real_llm: "真实大模型处理",
+  real_llm_classification: "真实大模型分类",
   real_embedding: "真实向量化处理"
 };
 
@@ -69,7 +69,7 @@ const APPROVAL_LABELS: Array<{ key: ApprovalKey; label: string; detail: string }
   {
     key: "real_llm",
     label: "允许真实大模型调用",
-    detail: "选择真实大模型处理模式时才会尝试；后端当前默认拒绝。"
+    detail: "只替换信号分类；向量化仍使用本机 mock embedding，且必须通过后端 env 门禁。"
   },
   {
     key: "real_embedding",

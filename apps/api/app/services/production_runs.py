@@ -12,7 +12,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from app.api.auth import env_flag_enabled
 from app.connectors.credential_resolver import PRODUCT_HUNT_ENV_VARS, REAL_PLATFORM_SMOKE_ENV, REDDIT_ENV_VARS
 from app.db.models import CollectionLog, ProductionLifecycleRun, Project
-from app.processing.llm_client import REQUIRED_LLM_ENV
+from app.processing.llm_client import LLM_PROCESSING_FLAG, REQUIRED_LLM_ENV
 from app.schemas.common import PaginationParams
 from app.schemas.production_runs import ProductionRunCloseout, ProductionRunCreate
 from app.services import processing_pipeline
@@ -22,6 +22,8 @@ from app.services.common import commit_and_refresh, get_or_404, paginate
 
 SAFE_COLLECTION_MODES = {"mock", "disabled_only", "safe_disabled"}
 SAFE_PROCESSING_MODES = {"mock", "fallback_only"}
+REAL_LLM_PROCESSING_MODES = {"real_llm_classification"}
+REAL_EMBEDDING_PROCESSING_MODES = {"real_llm_embedding"}
 SENSITIVE_KEY_PARTS = ("token", "secret", "password", "credential", "authorization", "cookie", "key")
 REDACTED = "[REDACTED]"
 
@@ -217,6 +219,8 @@ def _preflight(payload: ProductionRunCreate) -> dict[str, Any]:
     blocked: list[str] = []
     real_collection = payload.collection_mode not in SAFE_COLLECTION_MODES
     real_processing = payload.processing_mode not in SAFE_PROCESSING_MODES
+    real_llm_processing = payload.processing_mode in REAL_LLM_PROCESSING_MODES or payload.processing_mode in REAL_EMBEDDING_PROCESSING_MODES
+    real_embedding_processing = payload.processing_mode in REAL_EMBEDDING_PROCESSING_MODES
 
     if real_collection:
         if not payload.allow_real_platform_write:
@@ -227,15 +231,18 @@ def _preflight(payload: ProductionRunCreate) -> dict[str, Any]:
             missing.append("SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE")
         missing.extend(_missing_collection_env(payload.collection_mode))
     if real_processing:
-        if not payload.allow_real_llm:
+        if not real_llm_processing and not real_embedding_processing:
+            blocked.append("unsupported_processing_mode")
+        if real_llm_processing and not payload.allow_real_llm:
             blocked.append("allow_real_llm")
-        if not payload.allow_real_embedding:
+        if real_embedding_processing and not payload.allow_real_embedding:
             blocked.append("allow_real_embedding")
-        if not env_flag_enabled("SIGNALFORGE_ALLOW_REAL_LLM_SMOKE"):
-            missing.append("SIGNALFORGE_ALLOW_REAL_LLM_SMOKE")
-        if not env_flag_enabled("SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE"):
+        if real_llm_processing and not env_flag_enabled(LLM_PROCESSING_FLAG):
+            missing.append(LLM_PROCESSING_FLAG)
+        if real_embedding_processing and not env_flag_enabled("SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE"):
             missing.append("SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE")
-        missing.extend(name for name in REQUIRED_LLM_ENV if not os.getenv(name, "").strip())
+        if real_llm_processing:
+            missing.extend(name for name in REQUIRED_LLM_ENV if not os.getenv(name, "").strip())
 
     return {
         "safe_execution": not missing and not blocked,
@@ -248,7 +255,7 @@ def _preflight(payload: ProductionRunCreate) -> dict[str, Any]:
         "checked_env": [
             REAL_PLATFORM_SMOKE_ENV,
             "SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE",
-            "SIGNALFORGE_ALLOW_REAL_LLM_SMOKE",
+            LLM_PROCESSING_FLAG,
             "SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE",
         ],
     }

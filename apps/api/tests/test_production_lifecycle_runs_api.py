@@ -244,6 +244,59 @@ def test_production_lifecycle_run_real_provider_no_go_without_approvals_or_env(m
         delete_project(project_id)
 
 
+def test_real_llm_classification_preflight_does_not_require_embedding_gate(monkeypatch) -> None:
+    for name in (
+        "SIGNALFORGE_ALLOW_REAL_LLM_PROCESSING",
+        "SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE",
+        "LLM_BASE_URL",
+        "LLM_API_KEY",
+        "LLM_MODEL",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+    project_id = create_project()
+    run_ids: list[str] = []
+    client = TestClient(app)
+
+    def create_real_llm_run() -> dict:
+        response = client.post(
+            "/api/production/runs",
+            json={
+                "project_id": project_id,
+                "collection_mode": "mock",
+                "processing_mode": "real_llm_classification",
+                "allow_real_llm": True,
+                "allow_real_embedding": False,
+                "execute": False,
+            },
+        )
+        payload = response.json()
+        assert response.status_code == 201
+        run_ids.append(payload["id"])
+        assert "llm-secret-value" not in response.text
+        return payload
+
+    try:
+        missing_gate = create_real_llm_run()
+        assert missing_gate["status"] == "no_go_real_provider"
+        assert "SIGNALFORGE_ALLOW_REAL_LLM_PROCESSING" in missing_gate["env_preflight"]["missing"]
+        assert "SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE" not in missing_gate["env_preflight"]["missing"]
+        assert "allow_real_embedding" not in missing_gate["env_preflight"]["blocked"]
+
+        monkeypatch.setenv("SIGNALFORGE_ALLOW_REAL_LLM_PROCESSING", "true")
+        monkeypatch.setenv("LLM_BASE_URL", "https://llm.example.test/v1")
+        monkeypatch.setenv("LLM_API_KEY", "llm-secret-value")
+        monkeypatch.setenv("LLM_MODEL", "test-model")
+        passed = create_real_llm_run()
+        assert passed["status"] == "preflight_passed"
+        assert passed["env_preflight"]["missing"] == []
+        assert passed["env_preflight"]["blocked"] == []
+    finally:
+        for run_id in run_ids:
+            delete_run(run_id)
+        delete_project(project_id)
+
+
 def test_product_hunt_production_run_requires_smoke_write_and_run_approval(monkeypatch) -> None:
     project_id = create_project()
     run_ids: list[str] = []

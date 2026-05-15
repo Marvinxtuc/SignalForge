@@ -19,6 +19,7 @@ from app.services.common import get_or_404
 
 HIGH_VALUE_PAIN_LEVEL = 70
 HIGH_VALUE_CONFIDENCE = 60
+SUPPORTED_PROCESSING_MODES = {"mock", "fallback_only", "real_llm_classification"}
 
 
 def _raw_items_for_project(db: Session, project_id: UUID) -> list[RawItem]:
@@ -175,8 +176,8 @@ def process_project_raw_items(
     reprocess: bool = False,
     force_invalid_llm_json: bool = False,
 ) -> dict[str, Any]:
-    if mode not in {"mock", "fallback_only"}:
-        raise ValueError("Phase 5 processing only supports mock and fallback_only modes.")
+    if mode not in SUPPORTED_PROCESSING_MODES:
+        raise ValueError("Processing pipeline only supports mock, fallback_only, and real_llm_classification modes.")
 
     get_or_404(db, Project, project_id, "Project")
     raw_items = _raw_items_for_project(db, project_id)

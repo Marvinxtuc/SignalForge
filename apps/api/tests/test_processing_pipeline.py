@@ -8,6 +8,8 @@ from sqlalchemy import func, select
 from app.db.models import ClusterSignal, Embedding, Opportunity, Project, RawItem, Signal
 from app.db.session import SessionLocal
 from app.main import app
+from app.processing.classifier import validate_classification_payload
+from app.services import processing_pipeline
 
 
 def client() -> TestClient:
@@ -159,10 +161,52 @@ def test_processing_summary_preserves_source_url_and_excludes_deleted_high_value
         delete_project(project_id)
 
 
+def test_processing_pipeline_real_llm_classification_uses_mock_embeddings(monkeypatch) -> None:
+    project_id = create_raw_only_project()
+    calls: list[str] = []
+
+    def fake_classify_text(text: str, *, mode: str = "mock", llm_payload=None):
+        calls.append(mode)
+        return validate_classification_payload(
+            {
+                "is_need_signal": True,
+                "signal_type": "workflow_pain",
+                "pain_level": 81,
+                "clarity_score": 76,
+                "urgency_score": 74,
+                "business_relevance": 79,
+                "model_confidence": 72,
+                "signal_confidence": 78,
+                "summary_zh": "真实大模型分类路径生成的测试摘要。",
+                "recommended_action": "Validate the LLM-classified workflow pain.",
+            },
+            metadata={"classification_source": "real_llm"},
+        )
+
+    monkeypatch.setattr("app.processing.pipeline.classify_text", fake_classify_text)
+    try:
+        assert SessionLocal is not None
+        with SessionLocal() as db:
+            payload = processing_pipeline.process_project(
+                db=db,
+                project_id=project_id,
+                mode="real_llm_classification",
+                reprocess=False,
+            )
+
+        assert payload["mode"] == "real_llm_classification"
+        assert payload["processed_in_run"] == 6
+        assert payload["embedding_count"] == 5
+        assert payload["opportunity_count"] >= 1
+        assert "real_llm_classification" in calls
+    finally:
+        delete_project(project_id)
+
+
 def test_processing_rejects_real_provider_modes() -> None:
     project_id = create_raw_only_project()
     try:
-        for mode in ("real_llm", "real_embedding"):
+        for mode in ("real_llm", "real_llm_classification", "real_embedding"):
             response = client().post(f"/api/projects/{project_id}/process", json={"mode": mode, "reprocess": False})
             payload = response.json()
             assert response.status_code == 409
