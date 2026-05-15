@@ -29,12 +29,10 @@ def build_posts_search_query(
         minimum=0,
         maximum=MAX_COMMENTS_FIRST,
     )
-    search_query = " ".join(keyword.strip() for keyword in keywords if keyword.strip())
-
     return {
         "query": """
-query SignalForgeProductHuntPosts($query: String!, $first: Int!, $commentsFirst: Int!) {
-  posts(first: $first, search: $query) {
+query SignalForgeProductHuntPosts($first: Int!, $commentsFirst: Int!) {
+  posts(first: $first) {
     edges {
       node {
         id
@@ -67,26 +65,12 @@ query SignalForgeProductHuntPosts($query: String!, $first: Int!, $commentsFirst:
             }
           }
         }
-        products {
-          edges {
-            node {
-              id
-              slug
-              name
-              tagline
-              description
-              url
-              website
-            }
-          }
-        }
       }
     }
   }
 }
 """.strip(),
         "variables": {
-            "query": search_query,
             "first": normalized_first,
             "commentsFirst": normalized_comments_first,
         },

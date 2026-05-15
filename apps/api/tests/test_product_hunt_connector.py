@@ -26,7 +26,7 @@ def test_product_hunt_missing_token_returns_disabled() -> None:
     }
 
 
-def test_product_hunt_posts_products_and_comments_are_normalized() -> None:
+def test_product_hunt_posts_and_comments_are_normalized() -> None:
     requests: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -38,7 +38,12 @@ def test_product_hunt_posts_products_and_comments_are_normalized() -> None:
         assert request.headers["authorization"] == f"Bearer {SECRET}"
         body = json.loads(request.content)
         assert "query" in body
-        assert body["variables"]["query"] == "wallet onboarding"
+        assert "search:" not in body["query"]
+        assert "products" not in body["query"]
+        assert body["variables"] == {
+            "first": 10,
+            "commentsFirst": 5,
+        }
         return httpx.Response(
             200,
             headers={"Content-Type": "application/json"},
@@ -58,19 +63,6 @@ def test_product_hunt_posts_products_and_comments_are_normalized() -> None:
                                     "commentsCount": 1,
                                     "createdAt": "2026-04-01T10:00:00Z",
                                     "user": {"id": "user-1", "username": "maker"},
-                                    "products": {
-                                        "edges": [
-                                            {
-                                                "node": {
-                                                    "id": "product-1",
-                                                    "slug": "launch-wallet",
-                                                    "name": "Launch Wallet",
-                                                    "tagline": "Wallet analytics",
-                                                    "url": "https://www.producthunt.com/products/launch-wallet",
-                                                }
-                                            }
-                                        ]
-                                    },
                                     "comments": {
                                         "edges": [
                                             {
@@ -100,10 +92,9 @@ def test_product_hunt_posts_products_and_comments_are_normalized() -> None:
 
     assert len(requests) == 1
     assert result.status == ConnectorStatus.SUCCESS
-    assert result.items_collected == 3
+    assert result.items_collected == 2
     assert {item.platform_item_id for item in result.items} == {
         "post:post-1",
-        "product:product-1",
         "comment:comment-1",
     }
     assert all(item.source_url for item in result.items)
@@ -129,6 +120,45 @@ def test_product_hunt_missing_rate_headers_success_does_not_fail() -> None:
     assert result.status == ConnectorStatus.SUCCESS
     assert result.rate_limit_state is None
     assert result.items_collected == 0
+
+
+def test_product_hunt_large_success_response_is_not_truncated_before_json_parse() -> None:
+    large_description = "wallet onboarding " * 5000
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"Content-Type": "application/json"},
+            json={
+                "data": {
+                    "posts": {
+                        "edges": [
+                            {
+                                "node": {
+                                    "id": "post-large",
+                                    "slug": "large-wallet",
+                                    "name": "Large Wallet",
+                                    "tagline": "Wallet onboarding",
+                                    "description": large_description,
+                                    "url": "https://www.producthunt.com/posts/large-wallet",
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            request=request,
+        )
+
+    connector = ProductHuntConnector(
+        env={"PRODUCT_HUNT_TOKEN": SECRET},
+        transport=httpx.MockTransport(handler),
+    )
+    result = connector.collect(_config())
+
+    assert result.status == ConnectorStatus.SUCCESS
+    assert result.items_collected == 1
+    assert result.items[0].platform_item_id == "post:post-large"
 
 
 def test_product_hunt_graphql_permission_error_maps_to_permission_limited() -> None:

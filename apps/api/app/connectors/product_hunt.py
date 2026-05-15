@@ -33,6 +33,7 @@ REQUEST_HEADERS = {
     "Accept": "application/json",
     "Content-Type": "application/json",
 }
+PRODUCT_HUNT_BODY_EXCERPT_CHARS = 1_048_576
 PERMISSION_ERROR_MARKERS = (
     "permission",
     "permissions",
@@ -214,7 +215,7 @@ class ProductHuntConnector(BaseConnector):
         self._http_client = ConnectorHTTPClient(
             timeout=10.0,
             transport=self._transport,
-            body_excerpt_chars=65536,
+            body_excerpt_chars=PRODUCT_HUNT_BODY_EXCERPT_CHARS,
         )
         return self._http_client
 

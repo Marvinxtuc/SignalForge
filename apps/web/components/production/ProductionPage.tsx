@@ -59,12 +59,12 @@ const APPROVAL_LABELS: Array<{ key: ApprovalKey; label: string; detail: string }
   {
     key: "real_platform_read",
     label: "允许真实平台读取",
-    detail: "允许本次运行尝试真实平台读取或冒烟检查，仍受后端环境门禁约束。"
+    detail: "允许本次运行提交真实平台读取请求；Product Hunt / Reddit 仍受后端 env 门禁约束。"
   },
   {
     key: "real_platform_write",
     label: "允许真实平台写入",
-    detail: "当前前端不会执行写入；此项仅记录显式批准并保留门禁状态。"
+    detail: "允许真实采集写入本机 raw_items；还必须同时打开后端写入 env 门禁。"
   },
   {
     key: "real_llm",
@@ -100,16 +100,17 @@ export function ProductionPage() {
   const [approvals, setApprovals] =
     useState<ProductionRunCreateRequest["approvals"]>(INITIAL_APPROVALS);
   const [localRuns, setLocalRuns] = useState<ProductionRunListItem[]>([]);
+  const realCollectionRequested = collectionMode !== "mock";
 
   const explicitApprovalRequired = useMemo(
     () =>
       mode !== "mock" ||
-      collectionMode !== "mock" ||
+      realCollectionRequested ||
       processingMode.startsWith("real_") ||
       approvals.real_platform_write ||
       approvals.real_llm ||
       approvals.real_embedding,
-    [approvals, collectionMode, mode, processingMode]
+    [approvals, mode, processingMode, realCollectionRequested]
   );
 
   const canRun =
@@ -118,7 +119,7 @@ export function ProductionPage() {
     (!explicitApprovalRequired || approvals.confirmation_text === CONFIRMATION_TEXT) &&
     (!processingMode.startsWith("real_llm") || approvals.real_llm) &&
     (!processingMode.startsWith("real_embedding") || approvals.real_embedding) &&
-    (collectionMode === "mock" || approvals.real_platform_read);
+    (!realCollectionRequested || (approvals.real_platform_read && approvals.real_platform_write));
 
   useEffect(() => {
     if (!projectId) {
@@ -231,7 +232,7 @@ export function ProductionPage() {
           <p className="pageEyebrow">生产运行</p>
           <h1 className="pageTitle">Mac mini 本地生产生命周期</h1>
           <p className="pageSubtitle">
-            本页只使用同源接口代理和现有后端接口。真实平台写入与真实模型调用必须逐次勾选并确认。
+            本页只使用同源接口代理和现有后端接口。Product Hunt / Reddit 真实采集必须同时批准读取和写入，并通过后端 env 门禁。
           </p>
         </div>
         <Button disabled={pageState.status === "loading"} onClick={() => void loadStatus(projectId)}>

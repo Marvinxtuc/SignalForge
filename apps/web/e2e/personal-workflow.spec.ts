@@ -84,6 +84,32 @@ test("creates a production lifecycle run with explicit approval controls", async
   await expect(page.getByText("门禁已就绪")).toBeVisible();
 });
 
+test("requires read and write approval for Product Hunt production collection", async ({ page }) => {
+  await page.goto(`/production?projectId=${projectId}`);
+  await page.getByLabel("采集模式").selectOption("product_hunt");
+  await page.getByLabel("显式确认").fill("确认");
+  await expect(page.getByRole("button", { name: "创建并运行" })).toBeDisabled();
+
+  await page.getByLabel("允许真实平台读取").check();
+  await expect(page.getByRole("button", { name: "创建并运行" })).toBeDisabled();
+
+  await page.getByLabel("允许真实平台写入").check();
+  await expect(page.getByRole("button", { name: "创建并运行" })).toBeEnabled();
+
+  const requestPromise = page.waitForRequest(
+    (request) => new URL(request.url()).pathname === "/api/production/runs" && request.method() === "POST"
+  );
+  await page.getByRole("button", { name: "创建并运行" }).click();
+  const request = await requestPromise;
+  const payload = request.postDataJSON();
+
+  expect(payload.collection_mode).toBe("product_hunt");
+  expect(payload.processing_mode).toBe("fallback_only");
+  expect(payload.allow_real_platform_write).toBe(true);
+  expect(payload.allow_real_llm).toBe(false);
+  expect(payload.allow_real_embedding).toBe(false);
+});
+
 async function installApiMocks(page: Page) {
   await page.route("**/api/**", async (route) => {
     const url = new URL(route.request().url());

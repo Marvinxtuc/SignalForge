@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
 from app.api.auth import env_flag_enabled
-from app.connectors.credential_resolver import PRODUCT_HUNT_ENV_VARS, REDDIT_ENV_VARS
+from app.connectors.credential_resolver import PRODUCT_HUNT_ENV_VARS, REAL_PLATFORM_SMOKE_ENV, REDDIT_ENV_VARS
 from app.db.models import CollectionLog, ProductionLifecycleRun, Project
 from app.processing.llm_client import REQUIRED_LLM_ENV
 from app.schemas.common import PaginationParams
@@ -110,6 +110,26 @@ def create_run(db: Session, payload: ProductionRunCreate) -> ProductionLifecycle
                 "items_skipped": collection_log.items_skipped if collection_log else 0,
             },
         )
+        collection_summary = {
+            "job_id": str(collection_job.id),
+            "status": collection_job.status,
+            "items_collected": collection_log.items_collected if collection_log else 0,
+            "items_inserted": collection_log.items_inserted if collection_log else 0,
+            "items_skipped": collection_log.items_skipped if collection_log else 0,
+        }
+        if collection_job.status != "success":
+            run.status = "failed"
+            run.stage = "collect"
+            run.error_summary = collection_job.error_summary or f"Collection finished with status {collection_job.status}."
+            run.result_summary = _redact(
+                {
+                    "lifecycle": lifecycle,
+                    "collection": collection_summary,
+                }
+            )
+            run.finished_at = datetime.now(UTC)
+            return commit_and_refresh(db, run)
+
         lifecycle.append(_lifecycle_event("process", "running"))
         run.stage = "process"
         processing_summary = processing_pipeline.process_project(
@@ -159,11 +179,7 @@ def create_run(db: Session, payload: ProductionRunCreate) -> ProductionLifecycle
         {
             "lifecycle": lifecycle,
             "collection": {
-                "job_id": str(collection_job.id),
-                "status": collection_job.status,
-                "items_collected": collection_log.items_collected if collection_log else 0,
-                "items_inserted": collection_log.items_inserted if collection_log else 0,
-                "items_skipped": collection_log.items_skipped if collection_log else 0,
+                **collection_summary,
             },
             "processing": processing_summary,
         }
@@ -205,6 +221,8 @@ def _preflight(payload: ProductionRunCreate) -> dict[str, Any]:
     if real_collection:
         if not payload.allow_real_platform_write:
             blocked.append("allow_real_platform_write")
+        if not env_flag_enabled(REAL_PLATFORM_SMOKE_ENV):
+            missing.append(REAL_PLATFORM_SMOKE_ENV)
         if not env_flag_enabled("SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE"):
             missing.append("SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE")
         missing.extend(_missing_collection_env(payload.collection_mode))
@@ -228,6 +246,7 @@ def _preflight(payload: ProductionRunCreate) -> dict[str, Any]:
         "missing": missing,
         "blocked": blocked,
         "checked_env": [
+            REAL_PLATFORM_SMOKE_ENV,
             "SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE",
             "SIGNALFORGE_ALLOW_REAL_LLM_SMOKE",
             "SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE",
