@@ -26,7 +26,7 @@ def test_product_hunt_missing_token_returns_disabled() -> None:
     }
 
 
-def test_product_hunt_posts_and_comments_are_normalized() -> None:
+def test_product_hunt_topic_query_posts_and_comments_are_normalized() -> None:
     requests: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -40,7 +40,11 @@ def test_product_hunt_posts_and_comments_are_normalized() -> None:
         assert "query" in body
         assert "search:" not in body["query"]
         assert "products" not in body["query"]
+        assert "topics(query: $query, first: $topicsFirst)" in body["query"]
+        assert "posts(first: $first)" in body["query"]
         assert body["variables"] == {
+            "query": "wallet" if len(requests) == 1 else "onboarding",
+            "topicsFirst": 3,
             "first": 10,
             "commentsFirst": 5,
         }
@@ -49,28 +53,39 @@ def test_product_hunt_posts_and_comments_are_normalized() -> None:
             headers={"Content-Type": "application/json"},
             json={
                 "data": {
-                    "posts": {
+                    "topics": {
                         "edges": [
                             {
                                 "node": {
-                                    "id": "post-1",
-                                    "slug": "launch-wallet",
-                                    "name": "Launch Wallet",
-                                    "tagline": "Wallet onboarding feedback",
-                                    "description": "Users want a faster onboarding flow.",
-                                    "url": "https://www.producthunt.com/posts/launch-wallet",
-                                    "votesCount": 42,
-                                    "commentsCount": 1,
-                                    "createdAt": "2026-04-01T10:00:00Z",
-                                    "user": {"id": "user-1", "username": "maker"},
-                                    "comments": {
+                                    "id": "topic-1",
+                                    "slug": "wallet",
+                                    "name": "Wallet",
+                                    "posts": {
                                         "edges": [
                                             {
                                                 "node": {
-                                                    "id": "comment-1",
-                                                    "body": "The onboarding checklist needs clearer wallet setup steps.",
-                                                    "createdAt": "2026-04-01T11:00:00Z",
-                                                    "user": {"id": "user-2"},
+                                                    "id": "post-1",
+                                                    "slug": "launch-wallet",
+                                                    "name": "Launch Wallet",
+                                                    "tagline": "Wallet onboarding feedback",
+                                                    "description": "Users want a faster onboarding flow.",
+                                                    "url": "https://www.producthunt.com/posts/launch-wallet",
+                                                    "votesCount": 42,
+                                                    "commentsCount": 1,
+                                                    "createdAt": "2026-04-01T10:00:00Z",
+                                                    "user": {"id": "user-1", "username": "maker"},
+                                                    "comments": {
+                                                        "edges": [
+                                                            {
+                                                                "node": {
+                                                                    "id": "comment-1",
+                                                                    "body": "The onboarding checklist needs clearer wallet setup steps.",
+                                                                    "createdAt": "2026-04-01T11:00:00Z",
+                                                                    "user": {"id": "user-2"},
+                                                                }
+                                                            }
+                                                        ]
+                                                    },
                                                 }
                                             }
                                         ]
@@ -90,7 +105,7 @@ def test_product_hunt_posts_and_comments_are_normalized() -> None:
     )
     result = connector.collect(_config(keywords=["wallet", "onboarding"]))
 
-    assert len(requests) == 1
+    assert len(requests) == 2
     assert result.status == ConnectorStatus.SUCCESS
     assert result.items_collected == 2
     assert {item.platform_item_id for item in result.items} == {
@@ -98,8 +113,142 @@ def test_product_hunt_posts_and_comments_are_normalized() -> None:
         "comment:comment-1",
     }
     assert all(item.source_url for item in result.items)
+    post = next(item for item in result.items if item.platform_item_id == "post:post-1")
+    assert post.keyword_hits == ["wallet", "onboarding"]
     comment = next(item for item in result.items if item.platform_item_id == "comment:comment-1")
     assert comment.source_url == "https://www.producthunt.com/posts/launch-wallet#comment-comment-1"
+    assert comment.keyword_hits == ["wallet", "onboarding"]
+
+
+def test_product_hunt_topic_query_limits_to_three_keywords() -> None:
+    queries: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        queries.append(body["variables"]["query"])
+        return httpx.Response(
+            200,
+            headers={"Content-Type": "application/json"},
+            json={"data": {"topics": {"edges": []}}},
+            request=request,
+        )
+
+    connector = ProductHuntConnector(
+        env={"PRODUCT_HUNT_TOKEN": SECRET},
+        http_client=_client(handler),
+    )
+    result = connector.collect(
+        _config(keywords=["wallet", "onboarding", "ai", "billing", "wallet"])
+    )
+
+    assert result.status == ConnectorStatus.SUCCESS
+    assert result.items_collected == 0
+    assert queries == ["wallet", "onboarding", "ai"]
+
+
+def test_product_hunt_topic_query_no_topic_matches_returns_success_without_broad_fallback() -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        body = json.loads(request.content)
+        assert "topics(query: $query, first: $topicsFirst)" in body["query"]
+        assert "posts(first: $first)" in body["query"]
+        assert body["variables"]["query"] == "wallet"
+        return httpx.Response(
+            200,
+            headers={"Content-Type": "application/json"},
+            json={"data": {"topics": {"edges": []}}},
+            request=request,
+        )
+
+    connector = ProductHuntConnector(
+        env={"PRODUCT_HUNT_TOKEN": SECRET},
+        http_client=_client(handler),
+    )
+    result = connector.collect(_config(keywords=["wallet"]))
+
+    assert len(requests) == 1
+    assert result.status == ConnectorStatus.SUCCESS
+    assert result.items_collected == 0
+    assert result.items == []
+
+
+def test_product_hunt_topic_query_applies_exclude_keywords_locally() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"Content-Type": "application/json"},
+            json={
+                "data": {
+                    "topics": {
+                        "edges": [
+                            {
+                                "node": {
+                                    "id": "topic-1",
+                                    "name": "Wallet",
+                                    "posts": {
+                                        "edges": [
+                                            {
+                                                "node": {
+                                                    "id": "post-1",
+                                                    "name": "Wallet Jobs",
+                                                    "tagline": "Hiring for onboarding",
+                                                    "url": "https://www.producthunt.com/posts/wallet-jobs",
+                                                }
+                                            }
+                                        ]
+                                    },
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            request=request,
+        )
+
+    connector = ProductHuntConnector(
+        env={"PRODUCT_HUNT_TOKEN": SECRET},
+        http_client=_client(handler),
+    )
+    result = connector.collect(_config(keywords=["wallet"], exclude_keywords=["hiring"]))
+
+    assert result.status == ConnectorStatus.SUCCESS
+    assert result.items_collected == 0
+    assert result.items_skipped == 1
+
+
+def test_product_hunt_broad_posts_query_only_when_no_keywords() -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        body = json.loads(request.content)
+        assert "topics(" not in body["query"]
+        assert "posts(first: $first)" in body["query"]
+        assert "search:" not in body["query"]
+        assert "products" not in body["query"]
+        assert body["variables"] == {
+            "first": 10,
+            "commentsFirst": 5,
+        }
+        return httpx.Response(
+            200,
+            headers={"Content-Type": "application/json"},
+            json={"data": {"posts": {"edges": []}}},
+            request=request,
+        )
+
+    connector = ProductHuntConnector(
+        env={"PRODUCT_HUNT_TOKEN": SECRET},
+        http_client=_client(handler),
+    )
+    result = connector.collect(_config(keywords=[]))
+
+    assert len(requests) == 1
+    assert result.status == ConnectorStatus.SUCCESS
+    assert result.items_collected == 0
 
 
 def test_product_hunt_missing_rate_headers_success_does_not_fail() -> None:
@@ -115,7 +264,7 @@ def test_product_hunt_missing_rate_headers_success_does_not_fail() -> None:
         env={"PRODUCT_HUNT_TOKEN": SECRET},
         http_client=_client(handler),
     )
-    result = connector.collect(_config())
+    result = connector.collect(_config(keywords=[]))
 
     assert result.status == ConnectorStatus.SUCCESS
     assert result.rate_limit_state is None
@@ -154,7 +303,7 @@ def test_product_hunt_large_success_response_is_not_truncated_before_json_parse(
         env={"PRODUCT_HUNT_TOKEN": SECRET},
         transport=httpx.MockTransport(handler),
     )
-    result = connector.collect(_config())
+    result = connector.collect(_config(keywords=[]))
 
     assert result.status == ConnectorStatus.SUCCESS
     assert result.items_collected == 1
@@ -260,10 +409,12 @@ def _client(handler: httpx.MockTransport | httpx.SyncByteStream | object) -> Con
 def _config(
     *,
     keywords: list[str] | None = None,
+    exclude_keywords: list[str] | None = None,
 ) -> ProjectCollectionConfig:
     return ProjectCollectionConfig(
         project_id=uuid4(),
         platform="product_hunt",
-        keywords=keywords or ["wallet", "onboarding"],
+        keywords=["wallet", "onboarding"] if keywords is None else keywords,
+        exclude_keywords=exclude_keywords or [],
         max_items=10,
     )

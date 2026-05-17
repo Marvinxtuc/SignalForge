@@ -32,4 +32,3 @@ docs, and code when the question is answerable from the repo.
 ## Output
 
 Use the mandatory pre-change sections from `docs/agents/approval-protocol.md`.
-

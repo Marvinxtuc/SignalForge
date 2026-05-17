@@ -132,6 +132,28 @@ test("requires LLM approval for real LLM classification mode", async ({ page }) 
   expect(payload.allow_real_embedding).toBe(false);
 });
 
+test("requires embedding approval for real embedding mode", async ({ page }) => {
+  await page.goto(`/production?projectId=${projectId}`);
+  await page.getByLabel("处理模式", { exact: true }).selectOption("real_embedding");
+  await page.getByLabel("显式确认").fill("确认");
+  await expect(page.getByRole("button", { name: "创建并运行" })).toBeDisabled();
+
+  await page.getByLabel("允许真实向量化调用").check();
+  await expect(page.getByRole("button", { name: "创建并运行" })).toBeEnabled();
+
+  const requestPromise = page.waitForRequest(
+    (request) => new URL(request.url()).pathname === "/api/production/runs" && request.method() === "POST"
+  );
+  await page.getByRole("button", { name: "创建并运行" }).click();
+  const request = await requestPromise;
+  const payload = request.postDataJSON();
+
+  expect(payload.collection_mode).toBe("mock");
+  expect(payload.processing_mode).toBe("real_embedding");
+  expect(payload.allow_real_llm).toBe(false);
+  expect(payload.allow_real_embedding).toBe(true);
+});
+
 async function installApiMocks(page: Page) {
   await page.route("**/api/**", async (route) => {
     const url = new URL(route.request().url());

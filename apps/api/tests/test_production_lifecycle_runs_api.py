@@ -220,7 +220,7 @@ def test_production_lifecycle_run_real_provider_no_go_without_approvals_or_env(m
             json={
                 "project_id": project_id,
                 "collection_mode": "p0_real",
-                "processing_mode": "real_llm_embedding",
+                "processing_mode": "real_embedding",
                 "allow_real_platform_write": False,
                 "allow_real_llm": False,
                 "allow_real_embedding": False,
@@ -293,6 +293,130 @@ def test_real_llm_classification_preflight_does_not_require_embedding_gate(monke
         assert passed["env_preflight"]["blocked"] == []
     finally:
         for run_id in run_ids:
+            delete_run(run_id)
+        delete_project(project_id)
+
+
+def test_real_embedding_preflight_requires_embedding_gate_approval_and_env_only(monkeypatch) -> None:
+    for name in (
+        "SIGNALFORGE_ALLOW_REAL_LLM_PROCESSING",
+        "SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE",
+        "LLM_BASE_URL",
+        "LLM_API_KEY",
+        "LLM_MODEL",
+        "EMBEDDING_MODEL",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+    project_id = create_project()
+    run_ids: list[str] = []
+    client = TestClient(app)
+
+    def create_real_embedding_run(*, allow_real_embedding: bool) -> dict:
+        response = client.post(
+            "/api/production/runs",
+            json={
+                "project_id": project_id,
+                "collection_mode": "mock",
+                "processing_mode": "real_embedding",
+                "allow_real_llm": False,
+                "allow_real_embedding": allow_real_embedding,
+                "execute": False,
+            },
+        )
+        payload = response.json()
+        assert response.status_code == 201
+        run_ids.append(payload["id"])
+        assert "embedding-secret-value" not in response.text
+        return payload
+
+    try:
+        blocked = create_real_embedding_run(allow_real_embedding=False)
+        assert blocked["status"] == "no_go_real_provider"
+        assert "allow_real_embedding" in blocked["env_preflight"]["blocked"]
+        assert "allow_real_llm" not in blocked["env_preflight"]["blocked"]
+        assert "SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE" in blocked["env_preflight"]["missing"]
+        assert "SIGNALFORGE_ALLOW_REAL_LLM_PROCESSING" not in blocked["env_preflight"]["missing"]
+        assert "LLM_MODEL" not in blocked["env_preflight"]["missing"]
+
+        monkeypatch.setenv("SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE", "true")
+        monkeypatch.setenv("LLM_BASE_URL", "https://llm.example.test/v1")
+        monkeypatch.setenv("LLM_API_KEY", "embedding-secret-value")
+        monkeypatch.setenv("EMBEDDING_MODEL", "text-embedding-test")
+        passed = create_real_embedding_run(allow_real_embedding=True)
+        assert passed["status"] == "preflight_passed"
+        assert passed["env_preflight"]["missing"] == []
+        assert passed["env_preflight"]["blocked"] == []
+    finally:
+        for run_id in run_ids:
+            delete_run(run_id)
+        delete_project(project_id)
+
+
+def test_real_embedding_production_run_executes_only_after_gate_and_run_approval(monkeypatch) -> None:
+    project_id = create_project()
+    run_id = None
+    called_modes: list[str] = []
+
+    def fake_execute_collection(db, *, project_id, execution_mode, **_kwargs):
+        job = CollectionJob(
+            project_id=project_id,
+            status="success",
+            trigger_type="manual",
+        )
+        db.add(job)
+        db.flush()
+        db.add(
+            CollectionLog(
+                job_id=job.id,
+                platform=execution_mode,
+                status="success",
+                items_collected=0,
+                items_inserted=0,
+                items_skipped=0,
+            )
+        )
+        db.commit()
+        db.refresh(job)
+        return job
+
+    def fake_process_project(db, *, project_id, mode, reprocess, **_kwargs):
+        called_modes.append(mode)
+        return {
+            "mode": mode,
+            "reprocess": reprocess,
+            "processed_in_run": 0,
+            "embedding_count": 0,
+            "cluster_count": 0,
+        }
+
+    monkeypatch.setenv("SIGNALFORGE_ALLOW_REAL_EMBEDDING_SMOKE", "true")
+    monkeypatch.setenv("LLM_BASE_URL", "https://llm.example.test/v1")
+    monkeypatch.setenv("LLM_API_KEY", "embedding-secret-value")
+    monkeypatch.setenv("EMBEDDING_MODEL", "text-embedding-test")
+    monkeypatch.delenv("SIGNALFORGE_ALLOW_REAL_LLM_PROCESSING", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+    monkeypatch.setattr(production_run_service, "execute_collection", fake_execute_collection)
+    monkeypatch.setattr(production_run_service.processing_pipeline, "process_project", fake_process_project)
+    try:
+        response = TestClient(app).post(
+            "/api/production/runs",
+            json={
+                "project_id": project_id,
+                "collection_mode": "mock",
+                "processing_mode": "real_embedding",
+                "allow_real_embedding": True,
+            },
+        )
+        payload = response.json()
+        run_id = payload["id"]
+
+        assert response.status_code == 201
+        assert payload["status"] == "success"
+        assert payload["result_summary"]["processing"]["mode"] == "real_embedding"
+        assert called_modes == ["real_embedding"]
+    finally:
+        if run_id is not None:
             delete_run(run_id)
         delete_project(project_id)
 

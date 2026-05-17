@@ -19,4 +19,3 @@ without explicit owner approval.
 - `wontfix` - not actioned; requires explicit owner decision.
 
 Every triage draft should include exactly one category role and one state role.
-

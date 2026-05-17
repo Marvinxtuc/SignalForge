@@ -21,4 +21,3 @@ Use short kebab-case names with a date prefix when creating approved local draft
 - `YYYY-MM-DD-issue-<topic>.md`
 - `YYYY-MM-DD-triage-<topic>.md`
 - `YYYY-MM-DD-agent-brief-<topic>.md`
-

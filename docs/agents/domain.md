@@ -34,4 +34,3 @@ signal review, clustering, opportunity evaluation, and reports.
   API responses, exports, reports, or raw payload fields.
 - Production deployment, auth, billing, SaaS commercialization, and release tag creation are
   outside the current repo-local skill pilot unless separately approved.
-

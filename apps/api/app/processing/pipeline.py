@@ -10,7 +10,12 @@ from app.db.models import Cluster, ClusterSignal, Embedding, Project, RawItem, S
 from app.processing import prepare_text_for_processing
 from app.processing.classifier import classify_text
 from app.processing.clustering import assign_signal_to_cluster
-from app.processing.embedding_client import MOCK_EMBEDDING_MODEL, MockEmbeddingClient
+from app.processing.embedding_client import (
+    EmbeddingProviderError,
+    MockEmbeddingClient,
+    OpenAICompatibleEmbeddingClient,
+    validate_embedding,
+)
 from app.processing.opportunity_scoring import upsert_opportunity_from_cluster
 from app.processing.signal_quality import build_signal_quality_summary
 from app.processing.types import ClassificationResult, ProcessingCounters, clamp_score
@@ -19,7 +24,7 @@ from app.services.common import get_or_404
 
 HIGH_VALUE_PAIN_LEVEL = 70
 HIGH_VALUE_CONFIDENCE = 60
-SUPPORTED_PROCESSING_MODES = {"mock", "fallback_only", "real_llm_classification"}
+SUPPORTED_PROCESSING_MODES = {"mock", "fallback_only", "real_llm_classification", "real_embedding"}
 
 
 def _raw_items_for_project(db: Session, project_id: UUID) -> list[RawItem]:
@@ -92,14 +97,15 @@ def _upsert_signal(db: Session, raw_item: RawItem, classification: Classificatio
     return signal
 
 
-def _upsert_embedding(db: Session, signal: Signal, vector: list[float]) -> Embedding:
+def _upsert_embedding(db: Session, signal: Signal, vector: list[float], *, model_name: str) -> Embedding:
+    validate_embedding(vector)
     embedding = db.scalar(select(Embedding).where(Embedding.signal_id == signal.id))
     if embedding is None:
-        embedding = Embedding(signal_id=signal.id, model_name=MOCK_EMBEDDING_MODEL, embedding=vector)
+        embedding = Embedding(signal_id=signal.id, model_name=model_name, embedding=vector)
         db.add(embedding)
     else:
         embedding.embedding = vector
-        embedding.model_name = MOCK_EMBEDDING_MODEL
+        embedding.model_name = model_name
     db.flush()
     return embedding
 
@@ -177,11 +183,12 @@ def process_project_raw_items(
     force_invalid_llm_json: bool = False,
 ) -> dict[str, Any]:
     if mode not in SUPPORTED_PROCESSING_MODES:
-        raise ValueError("Processing pipeline only supports mock, fallback_only, and real_llm_classification modes.")
+        raise ValueError("Processing pipeline only supports mock, fallback_only, real_llm_classification, and real_embedding modes.")
 
     get_or_404(db, Project, project_id, "Project")
     raw_items = _raw_items_for_project(db, project_id)
-    embedding_client = MockEmbeddingClient()
+    embedding_client = OpenAICompatibleEmbeddingClient.from_env() if mode == "real_embedding" else MockEmbeddingClient()
+    classification_mode = "fallback_only" if mode == "real_embedding" else mode
 
     processed_in_run = 0
     skipped_existing = 0
@@ -201,7 +208,7 @@ def process_project_raw_items(
             classification = _classification_for_raw_item(
                 raw_item,
                 prepared.redacted_text,
-                mode=mode,
+                mode=classification_mode,
                 force_invalid_llm_json=force_invalid_llm_json,
             )
             fallback_count += classification.counters.fallback_classification_count
@@ -213,8 +220,14 @@ def process_project_raw_items(
                 processed_in_run += 1
                 continue
 
-            vector = embedding_client.embed_text(prepared.redacted_text).embedding
-            _upsert_embedding(db, signal, vector)
+            embedding_result = embedding_client.embed_text(prepared.redacted_text)
+            vector = embedding_result.embedding
+            if mode == "real_embedding":
+                try:
+                    validate_embedding(vector)
+                except ValueError as exc:
+                    raise EmbeddingProviderError(str(exc)) from exc
+            _upsert_embedding(db, signal, vector, model_name=embedding_result.model_name)
             cluster, _, _ = assign_signal_to_cluster(db, signal=signal, embedding=vector)
             upsert_opportunity_from_cluster(db, cluster)
             processed_in_run += 1

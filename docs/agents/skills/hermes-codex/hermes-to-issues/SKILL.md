@@ -43,4 +43,3 @@ AFK | HITL
 ## Output
 
 Use the mandatory pre-change sections from `docs/agents/approval-protocol.md`.
-

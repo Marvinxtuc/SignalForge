@@ -25,4 +25,3 @@ Provide a concise system map:
 - Verification standard if later implementation is proposed
 
 Do not modify files.
-

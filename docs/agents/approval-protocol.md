@@ -49,4 +49,3 @@ Require explicit owner approval:
 - Dependency installation
 - Hook, CI, deployment, secret, credential, or permission changes
 - Real platform, real LLM, real embedding, or production smoke actions
-

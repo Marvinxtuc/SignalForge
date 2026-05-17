@@ -40,4 +40,3 @@ instrumentation step. Do not continue with speculation.
 ## Output
 
 Use the mandatory pre-change and post-change sections from `docs/agents/approval-protocol.md`.
-

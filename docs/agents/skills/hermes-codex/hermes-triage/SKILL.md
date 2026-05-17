@@ -46,4 +46,3 @@ needs-triage | needs-info | ready-for-agent | ready-for-human | wontfix
 ## Output
 
 Use the mandatory pre-change sections from `docs/agents/approval-protocol.md`.
-

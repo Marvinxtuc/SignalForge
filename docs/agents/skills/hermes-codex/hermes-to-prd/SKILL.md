@@ -41,4 +41,3 @@ and relevant ADRs/docs.
 ## Output
 
 Use the mandatory pre-change sections from `docs/agents/approval-protocol.md`.
-
