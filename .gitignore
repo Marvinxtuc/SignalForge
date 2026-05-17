@@ -1,6 +1,7 @@
 .env
 .env.*
 !.env.example
+!.env.production.example
 
 node_modules/
 .venv/
@@ -10,8 +11,10 @@ __pycache__/
 .mypy_cache/
 
 .next/
+apps/web/test-results/
 dist/
 build/
+backups/
 
 .DS_Store
 *.log

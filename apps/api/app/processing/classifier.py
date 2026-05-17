@@ -1,10 +1,17 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import replace
-from typing import Any
+from typing import Any, Mapping
 
+from app.processing.llm_client import (
+    LLMProviderError,
+    OpenAICompatibleLLMClient,
+    missing_llm_env,
+    real_llm_processing_enabled,
+)
 from app.processing.types import (
     ALLOWED_SIGNAL_TYPES,
     SCORE_FIELDS,
@@ -41,8 +48,10 @@ def classify_text(text: str, *, mode: str = "mock", llm_payload: Any | None = No
     safe_text = _safe_text(text)
     if mode == "fallback_only":
         return fallback_classify(safe_text, reason="fallback_only")
+    if mode == "real_llm_classification":
+        return real_llm_classify(safe_text, llm_payload=llm_payload)
     if mode != "mock":
-        raise ValueError("Phase 5 classifier only supports mock and fallback_only modes.")
+        raise ValueError("Processing classifier only supports mock, fallback_only, and real_llm_classification modes.")
     if llm_payload is not None:
         return classify_llm_payload_or_fallback(llm_payload, safe_text)
     return mock_llm_classify(safe_text)
@@ -63,16 +72,66 @@ def mock_llm_classify(text: str) -> ClassificationResult:
     )
 
 
-def classify_llm_payload_or_fallback(payload: Any, fallback_text: str) -> ClassificationResult:
+def real_llm_classify(
+    text: str,
+    *,
+    llm_payload: Any | None = None,
+    env: Mapping[str, str] | None = None,
+    client: OpenAICompatibleLLMClient | None = None,
+) -> ClassificationResult:
+    safe_text = _safe_text(text)
+    if llm_payload is not None:
+        return classify_llm_payload_or_fallback(llm_payload, safe_text, source="real_llm_payload")
+    if not real_llm_processing_enabled(env):
+        return fallback_classify(
+            safe_text,
+            reason="real_llm_disabled",
+            counters=ProcessingCounters(llm_json_failure_count=1, fallback_classification_count=1),
+            metadata={"classification_source": "real_llm_fallback"},
+        )
+    missing = missing_llm_env(env)
+    if missing:
+        return fallback_classify(
+            safe_text,
+            reason="real_llm_missing_env",
+            counters=ProcessingCounters(llm_json_failure_count=1, fallback_classification_count=1),
+            metadata={"classification_source": "real_llm_fallback", "missing_required_env_count": len(missing)},
+        )
     try:
-        return validate_classification_payload(payload, metadata={"classification_source": "llm_payload"})
+        active_client = client or _real_llm_client(env)
+        return classify_llm_payload_or_fallback(
+            active_client.classify_signal(safe_text),
+            safe_text,
+            source="real_llm",
+        )
+    except LLMProviderError as exc:
+        return fallback_classify(
+            safe_text,
+            reason="real_llm_provider_error",
+            counters=ProcessingCounters(llm_json_failure_count=1, fallback_classification_count=1),
+            metadata={"classification_source": "real_llm_fallback", "provider_error": _redact_provider_error(str(exc))},
+        )
+
+
+def classify_llm_payload_or_fallback(payload: Any, fallback_text: str, *, source: str = "llm_payload") -> ClassificationResult:
+    try:
+        return validate_classification_payload(payload, metadata={"classification_source": source})
     except ClassificationValidationError as exc:
         return fallback_classify(
             fallback_text,
             reason="llm_json_invalid",
             counters=ProcessingCounters(llm_json_failure_count=1, fallback_classification_count=1),
-            metadata={"validation_error": str(exc)},
+            metadata={"validation_error": str(exc), "classification_source": f"{source}_fallback"},
         )
+
+
+def _real_llm_client(env: Mapping[str, str] | None) -> OpenAICompatibleLLMClient:
+    source = env or os.environ
+    return OpenAICompatibleLLMClient(
+        base_url=source["LLM_BASE_URL"],
+        api_key=source["LLM_API_KEY"],
+        model=source["LLM_MODEL"],
+    )
 
 
 def validate_classification_payload(
@@ -230,6 +289,13 @@ def _is_number(value: Any) -> bool:
 
 def _safe_text(text: str) -> str:
     return re.sub(r"\s+", " ", str(text or "")).strip()
+
+
+def _redact_provider_error(message: str) -> str:
+    redacted = str(message or "")
+    redacted = re.sub(r"(?i)bearer\\s+\\S+", "[REDACTED]", redacted)
+    redacted = re.sub(r"(?i)(token|secret|api_key|authorization)", "[REDACTED]", redacted)
+    return redacted
 
 
 def _summary_for(signal_type: str, text: str) -> str:

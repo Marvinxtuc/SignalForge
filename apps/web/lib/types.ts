@@ -31,6 +31,33 @@ export type Project = {
   updated_at: ISODateTime | null;
 };
 
+export type ProjectCreateRequest = {
+  name: string;
+  description?: string | null;
+  platforms_enabled?: Record<string, boolean> | null;
+  collection_frequency?: string;
+};
+
+export type KeywordType = "main" | "related" | "exclude";
+
+export type Keyword = {
+  id: UUID;
+  project_id: UUID;
+  keyword: string;
+  keyword_type: KeywordType;
+  language: string;
+  enabled: boolean;
+  created_at: ISODateTime | null;
+  updated_at: ISODateTime | null;
+};
+
+export type KeywordCreateRequest = {
+  keyword: string;
+  keyword_type: KeywordType;
+  language?: string;
+  enabled?: boolean;
+};
+
 export type SignalStatus = "new" | "saved" | "ignored" | "reviewed";
 export type SignalFeedback = "valuable" | "not_valuable" | "wrong_type" | "ignored";
 
@@ -130,11 +157,17 @@ export type CollectionCreateRequest = {
 export type PlatformName = "reddit" | "product_hunt" | "x" | "discord";
 export type PlatformPhase = "P0" | "P1" | "P2";
 export type CredentialStatus =
+  | "available"
   | "missing"
+  | "missing_env"
   | "configured"
+  | "configured_unverified"
+  | "valid"
   | "invalid"
   | "permission_limited"
-  | "disabled";
+  | "rate_limited"
+  | "disabled"
+  | "coming_soon";
 
 export type PlatformStatus = {
   platform: PlatformName;
@@ -156,6 +189,14 @@ export type CredentialStatusItem = {
 
 export type CredentialStatusResponse = {
   credentials: CredentialStatusItem[];
+};
+
+export type PlatformEnvTestResponse = {
+  platform: string;
+  status: CredentialStatus;
+  message: string;
+  checked_at: ISODateTime;
+  required_env_missing: string[];
 };
 
 export type ReportRequest = {
@@ -220,4 +261,64 @@ export type ProcessingResponse = ProcessingSummary & {
   skipped_deleted: number;
   status: string;
   details: Record<string, unknown>;
+};
+
+export type ProductionRunMode = "mock" | "preview" | "production";
+
+export type ProductionRunApprovals = {
+  real_platform_read: boolean;
+  real_platform_write: boolean;
+  real_llm: boolean;
+  real_embedding: boolean;
+  confirmation_text: string;
+};
+
+export type ProductionRunCreateRequest = {
+  mode: ProductionRunMode;
+  collection_execution_mode: string;
+  processing_mode: string;
+  reprocess: boolean;
+  approvals: ProductionRunApprovals;
+};
+
+export type ProductionRunRead = {
+  id: UUID;
+  project_id: UUID | null;
+  status: string;
+  stage: string;
+  collection_mode: string;
+  processing_mode: string;
+  allow_real_platform_write: boolean;
+  allow_real_llm: boolean;
+  allow_real_embedding: boolean;
+  env_preflight: Record<string, unknown>;
+  result_summary: Record<string, unknown>;
+  error_summary: string | null;
+  rollback_hint: string | null;
+  redacted_logs: Array<Record<string, unknown>>;
+  started_at: ISODateTime | null;
+  finished_at: ISODateTime | null;
+  created_at: ISODateTime | null;
+  updated_at: ISODateTime | null;
+};
+
+export type ProductionRunStatus = {
+  project_id: UUID;
+  checked_at: ISODateTime;
+  collection_logs: CollectionLog[];
+  processing_summary: ProcessingSummary;
+};
+
+export type ProductionRunListItem = {
+  id: UUID;
+  project_id: UUID;
+  created_at: ISODateTime;
+  state: "collect" | "process" | "review" | "report" | "closeout";
+  status: string;
+  mode: ProductionRunMode | string;
+  collection_job_id: UUID | null;
+  processing_mode: string | null;
+  items_inserted: number | null;
+  total_signals: number | null;
+  error_message: string | null;
 };

@@ -273,7 +273,8 @@ If `http://localhost:3000` is reachable, `scripts/validate_frontend_mvp.py` also
 Expected Phase 6 behavior:
 
 - Required frontend pages exist.
-- The UI includes Open Source evidence text and a high value marker.
+- The UI includes Open Source / 打开来源 evidence text and a High Value / 高价值 marker.
+- The frontend UI is localized to Chinese while preserving backend enum values, URL paths, and API request parameters.
 - Settings does not render `encrypted_payload`.
 - Reports expose markdown and csv export controls.
 - The frontend API client accepts only SignalForge backend-relative paths.

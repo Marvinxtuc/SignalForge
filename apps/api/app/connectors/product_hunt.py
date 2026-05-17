@@ -17,6 +17,7 @@ from app.connectors.http_client import ConnectorHTTPClient
 from app.connectors.product_hunt_queries import (
     PRODUCT_HUNT_GRAPHQL_ENDPOINT,
     build_posts_search_query,
+    build_topic_posts_query,
 )
 from app.connectors.types import (
     ConnectorResult,
@@ -33,6 +34,7 @@ REQUEST_HEADERS = {
     "Accept": "application/json",
     "Content-Type": "application/json",
 }
+PRODUCT_HUNT_BODY_EXCERPT_CHARS = 1_048_576
 PERMISSION_ERROR_MARKERS = (
     "permission",
     "permissions",
@@ -117,84 +119,91 @@ class ProductHuntConnector(BaseConnector):
                 metadata=credentials.safe_metadata(),
             )
 
-        payload = build_posts_search_query(
-            keywords=config.keywords,
-            first=config.max_items,
-        )
-        try:
-            response = self._client().request(
-                "POST",
-                PRODUCT_HUNT_GRAPHQL_ENDPOINT,
-                authorization=authorization,
-                headers=REQUEST_HEADERS,
-                json=payload,
-            )
-        except httpx.HTTPError as exc:
-            return ConnectorResult(
-                platform=self.platform,
-                status=ConnectorStatus.FAILED,
-                error_message=str(exc),
-                metadata=credentials.safe_metadata(),
-            )
+        payloads = _collection_payloads(config)
+        items: list[NormalizedRawItem] = []
+        seen_ids: set[str] = set()
+        skipped = 0
+        rate_limit_state: RateLimitState | None = None
 
-        rate_limit_state = _rate_limit_state_from_headers(response.headers)
-        if response.status_code in {401, 403}:
-            return ConnectorResult(
-                platform=self.platform,
-                status=ConnectorStatus.PERMISSION_LIMITED,
-                error_message=f"Product Hunt HTTP {response.status_code}",
-                rate_limit_state=rate_limit_state,
-                metadata=credentials.safe_metadata(),
-            )
-        if response.status_code == 429:
-            return ConnectorResult(
-                platform=self.platform,
-                status=ConnectorStatus.RATE_LIMITED,
-                error_message="Product Hunt rate limit reached",
-                rate_limit_state=rate_limit_state,
-                metadata=credentials.safe_metadata(),
-            )
-        if response.status_code >= 400:
-            return ConnectorResult(
-                platform=self.platform,
-                status=ConnectorStatus.FAILED,
-                error_message=f"Product Hunt HTTP {response.status_code}",
-                rate_limit_state=rate_limit_state,
-                metadata=credentials.safe_metadata(),
-            )
+        for payload in payloads:
+            try:
+                response = self._client().request(
+                    "POST",
+                    PRODUCT_HUNT_GRAPHQL_ENDPOINT,
+                    authorization=authorization,
+                    headers=REQUEST_HEADERS,
+                    json=payload,
+                )
+            except httpx.HTTPError as exc:
+                return ConnectorResult(
+                    platform=self.platform,
+                    status=ConnectorStatus.FAILED,
+                    error_message=str(exc),
+                    metadata=credentials.safe_metadata(),
+                )
 
-        body = _parse_json_body(response.body_excerpt)
-        if body is None:
-            return ConnectorResult(
-                platform=self.platform,
-                status=ConnectorStatus.FAILED,
-                error_message="Product Hunt returned invalid JSON",
-                rate_limit_state=rate_limit_state,
-                metadata=credentials.safe_metadata(),
-            )
+            rate_limit_state = _rate_limit_state_from_headers(response.headers)
+            if response.status_code in {401, 403}:
+                return ConnectorResult(
+                    platform=self.platform,
+                    status=ConnectorStatus.PERMISSION_LIMITED,
+                    error_message=f"Product Hunt HTTP {response.status_code}",
+                    rate_limit_state=rate_limit_state,
+                    metadata=credentials.safe_metadata(),
+                )
+            if response.status_code == 429:
+                return ConnectorResult(
+                    platform=self.platform,
+                    status=ConnectorStatus.RATE_LIMITED,
+                    error_message="Product Hunt rate limit reached",
+                    rate_limit_state=rate_limit_state,
+                    metadata=credentials.safe_metadata(),
+                )
+            if response.status_code >= 400:
+                return ConnectorResult(
+                    platform=self.platform,
+                    status=ConnectorStatus.FAILED,
+                    error_message=f"Product Hunt HTTP {response.status_code}",
+                    rate_limit_state=rate_limit_state,
+                    metadata=credentials.safe_metadata(),
+                )
 
-        errors = body.get("errors")
-        if errors:
-            status = _status_from_graphql_errors(errors)
-            return ConnectorResult(
-                platform=self.platform,
-                status=status,
-                error_message=_graphql_error_summary(errors),
-                rate_limit_state=rate_limit_state,
-                metadata=credentials.safe_metadata(),
-            )
+            body = _parse_json_body(response.body_excerpt)
+            if body is None:
+                return ConnectorResult(
+                    platform=self.platform,
+                    status=ConnectorStatus.FAILED,
+                    error_message="Product Hunt returned invalid JSON",
+                    rate_limit_state=rate_limit_state,
+                    metadata=credentials.safe_metadata(),
+                )
 
-        data = body.get("data")
-        if not isinstance(data, Mapping):
-            return ConnectorResult(
-                platform=self.platform,
-                status=ConnectorStatus.FAILED,
-                error_message="Product Hunt response missing data",
-                rate_limit_state=rate_limit_state,
-                metadata=credentials.safe_metadata(),
-            )
+            errors = body.get("errors")
+            if errors:
+                status = _status_from_graphql_errors(errors)
+                return ConnectorResult(
+                    platform=self.platform,
+                    status=status,
+                    error_message=_graphql_error_summary(errors),
+                    rate_limit_state=rate_limit_state,
+                    metadata=credentials.safe_metadata(),
+                )
 
-        items, skipped = normalize_product_hunt_data(data, config=config)
+            data = body.get("data")
+            if not isinstance(data, Mapping):
+                return ConnectorResult(
+                    platform=self.platform,
+                    status=ConnectorStatus.FAILED,
+                    error_message="Product Hunt response missing data",
+                    rate_limit_state=rate_limit_state,
+                    metadata=credentials.safe_metadata(),
+                )
+
+            response_items, response_skipped = normalize_product_hunt_data(data, config=config)
+            skipped += response_skipped
+            for item in response_items:
+                _append_unique(items, seen_ids, item)
+
         return ConnectorResult(
             platform=self.platform,
             status=ConnectorStatus.SUCCESS,
@@ -214,7 +223,7 @@ class ProductHuntConnector(BaseConnector):
         self._http_client = ConnectorHTTPClient(
             timeout=10.0,
             transport=self._transport,
-            body_excerpt_chars=65536,
+            body_excerpt_chars=PRODUCT_HUNT_BODY_EXCERPT_CHARS,
         )
         return self._http_client
 
@@ -265,6 +274,39 @@ def normalize_product_hunt_data(
             _append_unique(items, seen_ids, comment_item)
 
     return items, skipped
+
+
+def _collection_payloads(config: ProjectCollectionConfig) -> list[dict[str, Any]]:
+    topic_keywords = _topic_keywords(config.keywords)
+    if topic_keywords:
+        return [
+            build_topic_posts_query(
+                keyword=keyword,
+                first=config.max_items,
+            )
+            for keyword in topic_keywords
+        ]
+    return [
+        build_posts_search_query(
+            keywords=config.keywords,
+            first=config.max_items,
+        )
+    ]
+
+
+def _topic_keywords(keywords: list[str]) -> list[str]:
+    normalized_keywords: list[str] = []
+    seen: set[str] = set()
+    for keyword in keywords:
+        normalized = keyword.strip()
+        key = normalized.lower()
+        if not normalized or key in seen:
+            continue
+        seen.add(key)
+        normalized_keywords.append(normalized)
+        if len(normalized_keywords) == 3:
+            break
+    return normalized_keywords
 
 
 def _normalize_post(
@@ -394,7 +436,17 @@ def _post_nodes(data: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     post = data.get("post")
     if isinstance(post, Mapping):
         nodes.append(post)
+    for topic in _topic_nodes(data):
+        nodes.extend(_connection_nodes(topic.get("posts")))
     nodes.extend(_typed_search_nodes(data, {"Post"}))
+    return nodes
+
+
+def _topic_nodes(data: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    nodes = _connection_nodes(data.get("topics"))
+    topic = data.get("topic")
+    if isinstance(topic, Mapping):
+        nodes.append(topic)
     return nodes
 
 

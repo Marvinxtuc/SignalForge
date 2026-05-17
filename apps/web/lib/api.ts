@@ -1,4 +1,9 @@
-import { API_BASE_URL, API_REQUEST_TIMEOUT_MS } from "./constants";
+import {
+  API_REQUEST_TIMEOUT_MS,
+  HAS_PUBLIC_API_BASE_URL_OVERRIDE,
+  PUBLIC_API_BASE_URL,
+  SERVER_API_BASE_URL
+} from "./constants";
 import type {
   ApiErrorEnvelope,
   CollectionCreateRequest,
@@ -7,15 +12,24 @@ import type {
   CollectionLog,
   CredentialStatusResponse,
   CsvReportResponse,
+  Keyword,
+  KeywordCreateRequest,
   MarkdownReportResponse,
   Opportunity,
+  OpportunityStatus,
   PaginatedResponse,
   PaginationParams,
   PlatformsResponse,
+  PlatformEnvTestResponse,
   ProcessingRequest,
   ProcessingResponse,
   ProcessingSummary,
+  ProductionRunCreateRequest,
+  ProductionRunListItem,
+  ProductionRunRead,
+  ProductionRunStatus,
   Project,
+  ProjectCreateRequest,
   ReportRequest,
   Signal,
   SignalFeedback,
@@ -32,6 +46,8 @@ type ApiRequestOptions = Omit<RequestInit, "body"> & {
   query?: QueryParams;
   timeoutMs?: number;
 };
+
+export type HealthResponse = Record<string, unknown>;
 
 export class ApiClientError extends Error {
   readonly status: number | null;
@@ -69,6 +85,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
       headers: {
         Accept: "application/json",
         ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+        ...getServerOwnerAuthHeader(),
         ...requestInit.headers
       },
       signal: requestInit.signal ?? controller.signal
@@ -103,7 +120,8 @@ function buildBackendUrl(path: string, query?: QueryParams): string {
   }
 
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const url = new URL(normalizedPath, `${API_BASE_URL}/`);
+  const resolvedUrl = resolveApiUrl(normalizedPath);
+  const url = new URL(resolvedUrl, "http://signalforge.local");
 
   if (query) {
     Object.entries(query).forEach(([key, value]) => {
@@ -113,7 +131,96 @@ function buildBackendUrl(path: string, query?: QueryParams): string {
     });
   }
 
-  return url.toString();
+  return isAbsoluteUrl(resolvedUrl) ? url.toString() : `${url.pathname}${url.search}`;
+}
+
+function resolveApiUrl(path: string): string {
+  if (typeof window === "undefined") {
+    return new URL(path, `${SERVER_API_BASE_URL}/`).toString();
+  }
+
+  assertAllowedPublicApiBase();
+
+  if (!HAS_PUBLIC_API_BASE_URL_OVERRIDE || PUBLIC_API_BASE_URL === "/api") {
+    return toBrowserProxyPath(path);
+  }
+
+  if (isAbsoluteUrl(PUBLIC_API_BASE_URL)) {
+    return new URL(path, `${PUBLIC_API_BASE_URL}/`).toString();
+  }
+
+  return joinRelativePath(PUBLIC_API_BASE_URL, path);
+}
+
+function toBrowserProxyPath(path: string): string {
+  if (path === "/health") {
+    return "/api/health";
+  }
+
+  if (path === "/api" || path.startsWith("/api/")) {
+    return path;
+  }
+
+  return `/api${path}`;
+}
+
+function joinRelativePath(base: string, path: string): string {
+  const normalizedBase = base.startsWith("/") ? base : `/${base}`;
+  const normalizedPath =
+    normalizedBase.endsWith("/api") && path.startsWith("/api/")
+      ? path.slice("/api".length)
+      : path;
+
+  return `${normalizedBase.replace(/\/+$/, "")}/${normalizedPath.replace(/^\/+/, "")}`;
+}
+
+function assertAllowedPublicApiBase(): void {
+  if (
+    process.env.NODE_ENV !== "production" ||
+    !isLocalhostBase(PUBLIC_API_BASE_URL) ||
+    isLocalhost(window.location.hostname)
+  ) {
+    return;
+  }
+
+  throw new ApiClientError({
+    code: "invalid_public_api_base",
+    message: "Production browser API base cannot point to localhost from an external host.",
+    url: PUBLIC_API_BASE_URL
+  });
+}
+
+function isLocalhostBase(baseUrl: string): boolean {
+  if (!isAbsoluteUrl(baseUrl)) {
+    return false;
+  }
+
+  return isLocalhost(new URL(baseUrl).hostname);
+}
+
+function isAbsoluteUrl(url: string): boolean {
+  return /^https?:\/\//i.test(url);
+}
+
+function isLocalhost(hostname: string): boolean {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+}
+
+function getServerOwnerAuthHeader(): Record<string, string> {
+  if (typeof window !== "undefined") {
+    return {};
+  }
+
+  const authRequired = ["1", "true", "yes", "on"].includes(
+    (process.env.SIGNALFORGE_REQUIRE_OWNER_AUTH ?? "").trim().toLowerCase()
+  );
+  const ownerToken = process.env.SIGNALFORGE_OWNER_API_TOKEN?.trim();
+
+  if (!authRequired || !ownerToken) {
+    return {};
+  }
+
+  return { "X-SignalForge-Owner-Token": ownerToken };
 }
 
 async function parseApiResponse<T>(response: Response, url: string): Promise<T> {
@@ -192,10 +299,24 @@ function statusCodeToMessage(status: number): string {
 }
 
 export const api = {
+  health: () => apiRequest<HealthResponse>("/health"),
   projects: {
     list: (params: PaginationParams = {}) =>
       apiRequest<PaginatedResponse<Project>>("/api/projects", { query: params }),
-    get: (projectId: UUID) => apiRequest<Project>(`/api/projects/${projectId}`)
+    get: (projectId: UUID) => apiRequest<Project>(`/api/projects/${projectId}`),
+    create: (body: ProjectCreateRequest) =>
+      apiRequest<Project>("/api/projects", {
+        method: "POST",
+        body
+      })
+  },
+  keywords: {
+    list: (projectId: UUID) => apiRequest<Keyword[]>(`/api/projects/${projectId}/keywords`),
+    create: (projectId: UUID, body: KeywordCreateRequest) =>
+      apiRequest<Keyword>(`/api/projects/${projectId}/keywords`, {
+        method: "POST",
+        body
+      })
   },
   signals: {
     list: (projectId: UUID, params: SignalListParams = {}) =>
@@ -220,6 +341,15 @@ export const api = {
         query: params
       }),
     get: (opportunityId: UUID) => apiRequest<Opportunity>(`/api/opportunities/${opportunityId}`),
+    createFromSignal: (signalId: UUID) =>
+      apiRequest<Opportunity>(`/api/signals/${signalId}/create-opportunity`, {
+        method: "POST"
+      }),
+    updateStatus: (opportunityId: UUID, status: OpportunityStatus) =>
+      apiRequest<Opportunity>(`/api/opportunities/${opportunityId}`, {
+        method: "PUT",
+        body: { status }
+      }),
     archive: (opportunityId: UUID) =>
       apiRequest<Opportunity>(`/api/opportunities/${opportunityId}/archive`, {
         method: "POST"
@@ -241,7 +371,11 @@ export const api = {
   settings: {
     platforms: () => apiRequest<PlatformsResponse>("/api/settings/platforms"),
     credentialStatus: () =>
-      apiRequest<CredentialStatusResponse>("/api/settings/credentials/status")
+      apiRequest<CredentialStatusResponse>("/api/settings/credentials/status"),
+    testPlatform: (platform: string) =>
+      apiRequest<PlatformEnvTestResponse>(`/api/settings/platforms/${platform}/test`, {
+        method: "POST"
+      })
   },
   reports: {
     markdown: (projectId: UUID, body: ReportRequest = {}) =>
@@ -263,5 +397,83 @@ export const api = {
       }),
     summary: (projectId: UUID) =>
       apiRequest<ProcessingSummary>(`/api/projects/${projectId}/processing-summary`)
+  },
+  production: {
+    createRun: (projectId: UUID, body: ProductionRunCreateRequest) =>
+      apiRequest<ProductionRunRead>("/api/production/runs", {
+        method: "POST",
+        body: {
+          project_id: projectId,
+          collection_mode: body.collection_execution_mode,
+          processing_mode: body.processing_mode,
+          allow_real_platform_write: body.approvals.real_platform_write,
+          allow_real_llm: body.approvals.real_llm,
+          allow_real_embedding: body.approvals.real_embedding,
+          reprocess: body.reprocess,
+          execute: true,
+          rollback_hint: `Frontend run mode=${body.mode}; reprocess=${body.reprocess}.`
+        }
+      }),
+    getRun: (runId: UUID) => apiRequest<ProductionRunRead>(`/api/production/runs/${runId}`),
+    status: async (projectId: UUID): Promise<ProductionRunStatus> => {
+      const [logs, summary] = await Promise.all([
+        api.collection.listLogs(projectId, { page_size: 10 }),
+        api.processing.summary(projectId)
+      ]);
+
+      return {
+        project_id: projectId,
+        checked_at: new Date().toISOString(),
+        collection_logs: logs.items,
+        processing_summary: summary
+      };
+    },
+    listRuns: async (projectId: UUID): Promise<ProductionRunListItem[]> => {
+      const response = await apiRequest<PaginatedResponse<ProductionRunRead>>(
+        "/api/production/runs",
+        { query: { page_size: 20 } }
+      );
+
+      return response.items
+        .filter((run) => run.project_id === projectId)
+        .map(productionRunToListItem);
+    }
   }
 };
+
+function productionRunToListItem(run: ProductionRunRead): ProductionRunListItem {
+  const collectionSummary = asRecord(run.result_summary.collection);
+  const processingSummary = asRecord(run.result_summary.processing);
+
+  return {
+    id: run.id,
+    project_id: run.project_id ?? "",
+    created_at: run.created_at ?? run.started_at ?? new Date().toISOString(),
+    state: formatProductionRunStage(run.stage),
+    status: run.status,
+    mode: run.collection_mode,
+    collection_job_id: typeof collectionSummary.job_id === "string" ? collectionSummary.job_id : null,
+    processing_mode: run.processing_mode,
+    items_inserted: numberValue(collectionSummary.items_inserted),
+    total_signals: numberValue(processingSummary.total_signals),
+    error_message: run.error_summary
+  };
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function numberValue(value: unknown): number | null {
+  return typeof value === "number" ? value : null;
+}
+
+function formatProductionRunStage(runStage: string): ProductionRunListItem["state"] {
+  if (runStage === "collect" || runStage === "process" || runStage === "review" || runStage === "report") {
+    return runStage;
+  }
+
+  return runStage === "closeout" ? "closeout" : "review";
+}

@@ -5,6 +5,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://signalforge:signalforge_dev_password@postgres:5432/signalforge
       REDIS_URL: redis://redis:6379/0
+      CORS_ALLOW_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
     ports:
       - "8000:8000"
     volumes:
@@ -19,7 +20,7 @@ services:
     build:
       context: ../apps/web
     environment:
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+      SERVER_API_BASE_URL: http://api:8000
     ports:
       - "3000:3000"
     depends_on:

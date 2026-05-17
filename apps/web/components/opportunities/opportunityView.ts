@@ -10,12 +10,12 @@ export const OPPORTUNITY_STATUSES: OpportunityStatus[] = [
 ];
 
 export const OPPORTUNITY_STATUS_LABELS: Record<OpportunityStatus, string> = {
-  new: "New",
-  watching: "Watching",
-  validating: "Validating",
-  build_candidate: "Build candidate",
-  content_candidate: "Content candidate",
-  archived: "Archived"
+  new: "新建",
+  watching: "观察中",
+  validating: "验证中",
+  build_candidate: "产品候选",
+  content_candidate: "内容候选",
+  archived: "已归档"
 };
 
 export function isOpportunityStatus(value: string): value is OpportunityStatus {
@@ -24,7 +24,7 @@ export function isOpportunityStatus(value: string): value is OpportunityStatus {
 
 export function opportunityStatusLabel(value: string | null | undefined): string {
   if (!value) {
-    return "Unknown";
+    return "未知";
   }
 
   return isOpportunityStatus(value)
@@ -39,14 +39,14 @@ export function formatPlatformDistribution(
   distribution: Record<string, unknown> | null | undefined
 ): string {
   if (!distribution || Object.keys(distribution).length === 0) {
-    return "Unavailable";
+    return "不可用";
   }
 
   const items = Object.entries(distribution)
     .filter(([key]) => !isSensitiveKey(key))
     .map(([platform, value]) => `${labelFromSnakeCase(platform)}: ${formatDistributionValue(value)}`);
 
-  return items.length > 0 ? items.join(", ") : "Unavailable";
+  return items.length > 0 ? items.join(", ") : "不可用";
 }
 
 function formatDistributionValue(value: unknown): string {
@@ -55,14 +55,14 @@ function formatDistributionValue(value: unknown): string {
   }
 
   if (Array.isArray(value)) {
-    return `${value.length} values`;
+    return `${value.length} 个值`;
   }
 
   if (value && typeof value === "object") {
-    return "available";
+    return "可用";
   }
 
-  return "unknown";
+  return "未知";
 }
 
 function isSensitiveKey(key: string): boolean {

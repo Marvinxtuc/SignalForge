@@ -21,6 +21,7 @@ except ImportError as exc:
 
 
 ROOT = Path(__file__).resolve().parents[1]
+EXPECTED_MOCK_ITEMS = 5
 API_ROOT_CANDIDATES = (ROOT, ROOT / "apps" / "api")
 for candidate in API_ROOT_CANDIDATES:
     if (candidate / "app" / "connectors").is_dir() and str(candidate) not in sys.path:
@@ -322,11 +323,18 @@ def validate_collection_jobs() -> None:
 
             if mock_job.status != "success":
                 _fail(f"Mock collection job returned {mock_job.status}")
-            if mock_raw_count != 3:
-                _fail(f"Mock collection job inserted {mock_raw_count} raw_items, expected 3")
+            if mock_raw_count != EXPECTED_MOCK_ITEMS:
+                _fail(
+                    f"Mock collection job inserted {mock_raw_count} raw_items, "
+                    f"expected {EXPECTED_MOCK_ITEMS}"
+                )
             if any(not item.source_url for item in raw_items):
                 _fail("Mock collection job inserted raw_items without source_url")
-            if mock_log is None or mock_log.status != "success" or mock_log.items_inserted != 3:
+            if (
+                mock_log is None
+                or mock_log.status != "success"
+                or mock_log.items_inserted != EXPECTED_MOCK_ITEMS
+            ):
                 _fail(f"Mock collection job did not write expected collection_log: {mock_log}")
             _pass("Mock collection job inserts raw_items")
 
@@ -341,9 +349,13 @@ def validate_collection_jobs() -> None:
             duplicate_job = execute_collection(db, project_id=project_id, execution_mode="mock")
             duplicate_log = db.scalar(select(CollectionLog).where(CollectionLog.job_id == duplicate_job.id))
             duplicate_raw_count = _count(db, RawItem, RawItem.project_id == project_id)
-            if duplicate_raw_count != 3:
+            if duplicate_raw_count != EXPECTED_MOCK_ITEMS:
                 _fail(f"Duplicate collection changed raw_items count to {duplicate_raw_count}")
-            if duplicate_log is None or duplicate_log.items_inserted != 0 or duplicate_log.items_skipped != 3:
+            if (
+                duplicate_log is None
+                or duplicate_log.items_inserted != 0
+                or duplicate_log.items_skipped != EXPECTED_MOCK_ITEMS
+            ):
                 _fail(f"Duplicate raw_items were not skipped as expected: {duplicate_log}")
             _pass("Duplicate raw_items are skipped")
 

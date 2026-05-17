@@ -9,6 +9,8 @@ DEFAULT_POSTS_FIRST = 25
 DEFAULT_COMMENTS_FIRST = 5
 MAX_POSTS_FIRST = 100
 MAX_COMMENTS_FIRST = 25
+DEFAULT_TOPICS_FIRST = 3
+MAX_TOPICS_FIRST = 3
 
 
 def build_posts_search_query(
@@ -29,12 +31,10 @@ def build_posts_search_query(
         minimum=0,
         maximum=MAX_COMMENTS_FIRST,
     )
-    search_query = " ".join(keyword.strip() for keyword in keywords if keyword.strip())
-
     return {
         "query": """
-query SignalForgeProductHuntPosts($query: String!, $first: Int!, $commentsFirst: Int!) {
-  posts(first: $first, search: $query) {
+query SignalForgeProductHuntPosts($first: Int!, $commentsFirst: Int!) {
+  posts(first: $first) {
     edges {
       node {
         id
@@ -67,7 +67,53 @@ query SignalForgeProductHuntPosts($query: String!, $first: Int!, $commentsFirst:
             }
           }
         }
-        products {
+      }
+    }
+  }
+}
+""".strip(),
+        "variables": {
+            "first": normalized_first,
+            "commentsFirst": normalized_comments_first,
+        },
+    }
+
+
+def build_topic_posts_query(
+    *,
+    keyword: str,
+    first: int | None = None,
+    comments_first: int | None = None,
+    topics_first: int | None = None,
+) -> dict[str, Any]:
+    normalized_first = _bounded_int(
+        first,
+        default=DEFAULT_POSTS_FIRST,
+        minimum=1,
+        maximum=MAX_POSTS_FIRST,
+    )
+    normalized_comments_first = _bounded_int(
+        comments_first,
+        default=DEFAULT_COMMENTS_FIRST,
+        minimum=0,
+        maximum=MAX_COMMENTS_FIRST,
+    )
+    normalized_topics_first = _bounded_int(
+        topics_first,
+        default=DEFAULT_TOPICS_FIRST,
+        minimum=1,
+        maximum=MAX_TOPICS_FIRST,
+    )
+    return {
+        "query": """
+query SignalForgeProductHuntTopics($query: String!, $topicsFirst: Int!, $first: Int!, $commentsFirst: Int!) {
+  topics(query: $query, first: $topicsFirst) {
+    edges {
+      node {
+        id
+        slug
+        name
+        posts(first: $first) {
           edges {
             node {
               id
@@ -77,6 +123,29 @@ query SignalForgeProductHuntPosts($query: String!, $first: Int!, $commentsFirst:
               description
               url
               website
+              votesCount
+              commentsCount
+              createdAt
+              user {
+                id
+                username
+                name
+              }
+              comments(first: $commentsFirst) {
+                edges {
+                  node {
+                    id
+                    body
+                    url
+                    createdAt
+                    user {
+                      id
+                      username
+                      name
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -86,7 +155,8 @@ query SignalForgeProductHuntPosts($query: String!, $first: Int!, $commentsFirst:
 }
 """.strip(),
         "variables": {
-            "query": search_query,
+            "query": keyword.strip(),
+            "topicsFirst": normalized_topics_first,
             "first": normalized_first,
             "commentsFirst": normalized_comments_first,
         },
@@ -165,6 +235,7 @@ def _bounded_int(
 
 build_product_hunt_posts_query = build_posts_search_query
 build_product_hunt_product_query = build_product_lookup_query
+build_product_hunt_topic_posts_query = build_topic_posts_query
 
 
 __all__ = [
@@ -172,6 +243,8 @@ __all__ = [
     "PRODUCT_HUNT_GRAPHQL_URL",
     "build_product_hunt_posts_query",
     "build_product_hunt_product_query",
+    "build_product_hunt_topic_posts_query",
     "build_posts_search_query",
     "build_product_lookup_query",
+    "build_topic_posts_query",
 ]

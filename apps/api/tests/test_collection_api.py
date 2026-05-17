@@ -10,6 +10,9 @@ from app.db.session import SessionLocal
 from app.main import app
 
 
+EXPECTED_MOCK_ITEMS = 5
+
+
 def create_project() -> str:
     assert SessionLocal is not None
     with SessionLocal() as db:
@@ -65,6 +68,7 @@ def clear_p0_env(monkeypatch) -> None:
         "REDDIT_USER_AGENT",
         "PRODUCT_HUNT_TOKEN",
         "SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE",
+        "SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE",
     ):
         monkeypatch.delenv(name, raising=False)
 
@@ -83,8 +87,8 @@ def test_collect_mock_executes_and_inserts_raw_items() -> None:
         assert payload["collector_execution"] == "mock"
         assert payload["log"]["platform"] == "mock"
         assert payload["log"]["status"] == "success"
-        assert payload["log"]["items_collected"] == 3
-        assert raw_item_count(project_id) > before_count
+        assert payload["log"]["items_collected"] == EXPECTED_MOCK_ITEMS
+        assert raw_item_count(project_id) == before_count + EXPECTED_MOCK_ITEMS
     finally:
         delete_project(project_id)
 
@@ -150,6 +154,28 @@ def test_collect_p0_modes_degrade_without_credentials(monkeypatch) -> None:
             logs = collection_logs(project_id)
             platforms = {log.platform for log in logs if log.status == "disabled"}
             assert expected_platforms <= platforms
+    finally:
+        delete_project(project_id)
+
+
+def test_collect_real_platform_smoke_requires_write_gate(monkeypatch) -> None:
+    clear_p0_env(monkeypatch)
+    monkeypatch.setenv("SIGNALFORGE_ALLOW_REAL_PLATFORM_SMOKE", "true")
+    monkeypatch.setenv("PRODUCT_HUNT_TOKEN", "ph-secret-value")
+    project_id = create_project()
+    try:
+        before_count = raw_item_count(project_id)
+        response = TestClient(app).post(
+            f"/api/projects/{project_id}/collect",
+            json={"execution_mode": "product_hunt"},
+        )
+        payload = response.json()
+
+        assert response.status_code == 409
+        assert payload["error"]["code"] == "phase_not_available"
+        assert payload["error"]["message"] == "Real platform collection write requires SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE=true."
+        assert "ph-secret-value" not in response.text
+        assert raw_item_count(project_id) == before_count
     finally:
         delete_project(project_id)
 

@@ -5,8 +5,10 @@ from uuid import UUID
 from fastapi import APIRouter, Body
 from sqlalchemy import select
 
+from app.api.auth import env_flag_enabled
 from app.api.errors import phase_not_available
 from app.api.deps import DbSession
+from app.connectors.credential_resolver import REAL_PLATFORM_SMOKE_ENV
 from app.db.models import CollectionLog
 from app.schemas.collection_logs import CollectionLogRead
 from app.schemas.collection_jobs import (
@@ -33,6 +35,8 @@ def create_collection_job(
     execution_mode = _execution_mode(payload)
     if execution_mode not in PHASE_4_EXECUTION_MODES:
         raise phase_not_available(PHASE_4_FORBIDDEN_MODE_MESSAGE)
+    if _real_platform_write_required(execution_mode) and not env_flag_enabled("SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE"):
+        raise phase_not_available("Real platform collection write requires SIGNALFORGE_ALLOW_REAL_PLATFORM_WRITE=true.")
 
     job = execute_collection(db, project_id=project_id, execution_mode=execution_mode)
 
@@ -64,3 +68,7 @@ def _execution_mode(payload: CollectionJobCreateRequest | None) -> str:
         raise phase_not_available(PHASE_4_FORBIDDEN_MODE_MESSAGE)
     normalized = mode.strip()
     return normalized or DEFAULT_EXECUTION_MODE
+
+
+def _real_platform_write_required(execution_mode: str) -> bool:
+    return execution_mode in {"reddit", "product_hunt", "p0_real"} and env_flag_enabled(REAL_PLATFORM_SMOKE_ENV)

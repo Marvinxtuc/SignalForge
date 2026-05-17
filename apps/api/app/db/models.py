@@ -65,6 +65,27 @@ class PlatformCredential(TimestampMixin, Base):
     last_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class ProductionLifecycleRun(TimestampMixin, Base):
+    __tablename__ = "production_lifecycle_runs"
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    project_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("projects.id", ondelete="SET NULL"))
+    status: Mapped[str] = mapped_column(Text, nullable=False)
+    stage: Mapped[str] = mapped_column(Text, nullable=False)
+    collection_mode: Mapped[str] = mapped_column(Text, nullable=False)
+    processing_mode: Mapped[str] = mapped_column(Text, nullable=False)
+    allow_real_platform_write: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    allow_real_llm: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    allow_real_embedding: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    env_preflight: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default="{}")
+    result_summary: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default="{}")
+    error_summary: Mapped[str | None] = mapped_column(Text)
+    rollback_hint: Mapped[str | None] = mapped_column(Text)
+    redacted_logs: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, server_default="[]")
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class CollectionJob(Base):
     __tablename__ = "collection_jobs"
     __table_args__ = (

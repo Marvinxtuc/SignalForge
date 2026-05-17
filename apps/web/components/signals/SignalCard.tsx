@@ -1,7 +1,15 @@
 "use client";
 
 import type { Signal, SignalFeedback } from "../../lib/types";
-import { formatDateTime, formatScore, platformLabel, truncateText } from "../../lib/format";
+import {
+  formatDateTime,
+  formatFeedbackLabel,
+  formatScore,
+  formatSignalTypeLabel,
+  formatStatusLabel,
+  platformLabel,
+  truncateText
+} from "../../lib/format";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import styles from "./SignalInbox.module.css";
@@ -13,22 +21,24 @@ type SignalCardProps = {
   pendingAction: string | null;
   signal: Signal;
   onFeedback: (feedback: SignalFeedback) => void;
+  onCreateOpportunity: () => void;
   onIgnore: () => void;
   onSave: () => void;
   onSelect: () => void;
 };
 
 const FEEDBACK_ACTIONS: Array<{ value: SignalFeedback; label: string }> = [
-  { value: "valuable", label: "Valuable" },
-  { value: "not_valuable", label: "Not Valuable" },
-  { value: "wrong_type", label: "Wrong Type" },
-  { value: "ignored", label: "Feedback Ignore" }
+  { value: "valuable", label: "有价值" },
+  { value: "not_valuable", label: "无价值" },
+  { value: "wrong_type", label: "类型错误" },
+  { value: "ignored", label: "忽略反馈" }
 ];
 
 export function SignalCard({
   actionError,
   isPending,
   isSelected,
+  onCreateOpportunity,
   onFeedback,
   onIgnore,
   onSave,
@@ -47,24 +57,24 @@ export function SignalCard({
     .join(" ");
 
   return (
-    <article className={cardClasses} aria-label="Signal card">
+    <article className={cardClasses} aria-label="信号卡片">
       <button className={styles.cardBodyButton} onClick={onSelect} type="button">
         <div className={styles.cardMeta}>
           <Badge>{platformLabel(signal.platform)}</Badge>
-          <Badge>{signal.signal_type || "Unknown type"}</Badge>
-          <Badge tone={painTone(signal.pain_level)}>Pain {formatScore(signal.pain_level)}</Badge>
-          {highValue ? <Badge tone="success">High Value</Badge> : null}
+          <Badge>{formatSignalTypeLabel(signal.signal_type)}</Badge>
+          <Badge tone={painTone(signal.pain_level)}>痛点 {formatScore(signal.pain_level)}</Badge>
+          {highValue ? <Badge tone="warning">高价值</Badge> : null}
         </div>
 
         <div className={styles.cardTitleRow}>
-          <h2 className={styles.cardTitle}>{signal.summary_zh || "Untitled signal"}</h2>
-          <span className={styles.scoreText}>Confidence {formatScore(signal.signal_confidence)}</span>
+          <h2 className={styles.cardTitle}>{signal.summary_zh || "未命名信号"}</h2>
+          <span className={styles.scoreText}>置信度 {formatScore(signal.signal_confidence)}</span>
         </div>
 
         <p className={styles.excerpt}>{truncateText(signal.content_excerpt, 220)}</p>
 
         {signal.keyword_hits?.length ? (
-          <div className={styles.keywordRow} aria-label="Keyword hits">
+          <div className={styles.keywordRow} aria-label="命中关键词">
             {signal.keyword_hits.slice(0, 6).map((keyword) => (
               <span className={styles.keyword} key={keyword}>
                 {keyword}
@@ -74,15 +84,15 @@ export function SignalCard({
         ) : null}
 
         <p className={styles.cardFooter}>
-          Created {formatDateTime(signal.created_at)} · Status {signal.status}
-          {signal.user_feedback ? ` · Feedback ${signal.user_feedback}` : ""}
+          创建时间 {formatDateTime(signal.created_at)} · 状态 {formatStatusLabel(signal.status)}
+          {signal.user_feedback ? ` · 反馈 ${formatFeedbackLabel(signal.user_feedback)}` : ""}
         </p>
       </button>
 
       <div className={styles.actionBar}>
         {sourceDisabled ? (
           <span className={styles.disabledLink} aria-disabled="true">
-            Open Source
+            打开来源
           </span>
         ) : (
           <a
@@ -91,19 +101,22 @@ export function SignalCard({
             rel="noopener noreferrer"
             target="_blank"
           >
-            Open Source
+            打开来源
           </a>
         )}
         <Button disabled={isPending} onClick={onSave} size="small" variant="secondary">
-          {pendingAction === "status:saved" ? "Saving" : "Save"}
+          {pendingAction === "status:saved" ? "保存中" : "保存"}
+        </Button>
+        <Button disabled={isPending} onClick={onCreateOpportunity} size="small" variant="secondary">
+          {pendingAction === "opportunity:create" ? "创建中" : "生成机会"}
         </Button>
         <Button disabled={isPending} onClick={onIgnore} size="small" variant="ghost">
-          {pendingAction === "status:ignored" ? "Ignoring" : "Ignore"}
+          {pendingAction === "status:ignored" ? "忽略中" : "忽略"}
         </Button>
       </div>
 
-      <div className={styles.feedbackBar} aria-label="feedback actions">
-        <span className={styles.feedbackLabel}>feedback</span>
+      <div className={styles.feedbackBar} aria-label="反馈操作">
+        <span className={styles.feedbackLabel}>反馈</span>
         {FEEDBACK_ACTIONS.map((action) => (
           <Button
             disabled={isPending}
@@ -112,7 +125,7 @@ export function SignalCard({
             size="small"
             variant="ghost"
           >
-            {pendingAction === `feedback:${action.value}` ? "Updating" : action.label}
+            {pendingAction === `feedback:${action.value}` ? "更新中" : action.label}
           </Button>
         ))}
       </div>

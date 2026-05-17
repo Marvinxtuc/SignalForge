@@ -5,7 +5,7 @@ import "./styles.css";
 
 export const metadata: Metadata = {
   title: "SignalForge",
-  description: "SignalForge research workstation"
+  description: "SignalForge 研究工作台"
 };
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="zh-CN">
       <body>
         <AppShell>{children}</AppShell>
       </body>
