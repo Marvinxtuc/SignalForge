@@ -32,6 +32,20 @@ FORBIDDEN_REAL_EXECUTION_OPTIONS = (
     "discord_real",
 )
 
+ALLOWED_GATED_REAL_EXECUTION_OPTIONS = {
+    "real_llm": {
+        WEB_ROOT / "components" / "production" / "ProductionPage.tsx",
+        WEB_ROOT / "lib" / "api.ts",
+        WEB_ROOT / "lib" / "types.ts",
+    },
+    "real_embedding": {
+        WEB_ROOT / "components" / "production" / "ProductionPage.tsx",
+        WEB_ROOT / "e2e" / "personal-workflow.spec.ts",
+        WEB_ROOT / "lib" / "api.ts",
+        WEB_ROOT / "lib" / "types.ts",
+    },
+}
+
 FORBIDDEN_ENDPOINT_MARKERS = (
     "oauth.reddit.com",
     "www.reddit.com/api",
@@ -267,6 +281,8 @@ def validate_forbidden_values(files: list[Path]) -> None:
         text = _read(path)
         for option in FORBIDDEN_REAL_EXECUTION_OPTIONS:
             if re.search(rf"['\"]{re.escape(option)}['\"]|\b{re.escape(option)}\b", text):
+                if path in ALLOWED_GATED_REAL_EXECUTION_OPTIONS.get(option, set()):
+                    continue
                 _fail(f"forbidden real execution option {option!r} found in {path.relative_to(ROOT)}")
 
         for pattern in TOKEN_LIKE_PATTERNS:
